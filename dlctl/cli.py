@@ -13,15 +13,18 @@ def dlctl():
 dlctl.add_command(ingest)
 
 
-@dlctl.group()
-def transform():
-    pass
-
-
-@transform.command()
-def all():
+@dlctl.command()
+@click.option(
+    "--model",
+    "-m",
+    "models",
+    multiple=True,
+    type=click.STRING,
+    help="Model name to transform (can be used multiple times)",
+)
+def transform(models: tuple[str]):
     dbt_handler = DBTHandler()
-    dbt_handler.run()
+    dbt_handler.run(models)
 
 
 if __name__ == "__main__":
