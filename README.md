@@ -17,7 +17,7 @@ We purposely keep this simple with SQLite, using a backup/restore strategy to/fr
 
 ### scripts/
 
-Individual Bash or Python scripts for generic tasks, including catalog backup and restore.
+Individual bash or python scripts for generic tasks, including catalog backup or restore.
 
 ### local/
 
@@ -27,14 +27,22 @@ Untracked directory where all your local files will live. This includes the Duck
 
 When there are log files, they should live here. That's it for now.
 
-### dlctl
+### cli/
 
-The `dlctl`, for 'Data Lab Control', helps you run all the tasks supported by the data lab package. It is available as a script under that can be accessed via:
+This is where the `dlctl` command lives—dlctl stands for 'Data Lab Control'. This helps you run all the tasks supported by the data lab package. It is available as a script under `pyproject.toml` that can be accessed via:
 
 ```bash
 uv venv
 source .venv/bin/activate
-dlctl
+dlctl ...
+```
+
+### bin/
+
+Contains a `dlctl` bash script, to make the entry-point obvious for non-python-savvy users:
+
+```bash
+bin/dlctl ...
 ```
 
 ## 🗃️ Storage Layout

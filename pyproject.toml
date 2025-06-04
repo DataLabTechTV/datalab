@@ -10,3 +10,12 @@ dependencies = [
     "dbt-duckdb>=1.9.3",
     "minio>=7.2.15",
 ]
+
+[project.scripts]
+dlctl = "cli:dlctl"
+
+[tool.uv]
+package = true
+
+[tool.setuptools.packages.find]
+where = ["cli"]
