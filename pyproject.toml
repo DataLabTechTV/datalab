@@ -5,17 +5,22 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "boto3>=1.38.29",
+    "boto3-stubs[s3]>=1.38.29",
     "click>=8.2.1",
     "dbt-core>=1.9.6",
     "dbt-duckdb>=1.9.3",
+    "loguru>=0.7.3",
     "minio>=7.2.15",
+    "python-dotenv>=1.1.0",
+    "python-slugify>=8.0.4",
 ]
 
 [project.scripts]
-dlctl = "cli:dlctl"
+dlctl = "dlctl.cli:dlctl"
 
 [tool.uv]
 package = true
 
 [tool.setuptools.packages.find]
-where = ["cli"]
+include = ["dlctl", "ingest", "transform"]

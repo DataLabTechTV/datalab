@@ -32,17 +32,9 @@ When there are log files, they should live here. That's it for now.
 This is where the `dlctl` command lives—dlctl stands for 'Data Lab Control'. This helps you run all the tasks supported by the data lab package. It is available as a script under `pyproject.toml` that can be accessed via:
 
 ```bash
-uv venv
+uv sync
 source .venv/bin/activate
 dlctl ...
-```
-
-### bin/
-
-Contains a `dlctl` bash script, to make the entry-point obvious for non-python-savvy users:
-
-```bash
-bin/dlctl ...
 ```
 
 ## 🗃️ Storage Layout
@@ -84,7 +76,7 @@ As a rule of thumb, ingestion will be done via the `dlctl ingest` command. If a 
 For manually uploaded datasets, you can create a directory in S3 by giving it the dataset name:
 
 ```bash
-dlctl ingest --standalone --dataset "Your Dataset Name"
+dlctl ingest dataset --manual "Your Dataset Name"
 ```
 
 This will create a directory like `s3://lakehouse/raw/your_dataset_name/2025_06_03/19_56_03_000`, update `s3://lakehouse/raw/your_dataset_name/latest.json` to point to it, and print the path to stdout.
@@ -92,10 +84,10 @@ This will create a directory like `s3://lakehouse/raw/your_dataset_name/2025_06_
 ### From Kaggle or Hugging Face
 
 ```bash
-dlctl ingest \
+dlctl ingest dataset \
     "https://www.kaggle.com/datasets/<username>/<dataset>"
 
-dlctl ingest \
+dlctl ingest dataset \
     "https://huggingface.co/datasets/<username>/<dataset>"
 ```
 
@@ -113,6 +105,14 @@ Or all of them:
 
 ```bash
 dlctl ingest ls -a
+```
+
+### Pruning Empty Datasets
+
+Sometimes you'll manually create a dataset and never upload data into the directory, or an ingestion process from a URL will fail and leave an empty directory behind. You can prune those directories using:
+
+```bash
+dlctl ingest prune
 ```
 
 ## Transformation
