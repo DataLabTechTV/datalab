@@ -13,4 +13,7 @@ transform:
           region: "{{ env_var('S3_REGION') }}"
           key_id: "{{ env_var('S3_ACCESS_KEY') }}"
           secret: "{{ env_var('S3_SECRET_KEY') }}"
+          endpoint: "{{ env_var('S3_ENDPOINT') }}"
+          use_ssl: "{{ env_var('S3_USE_SSL') }}"
+          url_style: "{{ env_var('S3_URL_STYLE') }}"
   target: lakehouse

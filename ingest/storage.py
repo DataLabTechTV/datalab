@@ -11,10 +11,16 @@ class Storage:
     def __init__(self):
         load_dotenv()
 
-        endpoint_url = os.getenv("S3_ENDPOINT_URL")
+        endpoint = os.getenv("S3_ENDPOINT")
+        use_ssl = os.getenv("S3_USE_SSL", "true").lower() == "true"
         access_key = os.getenv("S3_ACCESS_KEY")
         secret_key = os.getenv("S3_SECRET_KEY")
         region = os.getenv("S3_REGION")
+
+        if endpoint is None:
+            endpoint_url = None
+        else:
+            endpoint_url = f"https://{endpoint}" if use_ssl else f"http://{endpoint}"
 
         self.s3 = boto3.resource(
             "s3",

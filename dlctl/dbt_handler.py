@@ -4,6 +4,7 @@ from typing import Optional
 
 from dbt.cli.main import dbtRunner
 from dbt.contracts.results import RunStatus
+from dotenv import load_dotenv
 from loguru import logger as log
 
 DBT_PROJECT_DIR = str((Path(__file__).parent / "../transform").resolve())
@@ -12,6 +13,7 @@ LOCAL_DIR = str((Path(__file__).parent / "../local").resolve())
 
 class DBTHandler:
     def __init__(self):
+        load_dotenv()
         os.environ["DBT_PROJECT_DIR"] = DBT_PROJECT_DIR
         os.environ["LOCAL_DIR"] = LOCAL_DIR
 
@@ -32,6 +34,6 @@ class DBTHandler:
 
         for r in result.result:
             if r.status == RunStatus.Success:
-                log.info("Model produced successfully: {}", r.node.name)
+                log.info("{}: {}", r.node.name, r.status)
             else:
-                log.warning("Model has a {} status: {}", r.status, r.node.name)
+                log.warning("{}: {}", r.node.name, r.status)

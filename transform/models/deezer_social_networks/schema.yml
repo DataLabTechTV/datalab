@@ -1,0 +1,31 @@
+
+version: 2
+
+models:
+  - name: ro_genres
+    description: Romanian genres per user
+    columns:
+      - name: user_id
+        description: User ID, also the node ID of the graph
+        data_tests:
+          - not_null
+      - name: genre
+        description: Genre string
+        data_tests:
+          - not_null
+
+  - name: genres
+    description: Combined genres per user
+    columns:
+      - name: country
+        description: Two-letter country identifier (ISO 3166-1 alpha-2)
+        data_tests:
+          - not_null
+      - name: user_id
+        description: User ID, also the node ID of the graph
+        data_tests:
+          - not_null
+      - name: genre
+        description: Genre string
+        data_tests:
+          - not_null
