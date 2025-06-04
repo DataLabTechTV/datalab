@@ -1,0 +1,16 @@
+transform:
+  outputs:
+    lakehouse:
+      type: duckdb
+      path: "{{ env_var('LOCAL_DIR') }}/lakehouse.duckdb"
+      extensions:
+        - httpfs
+        - parquet
+        - ducklake
+        - sqlite
+      secrets:
+        - type: s3
+          region: "{{ env_var('S3_REGION') }}"
+          key_id: "{{ env_var('S3_ACCESS_KEY') }}"
+          secret: "{{ env_var('S3_SECRET_KEY') }}"
+  target: lakehouse

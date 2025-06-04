@@ -23,10 +23,6 @@ Individual bash or python scripts for generic tasks, including catalog backup or
 
 Untracked directory where all your local files will live. This includes the DuckLake catalog, which you can load from a backup, or create from scratch.
 
-### logs/
-
-When there are log files, they should live here. That's it for now.
-
 ### cli/
 
 This is where the `dlctl` command lives—dlctl stands for 'Data Lab Control'. This helps you run all the tasks supported by the data lab package. It is available as a script under `pyproject.toml` that can be accessed via:
