@@ -7,50 +7,54 @@ Tooling for a minimalist data lab running on top of DuckLake.
 
 ### ingest/
 
+Helps manage ingestion from difference data sources, consisting only of the retrieval stage for raw data and the proper directory structure creation. Raw data might be dropped manually, from Kaggle, Hugging Face, or some other source. This will make it easy to load it and keep it organized.
+
 ### transform/
+
+This is the core of the data lakehouse, using [dbt](https://docs.getdbt.com/) to transform raw data into usable data, with [DuckLake](https://ducklake.select/) as the underlying catalog, running on top of SQLite.
+
+We purposely keep this simple with SQLite, using a backup/restore strategy to/from S3, as this assumes exploratory lab work, but you can easily replace [SQLite](https://ducklake.select/docs/stable/duckdb/usage/choosing_a_catalog_database#sqlite) with a [PostgreSQL](https://ducklake.select/docs/stable/duckdb/usage/choosing_a_catalog_database#postgresql) node, if you prefer.
+
+### scripts/
+
+Individual Bash or Python scripts for generic tasks, including catalog backup and restore.
 
 ### local/
 
+Untracked directory where all your local files will live. This includes the DuckLake catalog, which you can load from a backup, or create from scratch.
+
 ### logs/
+
+When there are log files, they should live here. That's it for now.
 
 ### dlctl
 
-
-## Ingestion
-
-As a rule of thumb, ingestion will be done via the `dlctl ingest` command. If a version for the current date already exists, it will output an error and do nothing—just wait a second.
-
-### Manual
-
-For manually uploaded datasets, you can create a directory in S3 by giving it the dataset name:
+The `dlctl`, for 'Data Lab Control', helps you run all the tasks supported by the data lab package. It is available as a script under that can be accessed via:
 
 ```bash
-dlctl ingest --standalone --dataset "Your Dataset Name"
+uv venv
+source .venv/bin/activate
+dlctl
 ```
 
-This will create a directory `s3://lakehouse/raw/your_dataset_name/2025-06-03/19-56-03` and print the path to stdout.
-
-### Kaggle
-
-### Hugging Face
-
-### Other
-
-### 🗃️ Storage Layout
+## 🗃️ Storage Layout
 
 All data is stored in a single S3 bucket (e.g., `s3://lakehouse`, tested with MinIO), with directory structure:
 
 ```
 s3://lakehouse/
 ├── catalog/
-│   └── backups/
+│   ├── snapshots/
+│   │   └── metadata-YYYY_MM_DD_HH_MM_SS_sss.sqlite
+│   └── latest.json
 ├── raw/
 │   └── <dataset-name>/
-│       └── YYYY-MM-DD/
-│           └── HH-mm-SS/
-│               ├── *.csv
-│               ├── *.json
-│               └── *.parquet
+│       ├── YYYY_MM_DD/
+│       │   └── HH_mm_SS_sss/
+│       │       ├── *.csv
+│       │       ├── *.json
+│       │       └── *.parquet
+│       └── latest.json
 ├── stage/
 │   └── <dataset-name>/
 │           └── *.parquet
@@ -60,10 +64,53 @@ s3://lakehouse/
 └── logs/
 ```
 
-## Transformation
+> [!NOTE]
+> Date/time entries should be always UTC.
 
-Transformations can be run via `dlctl transform`, which will run:
+## Ingestion
+
+As a rule of thumb, ingestion will be done via the `dlctl ingest` command. If a version for the current date already exists, it will output an error and do nothing—just wait a millisecond.
+
+### Manual
+
+For manually uploaded datasets, you can create a directory in S3 by giving it the dataset name:
 
 ```bash
-cd transform/ && dbt run
+dlctl ingest --standalone --dataset "Your Dataset Name"
+```
+
+This will create a directory like `s3://lakehouse/raw/your_dataset_name/2025_06_03/19_56_03_000`, update `s3://lakehouse/raw/your_dataset_name/latest.json` to point to it, and print the path to stdout.
+
+### From Kaggle or Hugging Face
+
+```bash
+dlctl ingest \
+    "https://www.kaggle.com/datasets/<username>/<dataset>"
+
+dlctl ingest \
+    "https://huggingface.co/datasets/<username>/<dataset>"
+```
+
+The dataset name will be automatically extracted from the `<dataset>` slug and transformed into snake case for storage. Then, a directory like `s3://lakehouse/raw/your_dataset_name/2025_06_03/19_56_03_000` will be created, `s3://lakehouse/raw/your_dataset_name/latest.json` updated to point to it, and the final path printed to stdout.
+
+### Listing Ingested Datasets
+
+You can also list existing dataset paths for the most recent version, to be used for transformation:
+
+```bash
+dlctl ingest ls
+```
+
+Or all of them:
+
+```bash
+dlctl ingest ls -a
+```
+
+## Transformation
+
+Transformations can be done via `dlctl transform`, which will call `dbt` with the appropriate arguments:
+
+```bash
+dlctl transform "<dataset-name>"
 ```
