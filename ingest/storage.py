@@ -37,13 +37,17 @@ class Storage:
 
         bucket = self.s3.Bucket(bucket_name)
 
-        if not bucket in self.s3.buckets.all():
+        if bucket not in self.s3.buckets.all():
             raise FileNotFoundError("Bucket does not exist: {}", self.bucket.name)
 
         self.bucket = bucket
 
     def to_s3_path(self, prefix: str) -> str:
         return f"s3://{self.bucket.name}/{prefix}"
+
+    def from_s3_path(self, s3_path: str) -> str:
+        prefix = "/".join(s3_path.split("/")[3:])
+        return prefix
 
     def mkdir(self, path: str, dated: bool = False) -> str:
         path = path.strip("/")
@@ -65,11 +69,31 @@ class Storage:
         except:
             raise IOError(f"Could not create directory: {s3_path}")
 
+    def upload_files(self, source_path: str, s3_target_path: str):
+        s3_target_prefix = self.from_s3_path(s3_target_path)
+
+        file_paths = []
+
+        for root, _, files in os.walk(source_path):
+            for file in files:
+                full_path = os.path.join(root, file)
+                relative_path = os.path.relpath(full_path, source_path)
+                file_paths.append(relative_path)
+
+        log.info("Uploading {} files to {}", len(file_paths), s3_target_path)
+
+        for file_path in file_paths:
+            local_path = os.path.join(source_path, file_path)
+            log.info(f"Uploading {local_path} to {s3_target_path}/{file_path}")
+
+            self.bucket.upload_file(
+                Filename=local_path,
+                Key=f"{s3_target_prefix}/{file_path}",
+            )
+
     def set_latest(self, path: str, latest_s3_path: str):
         path = path.strip("/")
-        s3_path = self.to_s3_path(path)
-
-        log.info("Setting latest for {} as {}", s3_path, latest_s3_path)
+        log.info("Setting latest as {}", latest_s3_path)
 
         data = json.dumps({"latest": latest_s3_path})
 

@@ -1,7 +1,7 @@
 import click
 from loguru import logger as log
 
-from ingest.handler import handle_standalone
+from ingest.handler import handle_hugging_face, handle_kaggle, handle_standalone
 
 
 @click.group()
@@ -22,6 +22,10 @@ def dataset(dataset: str, manual: bool):
 
     if manual:
         handle_standalone(dataset)
+    elif dataset.startswith("https://www.kaggle.com/datasets/"):
+        handle_kaggle(dataset_url=dataset)
+    elif dataset.startswith("https://huggingface.co/datasets/"):
+        handle_hugging_face(dataset_url=dataset)
 
 
 @ingest.command()
