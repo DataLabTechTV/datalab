@@ -22,8 +22,9 @@ dlctl.add_command(ingest)
     type=click.STRING,
     help="Model name to transform (can be used multiple times)",
 )
-def transform(models: tuple[str]):
-    dbt_handler = DBTHandler()
+@click.option("--debug", is_flag=True, help="Run dbt with the debug flag")
+def transform(models: tuple[str], debug: bool):
+    dbt_handler = DBTHandler(debug=debug)
     dbt_handler.run(models)
 
 

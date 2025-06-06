@@ -13,7 +13,9 @@ LOCAL_DIR = str((Path(__file__).parents[1] / "local").resolve())
 
 
 class DBTHandler:
-    def __init__(self):
+    def __init__(self, debug: bool = False):
+        self.debug = debug
+
         os.environ["DBT_PROJECT_DIR"] = DBT_PROJECT_DIR
         os.environ["LOCAL_DIR"] = LOCAL_DIR
 
@@ -26,6 +28,9 @@ class DBTHandler:
         args = ["run"]
         args += ["--project-dir", DBT_PROJECT_DIR]
         args += ["--profiles-dir", DBT_PROJECT_DIR]
+
+        if self.debug:
+            args += ["--debug"]
 
         if models is not None and len(models) > 0:
             args += [
