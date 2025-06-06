@@ -4,8 +4,9 @@ from typing import Optional
 
 from dbt.cli.main import dbtRunner
 from dbt.contracts.results import RunStatus
-from dotenv import load_dotenv
 from loguru import logger as log
+
+from shared.storage import Storage
 
 DBT_PROJECT_DIR = str((Path(__file__).parent / "../transform").resolve())
 LOCAL_DIR = str((Path(__file__).parent / "../local").resolve())
@@ -13,9 +14,11 @@ LOCAL_DIR = str((Path(__file__).parent / "../local").resolve())
 
 class DBTHandler:
     def __init__(self):
-        load_dotenv()
         os.environ["DBT_PROJECT_DIR"] = DBT_PROJECT_DIR
         os.environ["LOCAL_DIR"] = LOCAL_DIR
+
+        s = Storage()
+        s.latest_to_env()
 
     def run(self, models: Optional[tuple[str]] = None):
         dbt = dbtRunner()

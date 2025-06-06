@@ -9,7 +9,7 @@ from loguru import logger as log
 from platformdirs import user_cache_dir
 from slugify import slugify
 
-from ingest.storage import Storage
+from shared.storage import Storage
 
 
 def handle_standalone(dataset: str):
@@ -18,8 +18,8 @@ def handle_standalone(dataset: str):
 
     try:
         s = Storage()
-        s3_dir_path = s.mkdir(ds_name, dated=True)
-        s.set_latest(ds_name, s3_dir_path)
+        s3_dir_path = s.get_dir(ds_name, dated=True, upload_placeholder=True)
+        s.upload_manifest(ds_name, latest=s3_dir_path)
     except:
         log.exception("Could not create directory {} for {}", ds_name, dataset)
 
@@ -58,9 +58,9 @@ def handle_kaggle(dataset_url: str):
     try:
         kaggle_ds_path = kh.dataset_download(ds_url.handle)
         s = Storage()
-        s3_dir_path = s.mkdir(ds_url.name, dated=True)
+        s3_dir_path = s.get_dir(ds_url.name, dated=True)
         s.upload_files(source_path=kaggle_ds_path, s3_target_path=s3_dir_path)
-        s.set_latest(ds_url.name, s3_dir_path)
+        s.upload_manifest(ds_url.name, latest=s3_dir_path)
     except:
         log.exception(
             "Couldn't download dataset. You might need to setup "
@@ -96,8 +96,8 @@ def handle_hugging_face(dataset_url: str):
                     git_file_path.unlink()
 
         s = Storage()
-        s3_dir_path = s.mkdir(ds_url.name, dated=True)
+        s3_dir_path = s.get_dir(ds_url.name, dated=True)
         s.upload_files(source_path=hf_ds_path, s3_target_path=s3_dir_path)
-        s.set_latest(ds_url.name, s3_dir_path)
+        s.upload_manifest(ds_url.name, latest=s3_dir_path)
     except:
         log.exception("Couldn't download dataset")

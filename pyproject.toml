@@ -10,12 +10,12 @@ dependencies = [
     "click>=8.2.1",
     "dbt-core>=1.9.6",
     "dbt-duckdb>=1.9.3",
+    "environs>=14.2.0",
     "gitpython>=3.1.44",
     "kagglehub>=0.3.12",
     "loguru>=0.7.3",
     "minio>=7.2.15",
     "platformdirs>=4.3.8",
-    "python-dotenv>=1.1.0",
     "python-slugify>=8.0.4",
 ]
 
@@ -26,4 +26,4 @@ dlctl = "dlctl.cli:dlctl"
 package = true
 
 [tool.setuptools.packages.find]
-include = ["dlctl", "ingest", "transform"]
+include = ["dlctl", "shared", "ingest", "transform"]
