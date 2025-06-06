@@ -1,6 +1,12 @@
+SELECT 'HR' AS country, *
+FROM {{ ref('hr_genres') }}
 
--- Use the `ref` function to select from other models
+UNION
 
-select *
-from {{ ref('ro_genres') }}
-where id = 1
+SELECT 'HU' AS country, *
+FROM {{ ref('hu_genres') }}
+
+UNION
+
+SELECT 'RO' AS country, *
+FROM {{ ref('ro_genres') }}

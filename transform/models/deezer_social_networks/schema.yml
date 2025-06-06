@@ -2,6 +2,30 @@
 version: 2
 
 models:
+  - name: hr_genres
+    description: Croatia genres per user
+    columns:
+      - name: user_id
+        description: User ID, also the node ID of the graph
+        data_tests:
+          - not_null
+      - name: genre
+        description: Genre string
+        data_tests:
+          - not_null
+
+  - name: hu_genres
+    description: Hungarian genres per user
+    columns:
+      - name: user_id
+        description: User ID, also the node ID of the graph
+        data_tests:
+          - not_null
+      - name: genre
+        description: Genre string
+        data_tests:
+          - not_null
+
   - name: ro_genres
     description: Romanian genres per user
     columns:
