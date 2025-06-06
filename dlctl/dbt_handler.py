@@ -8,8 +8,8 @@ from loguru import logger as log
 
 from shared.storage import Storage
 
-DBT_PROJECT_DIR = str((Path(__file__).parent / "../transform").resolve())
-LOCAL_DIR = str((Path(__file__).parent / "../local").resolve())
+DBT_PROJECT_DIR = str((Path(__file__).parents[1] / "transform").resolve())
+LOCAL_DIR = str((Path(__file__).parents[1] / "local").resolve())
 
 
 class DBTHandler:
