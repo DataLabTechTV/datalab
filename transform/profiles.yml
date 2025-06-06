@@ -2,7 +2,7 @@ transform:
   outputs:
     lakehouse:
       type: duckdb
-      path: "{{ env_var('LOCAL_DIR') }}/lakehouse.duckdb"
+      path: "{{ env_var('LOCAL_DIR') }}/{{ env_var('ENGINE_DB') }}"
       extensions:
         - httpfs
         - parquet
