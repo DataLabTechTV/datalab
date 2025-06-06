@@ -42,7 +42,7 @@ s3://lakehouse/
 ├── catalog/
 │   ├── snapshots/
 │   │   └── metadata-YYYY_MM_DD_HH_MM_SS_sss.sqlite
-│   └── latest.json
+│   └── manifest.json
 ├── raw/
 │   └── <dataset-name>/
 │       ├── YYYY_MM_DD/
@@ -50,7 +50,7 @@ s3://lakehouse/
 │       │       ├── *.csv
 │       │       ├── *.json
 │       │       └── *.parquet
-│       └── latest.json
+│       └── manifest.json
 ├── stage/
 │   └── <dataset-name>/
 │           └── *.parquet
@@ -75,7 +75,7 @@ For manually uploaded datasets, you can create a directory in S3 by giving it th
 dlctl ingest dataset --manual "Your Dataset Name"
 ```
 
-This will create a directory like `s3://lakehouse/raw/your_dataset_name/2025_06_03/19_56_03_000`, update `s3://lakehouse/raw/your_dataset_name/latest.json` to point to it, and print the path to stdout.
+This will create a directory like `s3://lakehouse/raw/your_dataset_name/2025_06_03/19_56_03_000`, update `s3://lakehouse/raw/your_dataset_name/manifest.json` to point to it, and print the path to stdout.
 
 ### From Kaggle or Hugging Face
 
@@ -87,7 +87,7 @@ dlctl ingest dataset \
     "https://huggingface.co/datasets/<username>/<dataset>"
 ```
 
-The dataset name will be automatically extracted from the `<dataset>` slug and transformed into snake case for storage. Then, a directory like `s3://lakehouse/raw/your_dataset_name/2025_06_03/19_56_03_000` will be created, `s3://lakehouse/raw/your_dataset_name/latest.json` updated to point to it, and the final path printed to stdout.
+The dataset name will be automatically extracted from the `<dataset>` slug and transformed into snake case for storage. Then, a directory like `s3://lakehouse/raw/your_dataset_name/2025_06_03/19_56_03_000` will be created, `s3://lakehouse/raw/your_dataset_name/manifest.json` updated to point to it, and the final path printed to stdout.
 
 ### Listing Ingested Datasets
 
