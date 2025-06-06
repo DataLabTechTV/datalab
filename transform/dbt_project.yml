@@ -20,4 +20,5 @@ on-run-start:
 models:
   transform:
     deezer_social_networks:
+      +database: testing
       +materialized: view

@@ -16,4 +16,7 @@ transform:
           endpoint: "{{ env_var('S3_ENDPOINT') }}"
           use_ssl: "{{ env_var('S3_USE_SSL') }}"
           url_style: "{{ env_var('S3_URL_STYLE') }}"
+      attach:
+        - path: /tmp/testing.duckdb
+          alias: testing
   target: lakehouse
