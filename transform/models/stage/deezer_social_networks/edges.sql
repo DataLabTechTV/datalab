@@ -1,14 +1,14 @@
-SELECT e.source, e.target, 'HR' AS country
+SELECT e.source_id, e.target_id, 'HR' AS country
 FROM {{ ref('hr_edges') }} AS e
 
 UNION
 
-SELECT e.source, e.target, 'HU' AS country
+SELECT e.source_id, e.target_id, 'HU' AS country
 FROM {{ ref('hu_edges') }} AS e
 
 UNION
 
-SELECT e.source, e.target, 'RO' AS country
+SELECT e.source_id, e.target_id, 'RO' AS country
 FROM {{ ref('ro_edges') }} AS e
 
-ORDER BY e.source, e.target
+ORDER BY e.source_id, e.target_id

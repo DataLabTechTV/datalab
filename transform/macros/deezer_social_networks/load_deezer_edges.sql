@@ -1,8 +1,8 @@
 {% macro load_deezer_edges(s3_path) %}
 
 SELECT
-    node_1 AS source,
-    node_2 AS target
+    CAST(node_1 AS INTEGER) AS source_id,
+    CAST(node_2 AS INTEGER) AS target_id
 FROM read_csv(
     '{{ s3_path }}',
     delim = ',',

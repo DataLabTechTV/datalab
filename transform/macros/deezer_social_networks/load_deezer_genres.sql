@@ -4,7 +4,7 @@ WITH raw_json AS (
     SELECT *
     FROM read_json_auto('{{ s3_path }}')
 )
-SELECT je.key AS user_id, CAST(je.value AS VARCHAR[]) AS genres
+SELECT CAST(je.key AS INTEGER) AS user_id, CAST(je.value AS VARCHAR[]) AS genres
 FROM raw_json rj, json_each(rj.json) AS je
 
 {% endmacro %}
