@@ -19,6 +19,14 @@ models:
     stage:
       +database: stage
       +materialized: table
+      deezer_social_networks:
+        +schema: deezer
+      million_song_dataset_spotify_lastfm:
+        +schema: msdsl
     marts:
       +database: marts
       +materialized: table
+      graphs:
+        +schema: graphs
+        music_taste:
+          +schema: music_taste
