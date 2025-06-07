@@ -2,6 +2,7 @@
 local/**
 logs/**
 .vscode/
+/scripts/init.sql
 !.gitkeep
 
 # Byte-compiled / optimized / DLL files
