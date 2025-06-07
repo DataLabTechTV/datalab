@@ -40,6 +40,10 @@ class DBTHandler:
 
         result = dbt.invoke(args)
 
+        if result.result is None:
+            log.warning("No results returned from dbt")
+            return
+
         for r in result.result:
             if r.status == RunStatus.Success:
                 log.info("{}: {}", r.node.name, r.status)
