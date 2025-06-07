@@ -16,6 +16,9 @@ clean-targets:
 
 models:
   transform:
-    deezer_social_networks:
-      +database: lakehouse
+    stage:
+      +database: stage
+      +materialized: view
+    marts:
+      +database: marts
       +materialized: view
