@@ -246,7 +246,7 @@ requires-dist = [
     { name = "boto3-stubs", extras = ["s3"], specifier = ">=1.38.29" },
     { name = "click", specifier = ">=8.2.1" },
     { name = "dbt-core", specifier = ">=1.9.6" },
-    { name = "dbt-duckdb", specifier = ">=1.9.3" },
+    { name = "dbt-duckdb", git = "https://github.com/duckdb/dbt-duckdb.git?rev=afc39991158c0f719e5e57469ab466cfb63fbb8c" },
     { name = "environs", specifier = ">=14.2.0" },
     { name = "gitpython", specifier = ">=3.1.44" },
     { name = "kagglehub", specifier = ">=0.3.12" },
@@ -330,17 +330,13 @@ wheels = [
 
 [[package]]
 name = "dbt-duckdb"
-version = "1.9.3"
-source = { registry = "https://pypi.org/simple" }
+version = "1.9.4.dev21"
+source = { git = "https://github.com/duckdb/dbt-duckdb.git?rev=afc39991158c0f719e5e57469ab466cfb63fbb8c#afc39991158c0f719e5e57469ab466cfb63fbb8c" }
 dependencies = [
     { name = "dbt-adapters" },
     { name = "dbt-common" },
     { name = "dbt-core" },
     { name = "duckdb" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/aa/67/25b81b0773c13c5c15a973c4fe585f36d201b6ea4ed742bdf872a8880141/dbt_duckdb-1.9.3.tar.gz", hash = "sha256:53950de9ed9f4d3b5cf91b842054be440a940e24f17e9aa7ffaa2bf1448d65a5", size = 105788, upload-time = "2025-04-21T21:01:28.455Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a8/74/6a27016687920790f45b242c67dd1c1009ba553843e7158deab32635a540/dbt_duckdb-1.9.3-py3-none-any.whl", hash = "sha256:a377b9f7370c42dacf408e7c0041e4b9c3c032f87a77c751cd34ff8c5fc3bf08", size = 70003, upload-time = "2025-04-21T21:01:26.795Z" },
 ]
 
 [[package]]

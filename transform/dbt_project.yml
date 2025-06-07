@@ -14,11 +14,8 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
-on-run-start:
-  - "{{ attach_ducklake() }}"
-
 models:
   transform:
     deezer_social_networks:
-      +database: testing
+      +database: lakehouse
       +materialized: view

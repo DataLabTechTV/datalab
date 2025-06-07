@@ -9,7 +9,7 @@ dependencies = [
     "boto3-stubs[s3]>=1.38.29",
     "click>=8.2.1",
     "dbt-core>=1.9.6",
-    "dbt-duckdb>=1.9.3",
+    "dbt-duckdb",
     "environs>=14.2.0",
     "gitpython>=3.1.44",
     "kagglehub>=0.3.12",
@@ -24,6 +24,9 @@ dlctl = "dlctl.cli:dlctl"
 
 [tool.uv]
 package = true
+
+[tool.uv.sources]
+dbt-duckdb = { git = "https://github.com/duckdb/dbt-duckdb.git", rev = "afc39991158c0f719e5e57469ab466cfb63fbb8c" }
 
 [tool.setuptools.packages.find]
 include = ["dlctl", "shared", "ingest", "transform"]

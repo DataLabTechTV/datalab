@@ -17,6 +17,8 @@ transform:
           use_ssl: "{{ env_var('S3_USE_SSL') }}"
           url_style: "{{ env_var('S3_URL_STYLE') }}"
       attach:
-        - path: /tmp/testing.duckdb
-          alias: testing
+        - path: ducklake:sqlite:{{ env_var('LOCAL_DIR') }}/{{ env_var('STAGE_DB') }}
+          alias: lakehouse
+          options:
+            data_path: s3://{{ env_var('S3_BUCKET') }}/{{ env_var('S3_STAGE_PREFIX') }}
   target: lakehouse
