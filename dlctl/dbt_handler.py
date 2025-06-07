@@ -35,7 +35,7 @@ class DBTHandler:
         if models is not None and len(models) > 0:
             args += [
                 "--select",
-                ",".join(f"+{model}" for model in models),
+                ",".join(f"{model}" for model in models),
             ]
 
         result = dbt.invoke(args)
