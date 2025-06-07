@@ -18,7 +18,7 @@ models:
   transform:
     stage:
       +database: stage
-      +materialized: view
+      +materialized: table
     marts:
       +database: marts
-      +materialized: view
+      +materialized: table
