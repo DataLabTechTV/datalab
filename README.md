@@ -17,7 +17,13 @@ We purposely keep this simple with SQLite, using a backup/restore strategy to/fr
 
 ### scripts/
 
-Individual bash or python scripts for generic tasks, including catalog backup or restore.
+Individual Bash or Python scripts for generic tasks, including catalog backup or restore.
+
+We also include a `scripts/init.example.sql`, which can be configured for manually connecting to your DuckLake, for example by running:
+
+```bash
+duckdb -init scripts/init.sql local/engine.duckdb
+```
 
 ### local/
 
