@@ -38,18 +38,38 @@ models:
         data_tests:
           - not_null
 
-  - name: genres
-    description: Combined genres per user
+  - name: hr_edges
+    description: Croatian users with friendship relations on Deezer
     columns:
-      - name: country
-        description: Two-letter country identifier (ISO 3166-1 alpha-2)
+      - name: source_id
+        description: Source user node ID
         data_tests:
           - not_null
-      - name: user_id
-        description: User ID, also the node ID of the graph
+      - name: target_id
+        description: Target user node ID
         data_tests:
           - not_null
-      - name: genre
-        description: Genre string
+
+  - name: hu_edges
+    description: Hungarian users with friendship relations on Deezer
+    columns:
+      - name: source_id
+        description: Source user node ID
+        data_tests:
+          - not_null
+      - name: target_id
+        description: Target user node ID
+        data_tests:
+          - not_null
+
+  - name: ro_edges
+    description: Romanian users with friendship relations on Deezer
+    columns:
+      - name: source_id
+        description: Source user node ID
+        data_tests:
+          - not_null
+      - name: target_id
+        description: Target user node ID
         data_tests:
           - not_null

@@ -1,0 +1,31 @@
+
+version: 2
+
+models:
+  - name: nodes
+    description: User nodes representing taste profiles
+    columns:
+      - name: user_id
+        description: User ID, also the node ID of the graph
+        data_tests:
+          - not_null
+      - name: genres
+        description: String array of genres
+        data_tests:
+          - not_null
+      - name: country
+        description: Two-letter country identifier (ISO 3166-1 alpha-2)
+        data_tests:
+          - not_null
+
+  - name: edges
+    description: Users with friendship relations on Deezer
+    columns:
+      - name: source_id
+        description: Source user node ID
+        data_tests:
+          - not_null
+      - name: target_id
+        description: Target user node ID
+        data_tests:
+          - not_null
