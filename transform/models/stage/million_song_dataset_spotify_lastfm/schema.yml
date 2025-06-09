@@ -98,7 +98,7 @@ models:
         description: User ID, also the graph node ID suffix
         data_tests:
           - not_null
-      - name: playcount
+      - name: play_count
         description: Number of times the user played the track
         data_tests:
           - positive_integer
