@@ -43,7 +43,7 @@ models:
         data_tests:
           - not_null
 
-  - name: msdsl_edges_user_tags
+  - name: msdsl_edges_user_tracks
     description: Million Song Dataset, Spotify, and Last.fm (MSDSL) user tracks
     columns:
       - name: source_id
