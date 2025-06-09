@@ -1,3 +1,4 @@
+{{ config(name='music_info') }}
 
 SELECT
     track_id,

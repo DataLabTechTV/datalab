@@ -3,7 +3,7 @@ SELECT
     g.user_id AS user_id,
     'Deezer' AS source,
     'HR' AS country
-FROM {{ ref('hr_genres') }} AS g
+FROM {{ ref('dsn_hr_genres') }} AS g
 
 UNION
 
@@ -12,7 +12,7 @@ SELECT
     g.user_id AS user_id,
     'Deezer' AS source,
     'HU' AS country
-FROM {{ ref('hu_genres') }} AS g
+FROM {{ ref('dsn_hu_genres') }} AS g
 
 UNION
 
@@ -21,6 +21,6 @@ SELECT
     g.user_id AS user_id,
     'Deezer' AS source,
     'RO' AS country
-FROM {{ ref('ro_genres') }} AS g
+FROM {{ ref('dsn_ro_genres') }} AS g
 
 ORDER BY g.user_id
