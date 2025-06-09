@@ -1,0 +1,77 @@
+
+version: 2
+
+models:
+  - name: dsn_nodes_genres
+    description: Deezer genre nodes
+    columns:
+      - name: genre
+        description: >
+          All unique genres from Croatian (HR), Hungarian (HU), and Romanian (RO).
+        data_tests:
+          - not_null
+
+  - name: dsn_nodes_users
+    description: Deezer user nodes
+    columns:
+      - name: node_id
+        description: User ID with a 'd_' prefix to avoid collision with MSDSL users
+      - name: user_id
+        description: Deezer user ID
+        data_tests:
+          - not_null
+      - name: source
+        description: Data source for the node (always Deezer)
+        data_tests:
+          - expression_is_true:
+              expression: "source = 'Deezer'"
+      - name: country
+        description: Deezer user country
+        data_tests:
+          - expression_is_true:
+              expression: "country IN ('HR', 'HU', 'RO')"
+
+  - name: msdsl_nodes_tags
+    description: Romanian genres per user
+    columns:
+      - name: genre
+        description: All unique tags from MSDSL, matching Deezer genres
+        data_tests:
+          - not_null
+          - expression_is_true:
+              expression: "genre IN (SELECT genre FROM {{ ref('dsn_nodes_genres') }})"
+
+  - name: msdsl_nodes_tracks
+    description: Croatian users with friendship relations on Deezer
+    columns:
+      - name: track_id
+        description: String track identifier starting with TR
+        data_tests:
+          - not_null
+      - name: name
+        description: Track title
+        data_tests:
+          - not_null
+      - name: artist
+        description: Track artist
+        data_tests:
+          - not_null
+      - name: year
+        description: Track release year
+        data_tests:
+          - not_null
+
+  - name: msdsl_nodes_users
+    description: Hungarian users with friendship relations on Deezer
+    columns:
+      - name: node_id
+        description: User ID with an 'm_' prefix to avoid collision with Deezer users
+      - name: user_id
+        description: User ID for Million Song Dataset, Spotify, and Last.fm (MSDSL)
+        data_tests:
+          - not_null
+      - name: source
+        description: Data source for the node (always MSDSL)
+        data_tests:
+          - expression_is_true:
+              expression: "source = 'MSDSL'"

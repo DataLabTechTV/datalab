@@ -1,0 +1,56 @@
+
+version: 2
+
+models:
+  - name: dsn_edges_friendships
+    description: Deezer friendship relations between users
+    columns:
+      - name: source_id
+        description: Source user node ID
+        data_tests:
+          - not_null
+      - name: target_id
+        description: Target user node ID
+        data_tests:
+          - not_null
+      - name: source
+        description: Data source for the edge (always Deezer)
+        data_tests:
+          - expression_is_true:
+              expression: "source = 'Deezer'"
+
+  - name: dsn_edges_user_genres
+    description: Deezer user preferred music genres
+    columns:
+      - name: source_id
+        description: Deezer user node ID
+        data_tests:
+          - not_null
+      - name: target_id
+        description: Genre node ID
+        data_tests:
+          - not_null
+
+  - name: msdsl_edges_track_tags
+    description: Million Song Dataset, Spotify, and Last.fm (MSDSL) track tags
+    columns:
+      - name: source_id
+        description: String track identifier starting with TR
+        data_tests:
+          - not_null
+      - name: target_id
+        description: Genre node ID (only for tags matching Deezer genres)
+        data_tests:
+          - not_null
+
+  - name: msdsl_edges_user_tags
+    description: Million Song Dataset, Spotify, and Last.fm (MSDSL) user tracks
+    columns:
+      - name: source_id
+        description: MSDSL user node ID
+        data_tests:
+          - not_null
+      - name: target_id
+        description: String track identifier starting with TR
+        data_tests:
+          - not_null
