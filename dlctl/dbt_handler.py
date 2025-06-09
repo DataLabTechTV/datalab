@@ -2,7 +2,8 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from dbt.cli.main import dbtRunner
+from dbt.artifacts.schemas.run import RunExecutionResult
+from dbt.cli.main import dbtRunner, dbtRunnerResult
 from dbt.contracts.results import RunStatus
 from loguru import logger as log
 
@@ -13,6 +14,10 @@ LOCAL_DIR = str((Path(__file__).parents[1] / "local").resolve())
 
 
 class DBTHandler:
+    PROJECT_ARGS = []
+    PROJECT_ARGS += ["--project-dir", DBT_PROJECT_DIR]
+    PROJECT_ARGS += ["--profiles-dir", DBT_PROJECT_DIR]
+
     def __init__(self, debug: bool = False):
         self.debug = debug
 
@@ -22,12 +27,15 @@ class DBTHandler:
         s = Storage()
         s.latest_to_env()
 
-    def run(self, models: Optional[tuple[str]] = None):
-        dbt = dbtRunner()
+        self.dbt = dbtRunner()
+        self.deps()
 
+    def deps(self):
+        self.dbt.invoke(["deps"] + self.PROJECT_ARGS)
+
+    def run(self, models: Optional[tuple[str]] = None):
         args = ["run"]
-        args += ["--project-dir", DBT_PROJECT_DIR]
-        args += ["--profiles-dir", DBT_PROJECT_DIR]
+        args += self.PROJECT_ARGS
 
         if self.debug:
             args += ["--debug"]
@@ -38,7 +46,7 @@ class DBTHandler:
                 ",".join(f"{model}" for model in models),
             ]
 
-        result = dbt.invoke(args)
+        result = self.dbt.invoke(args)
 
         if result.result is None:
             log.warning("No results returned from dbt")
@@ -49,3 +57,12 @@ class DBTHandler:
                 log.info("{}: {}", r.node.name, r.status)
             else:
                 log.warning("{}: {}", r.node.name, r.status)
+
+    def test(self):
+        self.dbt.invoke(["test"] + self.PROJECT_ARGS)
+
+    def docs_generate(self):
+        self.dbt.invoke(["docs", "generate"] + self.PROJECT_ARGS)
+
+    def docs_serve(self):
+        self.dbt.invoke(["docs", "serve"] + self.PROJECT_ARGS)

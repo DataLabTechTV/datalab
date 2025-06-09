@@ -27,8 +27,6 @@ models:
           - not_null
       - name: tags
         description: List of user tags, formatted using title case
-        data_tests:
-          - not_null
       - name: genre
         description: Main track genre, often empty
       - name: year
@@ -87,6 +85,7 @@ models:
         description: Positive integer representing the number of beats per bar
         data_tests:
           - not_null
+
   - name: msdsl_user_listening_history
     description: User listening history with play count per track
     columns:

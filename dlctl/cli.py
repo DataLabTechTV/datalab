@@ -28,5 +28,28 @@ def transform(models: tuple[str], debug: bool):
     dbt_handler.run(models)
 
 
+@dlctl.command(name="test")
+def test():
+    dbt_handler = DBTHandler()
+    dbt_handler.test()
+
+
+@dlctl.group(name="docs")
+def docs():
+    pass
+
+
+@docs.command(name="generate")
+def docs_generate():
+    dbt_handler = DBTHandler()
+    dbt_handler.docs_generate()
+
+
+@docs.command(name="serve")
+def docs_serve():
+    dbt_handler = DBTHandler()
+    dbt_handler.docs_serve()
+
+
 if __name__ == "__main__":
     dlctl()

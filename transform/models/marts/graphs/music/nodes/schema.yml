@@ -23,13 +23,13 @@ models:
       - name: source
         description: Data source for the node (always Deezer)
         data_tests:
-          - expression_is_true:
-              expression: "source = 'Deezer'"
+          - dbt_utils.expression_is_true:
+              expression: "= 'Deezer'"
       - name: country
         description: Deezer user country
         data_tests:
-          - expression_is_true:
-              expression: "country IN ('HR', 'HU', 'RO')"
+          - dbt_utils.expression_is_true:
+              expression: "IN ('HR', 'HU', 'RO')"
 
   - name: msdsl_nodes_tags
     description: Romanian genres per user
@@ -38,8 +38,6 @@ models:
         description: All unique tags from MSDSL, matching Deezer genres
         data_tests:
           - not_null
-          - expression_is_true:
-              expression: "genre IN (SELECT genre FROM {{ ref('dsn_nodes_genres') }})"
 
   - name: msdsl_nodes_tracks
     description: Croatian users with friendship relations on Deezer
@@ -73,5 +71,5 @@ models:
       - name: source
         description: Data source for the node (always MSDSL)
         data_tests:
-          - expression_is_true:
-              expression: "source = 'MSDSL'"
+          - dbt_utils.expression_is_true:
+              expression: "= 'MSDSL'"

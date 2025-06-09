@@ -15,9 +15,9 @@ models:
           - not_null
       - name: source
         description: Data source for the edge (always Deezer)
-        data_tests:
-          - expression_is_true:
-              expression: "source = 'Deezer'"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "= 'Deezer'"
 
   - name: dsn_edges_user_genres
     description: Deezer user preferred music genres
