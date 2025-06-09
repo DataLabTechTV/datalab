@@ -99,6 +99,6 @@ models:
         data_tests:
           - not_null
       - name: playcount
-        description:
+        description: Number of times the user played the track
         data_tests:
           - positive_integer
