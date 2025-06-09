@@ -27,10 +27,5 @@ models:
       +database: marts
       +materialized: table
       graphs:
-        +schema: graphs
-        music_taste:
-          +schema: music_taste
-          nodes:
-            +schema: "v"
-          edges:
-            +schema: "e"
+        music:
+          +schema: music_graph
