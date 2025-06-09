@@ -20,7 +20,7 @@ models:
       +database: stage
       +materialized: table
       deezer_social_networks:
-        +schema: deezer
+        +schema: dsn
       million_song_dataset_spotify_lastfm:
         +schema: msdsl
     marts:
@@ -31,6 +31,6 @@ models:
         music_taste:
           +schema: music_taste
           nodes:
-            +schema: nodes
+            +schema: "v"
           edges:
-            +schema: edges
+            +schema: "e"
