@@ -1,4 +1,4 @@
-{{ config(name='user_listening_history') }}
+{{ config(alias='user_listening_history') }}
 
 SELECT
     track_id,

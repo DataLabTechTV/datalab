@@ -1,4 +1,4 @@
-{{ config(name='music_info') }}
+{{ config(alias='music_info') }}
 
 SELECT
     track_id,
