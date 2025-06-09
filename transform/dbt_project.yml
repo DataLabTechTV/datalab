@@ -30,3 +30,7 @@ models:
         +schema: graphs
         music_taste:
           +schema: music_taste
+          nodes:
+            +schema: nodes
+          edges:
+            +schema: edges
