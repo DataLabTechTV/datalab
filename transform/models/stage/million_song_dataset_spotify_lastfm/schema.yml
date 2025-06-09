@@ -1,0 +1,104 @@
+
+version: 2
+
+models:
+  - name: msdsl_music_info
+    description: Music track metadata and features
+    columns:
+      - name: track_id
+        description: String track identifier starting with TR
+        data_tests:
+          - not_null
+      - name: name
+        description: Track title
+        data_tests:
+          - not_null
+      - name: artist
+        description: Track artist
+        data_tests:
+          - not_null
+      - name: spotify_preview_url
+        description: Spotify track preview URL
+        data_tests:
+          - not_null
+      - name: spotify_id
+        description: Spotify track identifier
+        data_tests:
+          - not_null
+      - name: tags
+        description: List of user tags, formatted using title case
+        data_tests:
+          - not_null
+      - name: genre
+        description: Main track genre, often empty
+      - name: year
+        description: Track release year
+        data_tests:
+          - not_null
+      - name: duration_ms
+        description: Track duration in milliseconds
+        data_tests:
+          - not_null
+      - name: danceability
+        description: 0-1 normalized feature measuring the danceability of the track
+        data_tests:
+          - not_null
+      - name: energy
+        description: 0-1 normalized feature measuring the energy of the track
+        data_tests:
+          - not_null
+      - name: key
+        description: Positive integer feature with the musical key note of the track
+        data_tests:
+          - not_null
+      - name: loudness
+        description: Float feature measuring the loudness of the track
+        data_tests:
+          - not_null
+      - name: mode
+        description: Integer feature indicating a major (1) or minor (0) mode
+        data_tests:
+          - not_null
+      - name: speechiness
+        description: 0-1 normalized feature measuring the speechiness of the track
+        data_tests:
+          - not_null
+      - name: acousticness
+        description: 0-1 normalized feature measuring the acousticness of the track
+        data_tests:
+          - not_null
+      - name: instrumentalness
+        description: 0-1 normalized feature measuring the instrumentalness of the track
+        data_tests:
+          - not_null
+      - name: liveness
+        description: 0-1 normalized feature measuring the liveness of the track
+        data_tests:
+          - not_null
+      - name: valence
+        description: 0-1 normalized feature measuring the valence of the track
+        data_tests:
+          - not_null
+      - name: tempo
+        description: Positive float indicating the tempo of the track in BPM
+        data_tests:
+          - not_null
+      - name: time_signature
+        description: Positive integer representing the number of beats per bar
+        data_tests:
+          - not_null
+  - name: msdsl_user_listening_history
+    description: User listening history with play count per track
+    columns:
+      - name: track_id
+        description: String track identifier starting with TR
+        data_tests:
+          - not_null
+      - name: user_id
+        description: User ID, also the graph node ID suffix
+        data_tests:
+          - not_null
+      - name: playcount
+        description:
+        data_tests:
+          - positive_integer

@@ -2,43 +2,46 @@
 version: 2
 
 models:
-  - name: hr_genres
+  - name: dsn_hr_genres
     description: Croatia genres per user
     columns:
       - name: user_id
-        description: User ID, also the node ID of the graph
+        description: User ID, also the graph node ID suffix
         data_tests:
           - not_null
-      - name: genre
-        description: Genre string
+      - name: genres
+        description: List of genres, formatted using title case
         data_tests:
           - not_null
+          - list_not_empty
 
-  - name: hu_genres
+  - name: dsn_hu_genres
     description: Hungarian genres per user
     columns:
       - name: user_id
-        description: User ID, also the node ID of the graph
+        description: User ID, also the graph node ID suffix
         data_tests:
           - not_null
-      - name: genre
-        description: Genre string
+      - name: genres
+        description: List of genres, formatted using title case
         data_tests:
           - not_null
+          - list_not_empty
 
-  - name: ro_genres
+  - name: dsn_ro_genres
     description: Romanian genres per user
     columns:
       - name: user_id
-        description: User ID, also the node ID of the graph
+        description: User ID, also the graph node ID suffix
         data_tests:
           - not_null
-      - name: genre
-        description: Genre string
+      - name: genres
+        description: List of genres, formatted using title case
         data_tests:
           - not_null
+          - list_not_empty
 
-  - name: hr_edges
+  - name: dsn_hr_edges
     description: Croatian users with friendship relations on Deezer
     columns:
       - name: source_id
@@ -50,7 +53,7 @@ models:
         data_tests:
           - not_null
 
-  - name: hu_edges
+  - name: dsn_hu_edges
     description: Hungarian users with friendship relations on Deezer
     columns:
       - name: source_id
@@ -62,7 +65,7 @@ models:
         data_tests:
           - not_null
 
-  - name: ro_edges
+  - name: dsn_ro_edges
     description: Romanian users with friendship relations on Deezer
     columns:
       - name: source_id
