@@ -234,6 +234,7 @@ dependencies = [
     { name = "environs" },
     { name = "gitpython" },
     { name = "kagglehub" },
+    { name = "kuzu" },
     { name = "loguru" },
     { name = "minio" },
     { name = "platformdirs" },
@@ -250,6 +251,7 @@ requires-dist = [
     { name = "environs", specifier = ">=14.2.0" },
     { name = "gitpython", specifier = ">=3.1.44" },
     { name = "kagglehub", specifier = ">=0.3.12" },
+    { name = "kuzu", specifier = ">=0.10.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "minio", specifier = ">=7.2.15" },
     { name = "platformdirs", specifier = ">=4.3.8" },
@@ -552,6 +554,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ee/75/c48635ebfb8977945e1a3bf19ec78fba7e3c67b0e808eb633eb9500602ca/kagglehub-0.3.12.tar.gz", hash = "sha256:45e75854630a30605b794eb786b3757beccbbea1acca71600642f67b60e0d7bf", size = 112292, upload-time = "2025-04-23T23:04:57.077Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/49/bf/c2a24567bb6bd80c1fe7cb2ed1a332666476f69c313256aff96094bef93e/kagglehub-0.3.12-py3-none-any.whl", hash = "sha256:6eeb7c5c8e1f25a28e9b26d3d8ed0c24a4a32f763ea5de6e1b3aabba442f2a26", size = 67996, upload-time = "2025-04-23T23:04:55.694Z" },
+]
+
+[[package]]
+name = "kuzu"
+version = "0.10.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/3c/48/ebd5b564df0474ec7df294a6209d2453086f2ef0cef930608b176c73a40a/kuzu-0.10.0.tar.gz", hash = "sha256:7c7f975d053749295eaacf7acaccbd345bf852264f5ed25323001bbd9d408f48", size = 4854770, upload-time = "2025-05-08T18:23:11.497Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/21/7c/767460c87e4ec70d6ca630172336677fe23698b99afd52178961a5901dee/kuzu-0.10.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:8146efda377a1661368b607d23aaee4e46a624f764f79a2ee98540fe6c325cc9", size = 3687910, upload-time = "2025-05-08T18:22:32.837Z" },
+    { url = "https://files.pythonhosted.org/packages/47/70/6b5a6329183446761527df23977133aef26370dd1f8d511652af1d989275/kuzu-0.10.0-cp313-cp313-macosx_11_0_x86_64.whl", hash = "sha256:06a4bf8d9057100a2df576adbe1d50d683cd799d8a97f7fe2cbdd013bf6e439b", size = 4151510, upload-time = "2025-05-08T18:22:34.796Z" },
+    { url = "https://files.pythonhosted.org/packages/65/26/5478eeefe08e04f7087be4659f2b513faa1fad5d0a362abdd86b2e133d90/kuzu-0.10.0-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:85fa3af5283632dbc8b98b2146f3fd7fbcdf93ce3430b74fe22df48a09e88540", size = 6097521, upload-time = "2025-05-08T18:22:36.471Z" },
+    { url = "https://files.pythonhosted.org/packages/99/47/f7e9fd9d31823453d4857e589b9cbf58907c7ee5443e61c4ad80011a8f34/kuzu-0.10.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4f01f7f3be037b6800dd9cdbbc682ba8449a1fb230769341004e890a87541e48", size = 6892802, upload-time = "2025-05-08T18:22:38.668Z" },
+    { url = "https://files.pythonhosted.org/packages/09/1b/a061123be5919088b88603e5ec07243ea8b680c3c05aee5ab563c1ba9d8b/kuzu-0.10.0-cp313-cp313-win_amd64.whl", hash = "sha256:7a92b0c3047e4e77a227a2e2126864c002e9789d8e3aa8b96d8f61df6a35d09d", size = 4189828, upload-time = "2025-05-08T18:22:40.542Z" },
+    { url = "https://files.pythonhosted.org/packages/30/e7/3a25f52c1a6c5ffb2aa90e81f4d0a0f9cf84897fc024ddb07242bf578887/kuzu-0.10.0-cp313-cp313t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:57ed7e0054ac3f2fef4a9c5875f77c15b32ef16ea40d8cc129c492edcce21900", size = 6101063, upload-time = "2025-05-08T18:22:42.159Z" },
+    { url = "https://files.pythonhosted.org/packages/cb/de/469d26653805a47b7fa67b77741e7a2271d1316c531463640cd39d063db0/kuzu-0.10.0-cp313-cp313t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:964ff28e3540a55e1c865eb8748de6a9385d391b07358ff069c257df3fe76dd0", size = 6897320, upload-time = "2025-05-08T18:22:44.048Z" },
 ]
 
 [[package]]
