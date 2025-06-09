@@ -7,7 +7,7 @@ from ingest.cli import ingest
 
 @click.group()
 def dlctl():
-    log.info("Running Data Lab Control")
+    log.info("Welcome to Data Lab, by https://youtube.com/@DataLabTechTV")
 
 
 dlctl.add_command(ingest)
