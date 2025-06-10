@@ -17,8 +17,8 @@ class Storage:
     def __init__(self):
         endpoint = env.str("S3_ENDPOINT", required=False)
         use_ssl = env.bool("S3_USE_SSL", default=True)
-        access_key = env.str("S3_ACCESS_KEY")
-        secret_key = env.str("S3_SECRET_KEY")
+        access_key = env.str("S3_ACCESS_KEY_ID")
+        secret_key = env.str("S3_SECRET_ACCESS_KEY")
         region = env.str("S3_REGION")
 
         if endpoint is None:
