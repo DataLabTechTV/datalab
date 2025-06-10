@@ -2,15 +2,14 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from dbt.artifacts.schemas.run import RunExecutionResult
-from dbt.cli.main import dbtRunner, dbtRunnerResult
+from dbt.cli.main import dbtRunner
 from dbt.contracts.results import RunStatus
 from loguru import logger as log
 
+from shared.settings import LOCAL_DIR
 from shared.storage import Storage
 
 DBT_PROJECT_DIR = str((Path(__file__).parents[1] / "transform").resolve())
-LOCAL_DIR = str((Path(__file__).parents[1] / "local").resolve())
 
 
 class DBTHandler:

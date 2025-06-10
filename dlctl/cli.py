@@ -2,6 +2,7 @@ import click
 from loguru import logger as log
 
 from dlctl.dbt_handler import DBTHandler
+from graph.cli import graph
 from ingest.cli import ingest
 
 
@@ -11,6 +12,7 @@ def dlctl():
 
 
 dlctl.add_command(ingest)
+dlctl.add_command(graph)
 
 
 @dlctl.command()
