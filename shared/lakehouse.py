@@ -55,7 +55,7 @@ class Lakehouse:
             f"s3://{env.str('S3_BUCKET')}/{env.str('S3_EXPORTS_PREFIX')}"
         )
 
-    def export(self, schema: str):
+    def export(self, schema: str) -> str:
         log.info(
             "Exporting {}.{} to {}",
             self.marts_catalog,
@@ -90,13 +90,15 @@ class Lakehouse:
             schema,
         )
 
-        for database, schema, name in tables:
+        s3_export_path = f"{self.s3_exports_path}/{schema}"
+
+        for database, _, name in tables:
             if "nodes" in name:
-                path = f"{self.s3_exports_path}/{schema}/nodes/{name}.parquet"
+                path = f"{s3_export_path}/nodes/{name}.parquet"
             elif "edges" in name:
-                path = f"{self.s3_exports_path}/{schema}/edges/{name}.parquet"
+                path = f"{s3_export_path}/edges/{name}.parquet"
             else:
-                path = f"{self.s3_exports_path}/{schema}/{name}.parquet"
+                path = f"{s3_export_path}/{name}.parquet"
 
             table_fqn = f"{database}.{schema}.{name}"
 
@@ -107,4 +109,6 @@ class Lakehouse:
                 log.error(f"Could not export {table_fqn}: COPY failed")
                 break
 
-        log.info("Export completed: {}/{}", self.s3_exports_path, schema)
+        log.info("Export completed: {}", s3_export_path)
+
+        return s3_export_path
