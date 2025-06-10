@@ -56,6 +56,13 @@ class Lakehouse:
         )
 
     def export(self, schema: str):
+        log.info(
+            "Exporting {}.{} to {}",
+            self.marts_catalog,
+            schema,
+            f"{self.s3_exports_path}/{schema}",
+        )
+
         self.con.execute(
             """
             SELECT
