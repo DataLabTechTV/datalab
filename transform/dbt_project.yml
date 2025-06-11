@@ -24,8 +24,8 @@ models:
       million_song_dataset_spotify_lastfm:
         +schema: msdsl
     marts:
-      +database: marts
       +materialized: table
       graphs:
-        music:
-          +schema: music_graph
+        +database: graphs
+        music_taste:
+          +schema: music_taste
