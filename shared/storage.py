@@ -70,6 +70,15 @@ class Storage:
         prefix = "/".join(s3_path.split("/")[3:])
         return prefix
 
+    def from_storage_prefix(self, prefix: StoragePrefix) -> str:
+        match prefix:
+            case StoragePrefix.INGEST:
+                s3_prefix = self.ingest_prefix
+            case StoragePrefix.EXPORTS:
+                s3_prefix = self.exports_prefix
+
+        return s3_prefix
+
     def get_dir(
         self,
         ds_name: str,
@@ -77,11 +86,7 @@ class Storage:
         upload_placeholder: bool = False,
         prefix: StoragePrefix = StoragePrefix.INGEST,
     ) -> str:
-        match prefix:
-            case StoragePrefix.INGEST:
-                s3_prefix = f"{self.ingest_prefix}/{ds_name}"
-            case StoragePrefix.EXPORTS:
-                s3_prefix = f"{self.exports_prefix}/{ds_name}"
+        s3_prefix = f"{self.from_storage_prefix(prefix)}/{ds_name}"
 
         if dated:
             now = datetime.now(timezone.utc)
@@ -132,7 +137,13 @@ class Storage:
             Filename=target_path,
         )
 
-    def upload_manifest(self, ds_name: str, *, latest: str):
+    def upload_manifest(
+        self,
+        ds_name: str,
+        *,
+        latest: str,
+        prefix: StoragePrefix = StoragePrefix.INGEST,
+    ):
         log.info("Setting latest for {} as {}", ds_name, latest)
 
         data = json.dumps(
@@ -142,8 +153,10 @@ class Storage:
             }
         )
 
+        prefix = self.from_storage_prefix(prefix)
+
         self.bucket.put_object(
-            Key=f"{self.ingest_prefix}/{ds_name}/{MANIFEST}",
+            Key=f"{prefix}/{ds_name}/{MANIFEST}",
             Body=data,
             ContentType="application/json",
         )
@@ -167,10 +180,8 @@ class Storage:
             )
 
             for data_obj in data_objects:
-                key_parts = os.path.splitext(data_obj.key)[0].split("/")
-
                 is_ignorable = any(
-                    fnmatch(key_parts[-1], ignore_pattern)
+                    fnmatch(data_obj.key.split("/")[-1], ignore_pattern)
                     for ignore_pattern in IGNORE_PATTERNS
                 )
 
@@ -184,3 +195,78 @@ class Storage:
                 env_prefix = "__".join(env_prefix_parts).upper()
 
                 os.environ[env_prefix] = self.to_s3_path(data_obj.key)
+
+    def ls(self, prefix: StoragePrefix, include_all: bool = False) -> list[str]:
+        prefix = self.from_storage_prefix(prefix)
+
+        listing = {}
+
+        for obj in self.bucket.objects.filter(Prefix=prefix):
+            key_parts = obj.key.strip("/").split("/")
+
+            if key_parts[-1] != MANIFEST:
+                continue
+
+            manifest = json.loads(obj.get().get("Body").read().decode("utf-8"))
+
+            if include_all:
+                s3_dataset_path = "/".join(
+                    self.from_s3_path(manifest["latest"]).split("/")[:2]
+                )
+
+                data_objects = self.bucket.objects.filter(Prefix=s3_dataset_path)
+            else:
+                data_objects = self.bucket.objects.filter(
+                    Prefix=self.from_s3_path(manifest["latest"])
+                )
+
+            listing[manifest["dataset"]] = []
+
+            for data_obj in data_objects:
+                is_ignorable = any(
+                    fnmatch(data_obj.key.split("/")[-1], ignore_pattern)
+                    for ignore_pattern in IGNORE_PATTERNS
+                )
+
+                if is_ignorable:
+                    continue
+
+                listing[manifest["dataset"]].append(data_obj.key)
+
+        for dataset, files in listing.items():
+            print(dataset)
+            print("=" * len(dataset))
+            print()
+
+            for file in files:
+                print(file)
+
+            print()
+
+    def prune(self, prefix: StoragePrefix) -> int:
+        prefix = self.from_storage_prefix(prefix)
+
+        for obj in self.bucket.objects.filter(Prefix=prefix):
+            key_parts = obj.key.strip("/").split("/")
+
+            if key_parts[-1] != MANIFEST:
+                continue
+
+            manifest = json.loads(obj.get().get("Body").read().decode("utf-8"))
+
+            dataset_prefix = "/".join(
+                self.from_s3_path(manifest["latest"]).split("/")[:2]
+            )
+
+            latest_prefix = self.from_s3_path(manifest["latest"])
+
+            for data_obj in self.bucket.objects.filter(Prefix=dataset_prefix):
+                if data_obj.key.startswith(latest_prefix):
+                    continue
+
+                if len(data_obj.key.split("/")) < 4:
+                    # <prefix>/<dataset>/<date>/<time>
+                    continue
+
+                log.info("Deleting {}", data_obj.key)
+                data_obj.delete()

@@ -2,6 +2,7 @@ import click
 from loguru import logger as log
 
 from ingest.handler import handle_hugging_face, handle_kaggle, handle_standalone
+from shared.storage import Storage, StoragePrefix
 
 
 @click.group()
@@ -28,18 +29,27 @@ def dataset(dataset: str, manual: bool):
         handle_hugging_face(dataset_url=dataset)
 
 
-@ingest.command()
+@ingest.command(help="List ingested datasets")
 @click.option(
+    "--all",
     "-a",
     "include_all",
     is_flag=True,
     help="List all directories, not just the latest",
 )
 def ls(include_all: bool):
-    if include_all:
-        log.info("Listing all datasets")
-    else:
-        log.info("Listing latest datasets")
+    versions = "all" if include_all else "latest"
+    log.info("Listing ingested datasets: {} versions", versions)
+
+    storage = Storage()
+    storage.ls(StoragePrefix.INGEST, include_all=include_all)
+
+
+@ingest.command(help="Delete old dataset ingestions, only keeping the latest datasets")
+def prune():
+    log.info("Pruning ingested datasets")
+    storage = Storage()
+    storage.prune(StoragePrefix.INGEST)
 
 
 if __name__ == "__main__":

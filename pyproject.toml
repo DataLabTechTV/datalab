@@ -30,4 +30,4 @@ package = true
 dbt-duckdb = { git = "https://github.com/duckdb/dbt-duckdb.git", rev = "afc39991158c0f719e5e57469ab466cfb63fbb8c" }
 
 [tool.setuptools.packages.find]
-include = ["dlctl", "shared", "ingest", "transform", "graph"]
+include = ["dlctl", "shared", "ingest", "transform", "exports", "graph"]

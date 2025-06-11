@@ -114,6 +114,12 @@ class Lakehouse:
                 log.error(f"Could not export {table_fqn}: COPY failed")
                 break
 
+        self.storage.upload_manifest(
+            schema,
+            latest=s3_export_path,
+            prefix=StoragePrefix.EXPORTS,
+        )
+
         log.info("Export completed: {}", s3_export_path)
 
         return s3_export_path

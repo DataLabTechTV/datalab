@@ -133,6 +133,20 @@ dlctl transform "<dataset-name>"
 
 ## Exports
 
+### Listing Exported Datasets
+
+You can list the most recent versions of exported datasets:
+
+```bash
+dlctl exports ls
+```
+
+Or all of them:
+
+```bash
+dlctl exports ls -a
+```
+
 ### Pruning Empty Datasets
 
 After a few exports, you might want to remove old versions to claim space. You can prune those directories using:
