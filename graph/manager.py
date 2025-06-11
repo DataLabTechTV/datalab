@@ -105,20 +105,6 @@ class KuzuOps:
             "COPY User(node_id, user_id, source) FROM '$path'",
         )
 
-        log.info("Importing music_graph DSN Genre nodes")
-
-        self._copy_from_s3(
-            f"{s3_path}/nodes/dsn_nodes_genres.parquet",
-            "COPY Genre(genre) FROM '$path'",
-        )
-
-        log.info("Importing music_graph MSDSL Genre nodes (tags)")
-
-        self._copy_from_s3(
-            f"{s3_path}/nodes/msdsl_nodes_tags.parquet",
-            "COPY Genre(genre) FROM '$path'",
-        )
-
         log.info("Importing music_graph MSDSL Track nodes")
 
         self._copy_from_s3(
@@ -126,32 +112,39 @@ class KuzuOps:
             "COPY Track(track_id, name, artist, year) FROM '$path'",
         )
 
+        log.info("Importing music_graph Genre nodes")
+
+        self._copy_from_s3(
+            f"{s3_path}/nodes/nodes_genres.parquet",
+            "COPY Genre(genre) FROM '$path'",
+        )
+
         log.info("Importing music_graph DSN user-user friend edges")
 
         self._copy_from_s3(
             f"{s3_path}/edges/dsn_edges_friendships.parquet",
-            "COPY Friend(source_id, target_id) FROM '$path'",
+            "COPY Friend FROM '$path'",
         )
 
         log.info("Importing music_graph DSN user-genre edges")
 
         self._copy_from_s3(
             f"{s3_path}/edges/dsn_edges_user_genres.parquet",
-            "COPY Likes(source_id, target_id) FROM '$path'",
+            "COPY Likes FROM '$path'",
         )
 
         log.info("Importing music_graph MSDSL user-tracks edges")
 
         self._copy_from_s3(
             f"{s3_path}/edges/msdsl_edges_user_tracks.parquet",
-            "COPY ListenedTo(source_id, target_id) FROM '$path'",
+            "COPY ListenedTo FROM '$path'",
         )
 
         log.info("Importing music_graph MSDSL track-genres edges")
 
         self._copy_from_s3(
             f"{s3_path}/edges/msdsl_edges_track_tags.parquet",
-            "COPY Tagged(source_id, target_id) FROM '$path'",
+            "COPY Tagged FROM '$path'",
         )
 
     def load_music_graph(self, path: str):
