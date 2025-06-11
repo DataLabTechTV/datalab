@@ -6,7 +6,7 @@ from dbt.cli.main import dbtRunner
 from dbt.contracts.results import RunStatus
 from loguru import logger as log
 
-from shared.settings import LOCAL_DIR
+from shared.settings import LOCAL_DIR, env
 from shared.storage import Storage
 
 DBT_PROJECT_DIR = str((Path(__file__).parents[1] / "transform").resolve())
@@ -26,8 +26,22 @@ class DBTHandler:
         s = Storage()
         s.latest_to_env()
 
+        self.mkdirs()
+
         self.dbt = dbtRunner()
         self.deps()
+
+    def mkdirs(self):
+        engine_db_dir = os.path.dirname(os.path.join(LOCAL_DIR, env.str("ENGINE_DB")))
+        os.makedirs(engine_db_dir, exist_ok=True)
+
+        stage_db_dir = os.path.dirname(os.path.join(LOCAL_DIR, env.str("STAGE_DB")))
+        os.makedirs(stage_db_dir, exist_ok=True)
+
+        for name, value in os.environ.items():
+            if name.endswith("_MART_DB"):
+                mart_db_dir = os.path.dirname(os.path.join(LOCAL_DIR, value))
+                os.makedirs(mart_db_dir, exist_ok=True)
 
     def deps(self):
         self.dbt.invoke(["deps"] + self.PROJECT_ARGS)
