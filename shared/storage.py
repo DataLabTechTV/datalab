@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime, timezone
+from enum import Enum
 from fnmatch import fnmatch
 
 import boto3
@@ -11,6 +12,11 @@ from shared.settings import env
 
 MANIFEST = "manifest.json"
 IGNORE_PATTERNS = (".keep", "README", "*.md", MANIFEST)
+
+
+class StoragePrefix(Enum):
+    INGEST = 1
+    EXPORTS = 2
 
 
 class Storage:
@@ -34,8 +40,9 @@ class Storage:
             region_name=region,
         )
 
-        bucket_name = env.str("S3_BUCKET", default="lakehouse")
-        ingest_prefix = env.str("S3_INGEST_PREFIX", default="raw")
+        bucket_name = env.str("S3_BUCKET")
+        ingest_prefix = env.str("S3_INGEST_PREFIX")
+        exports_prefix = env.str("S3_EXPORTS_PREFIX")
 
         if bucket_name is None:
             raise ValueError("S3_BUCKET not defined")
@@ -43,7 +50,11 @@ class Storage:
         if ingest_prefix is None:
             raise ValueError("S3_INGEST_PREFIX not defined")
 
+        if exports_prefix is None:
+            raise ValueError("S3_EXPORTS_PREFIX not defined")
+
         self.ingest_prefix = ingest_prefix.strip("/")
+        self.exports_prefix = exports_prefix.strip("/")
 
         bucket = self.s3.Bucket(bucket_name)
 
@@ -64,8 +75,13 @@ class Storage:
         ds_name: str,
         dated: bool = False,
         upload_placeholder: bool = False,
+        prefix: StoragePrefix = StoragePrefix.INGEST,
     ) -> str:
-        s3_prefix = f"{self.ingest_prefix}/{ds_name}"
+        match prefix:
+            case StoragePrefix.INGEST:
+                s3_prefix = f"{self.ingest_prefix}/{ds_name}"
+            case StoragePrefix.EXPORTS:
+                s3_prefix = f"{self.exports_prefix}/{ds_name}"
 
         if dated:
             now = datetime.now(timezone.utc)

@@ -1,3 +1,5 @@
+import os
+
 import click
 from loguru import logger as log
 
@@ -11,7 +13,7 @@ def graph():
     pass
 
 
-@graph.command(help="Load the graph from a schema inside the marts lakehouse")
+@graph.command(help="Load the graph from a schema within the provided catalog")
 @click.argument("schema", type=click.STRING)
 @click.option(
     "--overwrite",
@@ -22,12 +24,15 @@ def graph():
     ),
 )
 def load(schema: str, overwrite: bool):
-    log.info("Loading {} into KùzuDB", schema)
+
+    graph_catalog = os.path.splitext(os.path.split(env.str("GRAPHS_MART_DB"))[-1])[0]
+
+    log.info("Loading {}.{} into KùzuDB", graph_catalog, schema)
 
     lh = Lakehouse()
-    s3_path = lh.export(schema)
+    s3_path = lh.export(graph_catalog, schema)
 
-    ops = KuzuOps(env.str(f"{schema.upper()}_DB"), overwrite=overwrite)
+    ops = KuzuOps(env.str(f"{schema.upper()}_GRAPH_DB"), overwrite=overwrite)
     ops.load_music_graph(s3_path)
 
 

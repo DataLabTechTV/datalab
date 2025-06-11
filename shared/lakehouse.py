@@ -4,6 +4,7 @@ import duckdb
 from loguru import logger as log
 
 from shared.settings import LOCAL_DIR, env
+from shared.storage import Storage, StoragePrefix
 
 
 class LakehouseException(Exception):
@@ -30,8 +31,7 @@ class Lakehouse:
                 f"Error executing init SQL script: {init_sql_path}"
             )
 
-        self.stage_catalog = os.path.splitext(env.str("STAGE_DB"))[0]
-        self.marts_catalog = os.path.splitext(env.str("MARTS_DB"))[0]
+        self.stage_catalog = os.path.splitext(os.path.split(env.str("STAGE_DB"))[-1])[0]
 
         log.info("Attaching {} DuckLake catalog", self.stage_catalog)
 
@@ -42,26 +42,36 @@ class Lakehouse:
             """
         )
 
-        log.info("Attaching {} DuckLake catalog", self.marts_catalog)
+        self.marts_catalogs = []
 
-        self.con.execute(
-            f"""
-            ATTACH IF NOT EXISTS 'ducklake:sqlite:{LOCAL_DIR}/{env.str('MARTS_DB')}'
-            (DATA_PATH 's3://{env.str('S3_BUCKET') }/{env.str('S3_MARTS_PREFIX')}')
-            """
-        )
+        for name, value in os.environ.items():
+            if not name.endswith("_MART_DB"):
+                continue
 
-        self.s3_exports_path = (
-            f"s3://{env.str('S3_BUCKET')}/{env.str('S3_EXPORTS_PREFIX')}"
-        )
+            mart_catalog = os.path.splitext(os.path.split(value)[-1])[0]
+            self.marts_catalogs.append(mart_catalog)
 
-    def export(self, schema: str) -> str:
-        log.info(
-            "Exporting {}.{} to {}",
-            self.marts_catalog,
+            mart_s3_prefix = env.str(f"S3_{name.replace('_MART_DB', '')}_MART_PREFIX")
+
+            log.info("Attaching {} DuckLake catalog", mart_catalog)
+
+            self.con.execute(
+                f"""
+                ATTACH IF NOT EXISTS 'ducklake:sqlite:{LOCAL_DIR}/{value}'
+                (DATA_PATH 's3://{env.str('S3_BUCKET') }/{mart_s3_prefix}')
+                """
+            )
+
+        self.storage = Storage()
+
+    def export(self, catalog: str, schema: str) -> str:
+        s3_export_path = self.storage.get_dir(
             schema,
-            f"{self.s3_exports_path}/{schema}",
+            dated=True,
+            prefix=StoragePrefix.EXPORTS,
         )
+
+        log.info("Exporting {}.{} to {}", catalog, schema, s3_export_path)
 
         self.con.execute(
             """
@@ -75,10 +85,7 @@ class Lakehouse:
                 table_catalog = ?
                 AND table_schema = ?
             """,
-            (
-                self.marts_catalog,
-                schema,
-            ),
+            (catalog, schema),
         )
 
         tables = self.con.fetchall()
@@ -86,11 +93,9 @@ class Lakehouse:
         log.info(
             "Found {} tables in {}.{} for exporting",
             len(tables),
-            self.marts_catalog,
+            catalog,
             schema,
         )
-
-        s3_export_path = f"{self.s3_exports_path}/{schema}"
 
         for database, _, name in tables:
             if "nodes" in name:

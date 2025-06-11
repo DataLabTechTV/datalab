@@ -20,6 +20,8 @@ CREATE OR REPLACE SECRET minio (
     REGION 'eu-west-1'
 );
 
-ATTACH 'ducklake:sqlite:./local/stage.sqlite' (DATA_PATH 's3://lakehouse/stage');
+ATTACH 'ducklake:sqlite:./local/stage.sqlite'
+(DATA_PATH 's3://lakehouse/stage');
 
-ATTACH 'ducklake:sqlite:./local/marts.sqlite' (DATA_PATH 's3://lakehouse/marts');
+ATTACH 'ducklake:sqlite:./local/marts/graphs.sqlite'
+(DATA_PATH 's3://lakehouse/marts/graphs');
