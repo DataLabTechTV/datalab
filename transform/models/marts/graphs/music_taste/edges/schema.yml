@@ -9,14 +9,14 @@ models:
         description: Source user node ID
         data_tests:
           - not_null
-          - dbt_utils.relationships_where:
+          - relationships:
               to: ref('dsn_nodes_users')
               field: node_id
       - name: target_id
         description: Target user node ID
         data_tests:
           - not_null
-          - dbt_utils.relationships_where:
+          - relationships:
               to: ref('dsn_nodes_users')
               field: node_id
     data_tests:
@@ -32,14 +32,14 @@ models:
         description: Deezer user node ID
         data_tests:
           - not_null
-          - dbt_utils.relationships_where:
+          - relationships:
               to: ref('dsn_nodes_users')
               field: node_id
       - name: target_id
         description: Genre node ID
         data_tests:
           - not_null
-          - dbt_utils.relationships_where:
+          - relationships:
               to: ref('nodes_genres')
               field: genre
     data_tests:
@@ -55,14 +55,14 @@ models:
         description: String track identifier starting with TR
         data_tests:
           - not_null
-          - dbt_utils.relationships_where:
+          - relationships:
               to: ref('msdsl_nodes_tracks')
               field: track_id
       - name: target_id
         description: Genre node ID (only for tags matching Deezer genres)
         data_tests:
           - not_null
-          - dbt_utils.relationships_where:
+          - relationships:
               to: ref('nodes_genres')
               field: genre
     data_tests:
@@ -78,14 +78,14 @@ models:
         description: MSDSL user node ID
         data_tests:
           - not_null
-          - dbt_utils.relationships_where:
+          - relationships:
               to: ref('msdsl_nodes_users')
               field: node_id
       - name: target_id
         description: String track identifier starting with TR
         data_tests:
           - not_null
-          - dbt_utils.relationships_where:
+          - relationships:
               to: ref('msdsl_nodes_tracks')
               field: track_id
     data_tests:
