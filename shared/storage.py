@@ -106,6 +106,16 @@ class Storage:
                 Key=f"{s3_target_prefix}/{file_path}",
             )
 
+    def download_file(self, s3_source_path: str, target_path: str):
+        s3_source_prefix = self.from_s3_path(s3_source_path)
+
+        log.info("Downloading {} to {}", s3_source_path, target_path)
+
+        self.bucket.download_file(
+            Key=s3_source_prefix,
+            Filename=target_path,
+        )
+
     def upload_manifest(self, ds_name: str, *, latest: str):
         log.info("Setting latest for {} as {}", ds_name, latest)
 
