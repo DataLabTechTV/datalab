@@ -1,10 +1,13 @@
 import os
 import shutil
+import tempfile
+from string import Template
 
 import kuzu
 from loguru import logger as log
 
-from shared.settings import LOCAL_DIR, env
+from shared.settings import LOCAL_DIR
+from shared.storage import Storage
 
 
 class KuzuOpsException(Exception):
@@ -24,13 +27,7 @@ class KuzuOps:
 
         db = kuzu.Database(db_path)
         self.con = kuzu.Connection(db)
-
-        env.str("S3_ENDPOINT")
-        env.bool("S3_USE_SSL")
-        env.str("S3_URL_STYLE")
-        env.str("S3_ACCESS_KEY_ID")
-        env.str("S3_SECRET_ACCESS_KEY")
-        env.str("S3_REGION")
+        self.storage = Storage()
 
     def _create_music_graph_schema(self):
         log.info("Creating music_graph schema for User nodes")
@@ -84,83 +81,88 @@ class KuzuOps:
         log.info("Creating music_graph schema for Tagged edges")
         self.con.execute("CREATE REL TABLE Tagged(FROM Track TO Genre, MANY_MANY)")
 
-    def _import_music_graph(self, path: str):
-        log.info("Importing music_graph: nodes")
+        log.info("Installing httpfs extension")
+        self.con.execute("INSTALL httpfs")
+        self.con.execute("LOAD httpfs")
 
-        self.con.execute(
-            f"""
-            COPY User(node_id, user_id, source, country)
-            FROM '{path}/nodes/dsn_nodes_users.parquet'
-            """
+    def _copy_from_s3(self, s3_path: str, query: str, path_var="path"):
+        with tempfile.NamedTemporaryFile(suffix=".parquet") as tmp:
+            self.storage.download_file(s3_path, tmp.name)
+            self.con.execute(Template(query).substitute({path_var: tmp.name}))
+
+    def _import_music_graph(self, s3_path: str):
+        log.info("Importing music_graph DSN User nodes")
+
+        self._copy_from_s3(
+            f"{s3_path}/nodes/dsn_nodes_users.parquet",
+            "COPY User(node_id, user_id, source, country) FROM '$path'",
         )
 
-        self.con.execute(
-            f"""
-            COPY User(node_id, user_id, source)
-            FROM '{path}/nodes/msdsl_nodes_users.parquet'
-            """
+        log.info("Importing music_graph MSDSL User nodes")
+
+        self._copy_from_s3(
+            f"{s3_path}/nodes/msdsl_nodes_users.parquet",
+            "COPY User(node_id, user_id, source) FROM '$path'",
         )
 
-        self.con.execute(
-            f"""
-            COPY Genre(genre)
-            FROM '{path}/nodes/dsn_nodes_genres.parquet'
-            """
+        log.info("Importing music_graph DSN Genre nodes")
+
+        self._copy_from_s3(
+            f"{s3_path}/nodes/dsn_nodes_genres.parquet",
+            "COPY Genre(genre) FROM '$path'",
         )
 
-        self.con.execute(
-            f"""
-            COPY Genre(genre)
-            FROM '{path}/nodes/msdsl_nodes_tags.parquet'
-            """
+        log.info("Importing music_graph MSDSL Genre nodes (tags)")
+
+        self._copy_from_s3(
+            f"{s3_path}/nodes/msdsl_nodes_tags.parquet",
+            "COPY Genre(genre) FROM '$path'",
         )
 
-        self.con.execute(
-            f"""
-            COPY Track(track_id, name, artist, year)
-            FROM '{path}/nodes/msdsl_nodes_tracks.parquet'
-            """
+        log.info("Importing music_graph MSDSL Track nodes")
+
+        self._copy_from_s3(
+            f"{s3_path}/nodes/msdsl_nodes_tracks.parquet",
+            "COPY Track(track_id, name, artist, year) FROM '$path'",
         )
 
-        log.info("Importing music_graph: edges")
+        log.info("Importing music_graph DSN user-user friend edges")
 
-        self.con.execute(
-            f"""
-            COPY Friend(source_id, target_id)
-            FROM '{path}/edges/dsn_edges_friendships.parquet'
-            """
+        self._copy_from_s3(
+            f"{s3_path}/edges/dsn_edges_friendships.parquet",
+            "COPY Friend(source_id, target_id) FROM '$path'",
         )
 
-        self.con.execute(
-            f"""
-            COPY Likes(source_id, target_id)
-            FROM '{path}/edges/dsn_edges_user_genres.parquet'
-            """
+        log.info("Importing music_graph DSN user-genre edges")
+
+        self._copy_from_s3(
+            f"{s3_path}/edges/dsn_edges_user_genres.parquet",
+            "COPY Likes(source_id, target_id) FROM '$path'",
         )
 
-        self.con.execute(
-            f"""
-            COPY ListenedTo(source_id, target_id)
-            FROM '{path}/edges/msdsl_edges_user_tracks.parquet'
-            """
+        log.info("Importing music_graph MSDSL user-tracks edges")
+
+        self._copy_from_s3(
+            f"{s3_path}/edges/msdsl_edges_user_tracks.parquet",
+            "COPY ListenedTo(source_id, target_id) FROM '$path'",
         )
 
-        self.con.execute(
-            f"""
-            COPY Tagged(source_id, target_id)
-            FROM '{path}/edges/msdsl_edges_track_tags.parquet'
-            """
+        log.info("Importing music_graph MSDSL track-genres edges")
+
+        self._copy_from_s3(
+            f"{s3_path}/edges/msdsl_edges_track_tags.parquet",
+            "COPY Tagged(source_id, target_id) FROM '$path'",
         )
 
     def load_music_graph(self, path: str):
         try:
             self._create_music_graph_schema()
-        except:
-            log.exception("Could not create schema for music_graph")
+        except Exception as e:
+            log.error("Failed to create schema for music_graph: {}", e)
             return
 
         try:
             self._import_music_graph(path)
-        except:
-            log.exception("Could not import music_graph")
+        except Exception as e:
+            log.error("Failed to import nodes/edges for music_graph: {}", e)
             return
