@@ -11,6 +11,11 @@ WITH all_genres AS (
 
     SELECT unnest(genres) AS genre
     FROM {{ ref('dsn_ro_genres') }}
+
+    UNION
+
+    SELECT unnest(tags) AS genre
+    FROM {{ ref('msdsl_music_info') }}
 )
 SELECT DISTINCT genre
 FROM all_genres
