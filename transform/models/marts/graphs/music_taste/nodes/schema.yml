@@ -2,20 +2,14 @@
 version: 2
 
 models:
-  - name: dsn_nodes_genres
-    description: Deezer genre nodes
-    columns:
-      - name: genre
-        description: >
-          All unique genres from Croatian (HR), Hungarian (HU), and Romanian (RO).
-        data_tests:
-          - not_null
-
   - name: dsn_nodes_users
     description: Deezer user nodes
     columns:
       - name: node_id
         description: User ID with a 'd_' prefix to avoid collision with MSDSL users
+        data_tests:
+          - not_null
+          - unique
       - name: user_id
         description: Deezer user ID
         data_tests:
@@ -31,21 +25,14 @@ models:
           - dbt_utils.expression_is_true:
               expression: "IN ('HR', 'HU', 'RO')"
 
-  - name: msdsl_nodes_tags
-    description: Romanian genres per user
-    columns:
-      - name: genre
-        description: All unique tags from MSDSL, matching Deezer genres
-        data_tests:
-          - not_null
-
   - name: msdsl_nodes_tracks
-    description: Croatian users with friendship relations on Deezer
+    description: Million Song Dataset, Spotify, and Last.fm music tracks
     columns:
       - name: track_id
         description: String track identifier starting with TR
         data_tests:
           - not_null
+          - unique
       - name: name
         description: Track title
         data_tests:
@@ -60,10 +47,13 @@ models:
           - not_null
 
   - name: msdsl_nodes_users
-    description: Hungarian users with friendship relations on Deezer
+    description: Million Song Dataset, Spotify, and Last.fm users
     columns:
       - name: node_id
         description: User ID with an 'm_' prefix to avoid collision with Deezer users
+        data_tests:
+          - not_null
+          - unique
       - name: user_id
         description: User ID for Million Song Dataset, Spotify, and Last.fm (MSDSL)
         data_tests:
@@ -73,3 +63,14 @@ models:
         data_tests:
           - dbt_utils.expression_is_true:
               expression: "= 'MSDSL'"
+
+  - name: nodes_genres
+    description: Deezer genres and MSDSL tags as genre nodes
+    columns:
+      - name: genre
+        description: >
+          All unique genres from DSN Croatian (HR), Hungarian (HU) and Romanian (RO),
+          and all MSDSL tags as genres.
+        data_tests:
+          - not_null
+          - unique

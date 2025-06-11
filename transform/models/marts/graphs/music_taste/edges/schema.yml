@@ -13,6 +13,11 @@ models:
         description: Target user node ID
         data_tests:
           - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - target_id
 
   - name: dsn_edges_user_genres
     description: Deezer user preferred music genres
@@ -25,6 +30,11 @@ models:
         description: Genre node ID
         data_tests:
           - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - target_id
 
   - name: msdsl_edges_track_tags
     description: Million Song Dataset, Spotify, and Last.fm (MSDSL) track tags
@@ -37,6 +47,11 @@ models:
         description: Genre node ID (only for tags matching Deezer genres)
         data_tests:
           - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - target_id
 
   - name: msdsl_edges_user_tracks
     description: Million Song Dataset, Spotify, and Last.fm (MSDSL) user tracks
@@ -49,3 +64,8 @@ models:
         description: String track identifier starting with TR
         data_tests:
           - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - target_id
