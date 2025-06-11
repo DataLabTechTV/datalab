@@ -20,8 +20,8 @@ def handle_standalone(dataset: str):
         s = Storage()
         s3_dir_path = s.get_dir(ds_name, dated=True, upload_placeholder=True)
         s.upload_manifest(ds_name, latest=s3_dir_path)
-    except:
-        log.exception("Could not create directory {} for {}", ds_name, dataset)
+    except Exception as e:
+        log.error("Could not create directory {} for {}: {}", ds_name, dataset, e)
 
 
 @dataclass
@@ -99,5 +99,5 @@ def handle_hugging_face(dataset_url: str):
         s3_dir_path = s.get_dir(ds_url.name, dated=True)
         s.upload_files(source_path=hf_ds_path, s3_target_path=s3_dir_path)
         s.upload_manifest(ds_url.name, latest=s3_dir_path)
-    except:
-        log.exception("Couldn't download dataset")
+    except Exception as e:
+        log.exception("Couldn't download dataset: {}", e)
