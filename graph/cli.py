@@ -24,25 +24,27 @@ def graph():
     ),
 )
 @click.option(
-    "--latest-export",
+    "--force-export",
     is_flag=True,
-    help="Use the latest export, if one exists",
+    help="Force export from graphs data mart, even if an export already exists",
 )
-def load(schema: str, overwrite: bool, latest_export: bool):
+def load(schema: str, overwrite: bool, force_export: bool):
     graph_catalog = os.path.splitext(os.path.split(env.str("GRAPHS_MART_DB"))[-1])[0]
 
     log.info("Loading {}.{} into KùzuDB", graph_catalog, schema)
 
     lh = Lakehouse()
 
-    if latest_export:
+    if force_export:
+        s3_path = lh.export(graph_catalog, schema)
+    else:
         s3_path = lh.latest_export(graph_catalog, schema)
 
-        if s3_path is not None:
-            log.info("Reusing latest export found at {}", s3_path)
-
-    if not latest_export or s3_path is None:
-        s3_path = lh.export(graph_catalog, schema)
+        if s3_path is None:
+            log.warning("Export not found, exporting {}.{}...", graph_catalog, schema)
+            s3_path = lh.export(graph_catalog, schema)
+        else:
+            log.info("Latest export found at {}", s3_path)
 
     ops = KuzuOps(env.str(f"{schema.upper()}_GRAPH_DB"), overwrite=overwrite)
     ops.load_music_graph(s3_path)
