@@ -283,7 +283,7 @@ class Storage:
                 if data_obj.key.startswith(latest_prefix):
                     continue
 
-                if len(data_obj.key.split("/")) < 4:
+                if len(data_obj.key.split("/")) <= 4:
                     # <prefix>/<dataset>/<date>/<time>
                     continue
 
