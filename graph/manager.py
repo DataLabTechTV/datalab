@@ -78,23 +78,29 @@ class KuzuOps:
         log.info("Creating music_graph schema for Friend edges")
         self.con.execute("CREATE REL TABLE Friend(FROM User TO User, MANY_MANY)")
 
-        log.info("Creating music_graph schema for Likes edges")
-        self.con.execute("CREATE REL TABLE Likes(FROM User TO Genre, MANY_MANY)")
+        # log.info("Creating music_graph schema for Likes edges")
+        # self.con.execute("CREATE REL TABLE Likes(FROM User TO Genre, MANY_MANY)")
 
-        log.info("Creating music_graph schema for ListenedTo edges")
-        self.con.execute("CREATE REL TABLE ListenedTo(FROM User TO Track, MANY_MANY)")
+        # log.info("Creating music_graph schema for ListenedTo edges")
+        # self.con.execute(
+        #     """
+        #     CREATE REL TABLE ListenedTo(
+        #         FROM User TO Track,
+        #         play_count INT32,
+        #         MANY_MANY
+        #     )
+        #     """
+        # )
 
         log.info("Creating music_graph schema for Tagged edges")
         self.con.execute("CREATE REL TABLE Tagged(FROM Track TO Genre, MANY_MANY)")
 
-        log.info("Installing httpfs extension")
-        self.con.execute("INSTALL httpfs")
-        self.con.execute("LOAD httpfs")
-
     def _copy_from_s3(self, s3_path: str, query: str, path_var="path"):
         with tempfile.NamedTemporaryFile(suffix=".parquet") as tmp:
             self.storage.download_file(s3_path, tmp.name)
-            self.con.execute(Template(query).substitute({path_var: tmp.name}))
+            query = Template(query).substitute({path_var: tmp.name})
+            log.debug("Running query: {}", query)
+            self.con.execute(query)
 
     def _import_music_graph(self, s3_path: str):
         # Nodes
@@ -107,12 +113,12 @@ class KuzuOps:
             "COPY User(node_id, user_id, source, country) FROM '$path'",
         )
 
-        log.info("Importing music_graph MSDSL User nodes")
+        # log.info("Importing music_graph MSDSL User nodes")
 
-        self._copy_from_s3(
-            f"{s3_path}/nodes/msdsl_nodes_users.parquet",
-            "COPY User(node_id, user_id, source) FROM '$path'",
-        )
+        # self._copy_from_s3(
+        #     f"{s3_path}/nodes/msdsl_nodes_users.parquet",
+        #     "COPY User(node_id, user_id, source) FROM '$path'",
+        # )
 
         log.info("Importing music_graph MSDSL Track nodes")
 
@@ -138,19 +144,19 @@ class KuzuOps:
             "COPY Friend FROM '$path'",
         )
 
-        log.info("Importing music_graph DSN user-genre edges")
+        # log.info("Importing music_graph DSN user-genre edges")
 
-        self._copy_from_s3(
-            f"{s3_path}/edges/dsn_edges_user_genres.parquet",
-            "COPY Likes FROM '$path'",
-        )
+        # self._copy_from_s3(
+        #     f"{s3_path}/edges/dsn_edges_user_genres.parquet",
+        #     "COPY Likes FROM '$path'",
+        # )
 
-        log.info("Importing music_graph MSDSL user-tracks edges")
+        # log.info("Importing music_graph MSDSL user-tracks edges")
 
-        self._copy_from_s3(
-            f"{s3_path}/edges/msdsl_edges_user_tracks.parquet",
-            "COPY ListenedTo FROM '$path'",
-        )
+        # self._copy_from_s3(
+        #     f"{s3_path}/edges/msdsl_edges_user_tracks.parquet",
+        #     "COPY ListenedTo FROM '$path'",
+        # )
 
         log.info("Importing music_graph MSDSL track-genres edges")
 
