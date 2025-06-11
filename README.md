@@ -58,12 +58,18 @@ s3://lakehouse/
 │       │       └── *.parquet
 │       └── manifest.json
 ├── stage/
-│   └── <dataset-name>/
-│           └── *.parquet
+│   └── *.parquet
 ├── marts/
 │   └── <domain>/
 │           └── *.parquet
-└── logs/
+└── exports/
+    └── <domain>/
+        └── <dataset-name>/
+            └── YYYY_MM_DD/
+                └── HH_mm_SS_sss/
+                    ├── *.csv
+                    ├── *.json
+                    └── *.parquet
 ```
 
 > [!NOTE]
