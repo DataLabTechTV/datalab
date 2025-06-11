@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 import duckdb
 from loguru import logger as log
@@ -66,7 +67,7 @@ class Lakehouse:
 
     def export(self, catalog: str, schema: str) -> str:
         s3_export_path = self.storage.get_dir(
-            schema,
+            f"{catalog}/{schema}",
             dated=True,
             prefix=StoragePrefix.EXPORTS,
         )
@@ -115,7 +116,7 @@ class Lakehouse:
                 break
 
         self.storage.upload_manifest(
-            schema,
+            f"{catalog}/{schema}",
             latest=s3_export_path,
             prefix=StoragePrefix.EXPORTS,
         )
@@ -123,3 +124,18 @@ class Lakehouse:
         log.info("Export completed: {}", s3_export_path)
 
         return s3_export_path
+
+    def latest_export(self, catalog: str, schema: str) -> Optional[str]:
+        manifest = self.storage.load_manifest(
+            f"{catalog}/{schema}",
+            prefix=StoragePrefix.EXPORTS,
+        )
+
+        if manifest is None:
+            return
+
+        if "latest" not in manifest:
+            log.warning("No latest field found in manifest")
+            return
+
+        return manifest["latest"]

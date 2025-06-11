@@ -3,6 +3,7 @@ local/**
 logs/**
 .vscode/
 /scripts/init.sql
+history.txt
 !.gitkeep
 
 # Byte-compiled / optimized / DLL files

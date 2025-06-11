@@ -30,6 +30,9 @@ class KuzuOps:
         self.storage = Storage()
 
     def _create_music_graph_schema(self):
+        # Nodes
+        # =====
+
         log.info("Creating music_graph schema for User nodes")
 
         self.con.execute(
@@ -69,6 +72,9 @@ class KuzuOps:
             """
         )
 
+        # Edges
+        # =====
+
         log.info("Creating music_graph schema for Friend edges")
         self.con.execute("CREATE REL TABLE Friend(FROM User TO User, MANY_MANY)")
 
@@ -91,6 +97,9 @@ class KuzuOps:
             self.con.execute(Template(query).substitute({path_var: tmp.name}))
 
     def _import_music_graph(self, s3_path: str):
+        # Nodes
+        # =====
+
         log.info("Importing music_graph DSN User nodes")
 
         self._copy_from_s3(
@@ -118,6 +127,9 @@ class KuzuOps:
             f"{s3_path}/nodes/nodes_genres.parquet",
             "COPY Genre(genre) FROM '$path'",
         )
+
+        # Edges
+        # =====
 
         log.info("Importing music_graph DSN user-user friend edges")
 

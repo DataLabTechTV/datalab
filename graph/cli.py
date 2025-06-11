@@ -23,14 +23,26 @@ def graph():
         "will be overwritten"
     ),
 )
-def load(schema: str, overwrite: bool):
-
+@click.option(
+    "--latest-export",
+    is_flag=True,
+    help="Use the latest export, if one exists",
+)
+def load(schema: str, overwrite: bool, latest_export: bool):
     graph_catalog = os.path.splitext(os.path.split(env.str("GRAPHS_MART_DB"))[-1])[0]
 
     log.info("Loading {}.{} into KùzuDB", graph_catalog, schema)
 
     lh = Lakehouse()
-    s3_path = lh.export(graph_catalog, schema)
+
+    if latest_export:
+        s3_path = lh.latest_export(graph_catalog, schema)
+
+        if s3_path is not None:
+            log.info("Reusing latest export found at {}", s3_path)
+
+    if not latest_export or s3_path is None:
+        s3_path = lh.export(graph_catalog, schema)
 
     ops = KuzuOps(env.str(f"{schema.upper()}_GRAPH_DB"), overwrite=overwrite)
     ops.load_music_graph(s3_path)

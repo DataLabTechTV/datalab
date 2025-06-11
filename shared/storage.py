@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timezone
 from enum import Enum
 from fnmatch import fnmatch
+from typing import Any, Optional
 
 import boto3
 from loguru import logger as log
@@ -160,6 +161,22 @@ class Storage:
             Body=data,
             ContentType="application/json",
         )
+
+    def load_manifest(
+        self,
+        path: str,
+        prefix: StoragePrefix,
+    ) -> Optional[dict[str, Any]]:
+        prefix = self.from_storage_prefix(prefix)
+
+        obj = self.bucket.Object(f"{prefix}/{path}/{MANIFEST}")
+
+        try:
+            manifest = json.loads(obj.get().get("Body").read().decode("utf-8"))
+        except:
+            return
+
+        return manifest
 
     def latest_to_env(self):
         s3_ingest_prefix = env.str("S3_INGEST_PREFIX")
