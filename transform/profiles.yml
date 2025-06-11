@@ -21,8 +21,10 @@ transform:
           alias: stage
           options:
             data_path: s3://{{ env_var('S3_BUCKET') }}/{{ env_var('S3_STAGE_PREFIX') }}
-        - path: ducklake:sqlite:{{ env_var('LOCAL_DIR') }}/{{ env_var('MARTS_DB') }}
-          alias: marts
+        - path: >
+            ducklake:sqlite:{{ env_var('LOCAL_DIR') }}/{{ env_var('GRAPHS_MART_DB') }}
+          alias: graphs
           options:
-            data_path: s3://{{ env_var('S3_BUCKET') }}/{{ env_var('S3_MARTS_PREFIX') }}
+            data_path: >
+              s3://{{ env_var('S3_BUCKET') }}/{{ env_var('S3_GRAPHS_MART_PREFIX') }}
   target: lakehouse
