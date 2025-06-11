@@ -180,8 +180,10 @@ class Storage:
             )
 
             for data_obj in data_objects:
+                key_parts = os.path.splitext(data_obj.key)[0].split("/")
+
                 is_ignorable = any(
-                    fnmatch(data_obj.key.split("/")[-1], ignore_pattern)
+                    fnmatch(key_parts[-1], ignore_pattern)
                     for ignore_pattern in IGNORE_PATTERNS
                 )
 
