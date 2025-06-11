@@ -130,3 +130,13 @@ Transformations can be done via `dlctl transform`, which will call `dbt` with th
 ```bash
 dlctl transform "<dataset-name>"
 ```
+
+## Exports
+
+### Pruning Empty Datasets
+
+After a few exports, you might want to remove old versions to claim space. You can prune those directories using:
+
+```bash
+dlctl exports prune
+```
