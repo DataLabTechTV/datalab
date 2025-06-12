@@ -1,3 +1,5 @@
+import sys
+
 import click
 from loguru import logger as log
 
@@ -8,8 +10,12 @@ from ingest.cli import ingest
 
 
 @click.group()
-def dlctl():
+@click.option("--debug", is_flag=True, help="Globally enable logging debug mode")
+def dlctl(debug: bool):
     log.info("Welcome to Data Lab, by https://youtube.com/@DataLabTechTV")
+
+    log.remove()
+    log.add(sys.stderr, level="DEBUG" if debug else "INFO")
 
 
 dlctl.add_command(ingest)
