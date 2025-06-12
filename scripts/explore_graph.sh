@@ -17,35 +17,20 @@ if [[ "$kuzudb_path" != /* && "$kuzudb_path" != ./* ]]; then
 fi
 
 cleanup() {
-    echo "==> Cleaning up kuzudb-explorer..."
     trap - SIGINT SIGTERM
-
-    echo "Stopping kuzudb-explorer"
+    echo "==> Stopping ephemeral docker container for kuzudb-explorer"
     docker stop kuzudb-explorer >/dev/null
-
-    echo "Removing kuzudb-explorer"
-    docker rm kuzudb-explorer >/dev/null
-
-    if [ -e "$kuzudb_path/.lock" ]; then
-        echo "Removing database lock"
-        rm -f "$kuzudb_path/.lock"
-    fi
 }
 
 trap cleanup SIGINT SIGTERM
 
-if [ -e "$kuzudb_path/.lock" ]; then
-    echo "error: database is locked"
-    exit 3
-fi
+echo "==> Starting ephemeral docker container for kuzudb-explorer..."
+docker run -d --name kuzudb-explorer \
+    -p 8000:8000 -v "${kuzudb_path}:/database" \
+    -e MODE=READ_ONLY \
+    --rm kuzudb/explorer:latest >/dev/null
 
-echo "==> Starting kuzudb-explorer..."
-docker run -q -d --name kuzudb-explorer -p 8000:8000 \
-    -v "${kuzudb_path}:/database" kuzudb/explorer:latest \
-    >/dev/null
-
-echo "==> Opening browser..."
+echo "==> Opening browser at http://localhost:8000..."
 open http://localhost:8000
 
-echo "==> Following logs..."
 docker logs -f kuzudb-explorer
