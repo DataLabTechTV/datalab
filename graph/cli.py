@@ -46,8 +46,11 @@ def load(schema: str, overwrite: bool, force_export: bool):
         else:
             log.info("Latest export found at {}", s3_path)
 
-    ops = KuzuOps(env.str(f"{schema.upper()}_GRAPH_DB"), overwrite=overwrite)
-    ops.load_music_graph(s3_path)
+    try:
+        ops = KuzuOps(env.str(f"{schema.upper()}_GRAPH_DB"), overwrite=overwrite)
+        ops.load_music_graph(s3_path)
+    except Exception as e:
+        log.error(e)
 
 
 if __name__ == "__main__":
