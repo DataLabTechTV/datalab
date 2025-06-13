@@ -17,7 +17,14 @@ dependencies = [
     "loguru>=0.7.3",
     "minio>=7.2.15",
     "platformdirs>=4.3.8",
+    "pyg-lib>=0.4.0",
     "python-slugify>=8.0.4",
+    "torch>=2.7.1",
+    "torch-cluster>=1.6.3",
+    "torch-geometric>=2.6.1",
+    "torch-scatter>=2.1.2",
+    "torch-sparse>=0.6.18",
+    "torch-spline-conv>=1.2.2",
 ]
 
 [project.scripts]
