@@ -62,11 +62,25 @@ def compute():
 @compute.command(help="Compute node embeddings using the selected algorithm")
 @click.argument("schema", type=click.STRING)
 @click.option(
+    "--dimension",
+    "-d",
+    default=128,
+    type=click.INT,
+    help="Dimension of the embeddings",
+)
+@click.option(
     "--batch-size",
-    "-bs",
+    "-b",
     default=512,
     type=click.INT,
     help="Batch size corresponding to the number of nodes for which to load neighbors",
+)
+@click.option(
+    "--epochs",
+    "-e",
+    default=1,
+    type=click.INT,
+    help="Number of epochs (i.e., global passes)",
 )
 @click.option(
     "--algo",
@@ -75,9 +89,15 @@ def compute():
     default=NodeEmbeddingAlgo.FRP.name,
     help="Node embedding algorithm",
 )
-def embeddings(schema: str, batch_size: int, algo: str):
+def embeddings(schema: str, dimension: int, batch_size: int, epochs: int, algo: str):
     try:
-        e = NodeEmbedding(schema, batch_size=batch_size, algo=NodeEmbeddingAlgo[algo])
+        e = NodeEmbedding(
+            schema,
+            dim=dimension,
+            batch_size=batch_size,
+            epochs=epochs,
+            algo=NodeEmbeddingAlgo[algo],
+        )
         e.train()
     except Exception as e:
         log.error(e)

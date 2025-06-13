@@ -20,7 +20,7 @@ class NodeEmbedding:
         *,
         dim: int = 128,
         batch_size: int = 512,
-        epochs: int = 10,
+        epochs: int = 1,
         algo: NodeEmbeddingAlgo = NodeEmbeddingAlgo.FRP,
     ):
         self.schema = schema
@@ -35,7 +35,7 @@ class NodeEmbedding:
         self._embeddings = None
 
     def _train_frp(self):
-        log.info("Training Fast Random Projection (FRP)")
+        log.info("Training FRP (Fast Random Projection)")
 
         mlp = torch.nn.Sequential(
             torch.nn.Linear(self.dim, self.dim),
@@ -53,10 +53,15 @@ class NodeEmbedding:
         )
 
         for epoch in range(1, self.epochs + 1):
-            log.info("Training epoch {}", epoch)
+            log.info("Training FRP: Epoch {}", epoch)
 
             for batch in node_batcher:
-                log.info("Training batch {}", batch.count)
+                log.info(
+                    "Training FRP: Batch {} (nodes {} to {})",
+                    batch.count,
+                    batch.from_node,
+                    batch.to_node,
+                )
 
                 edge_index = torch.tensor(
                     [batch.edges.source, batch.edges.target],
@@ -75,7 +80,7 @@ class NodeEmbedding:
                 x = torch.stack(x).to(self.dev)
 
                 # Manual FRP aggregation
-                row, col = edge_index  # row: target, col: source
+                row, col = edge_index
                 agg = torch.zeros_like(x, device=self.dev)
                 agg.index_add_(0, row, x[col])
 

@@ -9,6 +9,8 @@ from graph.ops import KuzuOps
 @dataclass
 class NodeBatch:
     count: int
+    from_node: int
+    to_node: int
     nodes: pd.Series
     edges: Optional[pd.DataFrame] = None
 
@@ -48,6 +50,8 @@ class KuzuNodeBatcher:
 
     def __next__(self):
         nodes = self.ops.query_node_batch(self.offset, self.limit)
+        from_node = nodes.min()
+        to_node = nodes.max()
 
         if len(nodes) == 0:
             raise StopIteration
@@ -64,9 +68,17 @@ class KuzuNodeBatcher:
         else:
             edges = None
 
-        batch = NodeBatch(count=self.count, nodes=nodes, edges=edges)
+        batch = NodeBatch(
+            count=self.count,
+            from_node=from_node,
+            to_node=to_node,
+            nodes=nodes,
+            edges=edges,
+        )
 
         if self.reindex:
             batch.reindex()
+
+        self.offset += self.limit
 
         return batch
