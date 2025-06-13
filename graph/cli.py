@@ -48,7 +48,7 @@ def load(schema: str, overwrite: bool, force_export: bool):
             log.info("Latest export found at {}", s3_path)
 
     try:
-        ops = KuzuOps(env.str(f"{schema.upper()}_GRAPH_DB"), overwrite=overwrite)
+        ops = KuzuOps(schema, overwrite=overwrite)
         ops.load_music_graph(s3_path)
     except Exception as e:
         log.error(e)
@@ -60,6 +60,14 @@ def compute():
 
 
 @compute.command(help="Compute node embeddings using the selected algorithm")
+@click.argument("schema", type=click.STRING)
+@click.option(
+    "--batch-size",
+    "-bs",
+    default=512,
+    type=click.INT,
+    help="Batch size corresponding to the number of nodes for which to load neighbors",
+)
 @click.option(
     "--algo",
     "-a",
@@ -67,9 +75,12 @@ def compute():
     default=NodeEmbeddingAlgo.FRP.name,
     help="Node embedding algorithm",
 )
-def embeddings(algo: str):
-    e = NodeEmbedding(algo=NodeEmbeddingAlgo[algo])
-    e.train()
+def embeddings(schema: str, batch_size: int, algo: str):
+    try:
+        e = NodeEmbedding(schema, batch_size=batch_size, algo=NodeEmbeddingAlgo[algo])
+        e.train()
+    except Exception as e:
+        log.error(e)
 
 
 if __name__ == "__main__":
