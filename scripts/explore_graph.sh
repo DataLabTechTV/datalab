@@ -66,8 +66,6 @@ fi
 
 if container_exists; then
     current_mode=$(kuzudb_container_mode)
-    echo $current_mode
-    echo $MODE
 
     if [ "$current_mode" != $MODE ]; then
         echo "==> Removing existing $current_mode kuzudb-explorer container"
