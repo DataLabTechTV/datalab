@@ -6,7 +6,7 @@ models:
     description: Deezer user nodes
     columns:
       - name: node_id
-        description: User ID with a 'd_' prefix to avoid collision with MSDSL users
+        description: Unique numerical node ID from a shared sequence
         data_tests:
           - not_null
           - unique
@@ -28,6 +28,11 @@ models:
   - name: msdsl_nodes_tracks
     description: Million Song Dataset, Spotify, and Last.fm music tracks
     columns:
+      - name: node_id
+        description: Unique numerical node ID from a shared sequence
+        data_tests:
+          - not_null
+          - unique
       - name: track_id
         description: String track identifier starting with TR
         data_tests:
@@ -50,7 +55,7 @@ models:
     description: Million Song Dataset, Spotify, and Last.fm users
     columns:
       - name: node_id
-        description: User ID with an 'm_' prefix to avoid collision with Deezer users
+        description: Unique numerical node ID from a shared sequence
         data_tests:
           - not_null
           - unique
@@ -67,6 +72,11 @@ models:
   - name: nodes_genres
     description: Deezer genres and MSDSL tags as genre nodes
     columns:
+      - name: node_id
+        description: Unique numerical node ID from a shared sequence
+        data_tests:
+          - not_null
+          - unique
       - name: genre
         description: >
           All unique genres from DSN Croatian (HR), Hungarian (HU) and Romanian (RO),

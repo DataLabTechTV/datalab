@@ -41,7 +41,7 @@ models:
           - not_null
           - relationships:
               to: ref('nodes_genres')
-              field: genre
+              field: node_id
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -57,14 +57,14 @@ models:
           - not_null
           - relationships:
               to: ref('msdsl_nodes_tracks')
-              field: track_id
+              field: node_id
       - name: target_id
         description: Genre node ID (only for tags matching Deezer genres)
         data_tests:
           - not_null
           - relationships:
               to: ref('nodes_genres')
-              field: genre
+              field: node_id
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -87,7 +87,7 @@ models:
           - not_null
           - relationships:
               to: ref('msdsl_nodes_tracks')
-              field: track_id
+              field: node_id
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
