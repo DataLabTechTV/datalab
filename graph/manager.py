@@ -52,8 +52,9 @@ class KuzuOps:
         self.con.execute(
             """
             CREATE NODE TABLE Genre (
+                node_id STRING,
                 genre STRING,
-                PRIMARY KEY (genre)
+                PRIMARY KEY (node_id)
             )
             """
         )
@@ -63,11 +64,12 @@ class KuzuOps:
         self.con.execute(
             """
             CREATE NODE TABLE Track (
+                node_id STRING,
                 track_id STRING,
                 name STRING,
                 artist STRING,
                 year INT16,
-                PRIMARY KEY (track_id)
+                PRIMARY KEY (node_id)
             )
             """
         )
@@ -124,14 +126,14 @@ class KuzuOps:
 
         self._copy_from_s3(
             f"{s3_path}/nodes/msdsl_nodes_tracks.parquet",
-            "COPY Track(track_id, name, artist, year) FROM '$path'",
+            "COPY Track(node_id, track_id, name, artist, year) FROM '$path'",
         )
 
         log.info("Importing music_graph Genre nodes")
 
         self._copy_from_s3(
             f"{s3_path}/nodes/nodes_genres.parquet",
-            "COPY Genre(genre) FROM '$path'",
+            "COPY Genre(node_id, genre) FROM '$path'",
         )
 
         # Edges

@@ -1,4 +1,5 @@
 SELECT
+    track_id AS node_id,
     track_id,
     name,
     artist,

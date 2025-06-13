@@ -17,6 +17,8 @@ WITH all_genres AS (
     SELECT unnest(tags) AS genre
     FROM {{ ref('msdsl_music_info') }}
 )
-SELECT DISTINCT genre
+SELECT DISTINCT
+    genre AS node_id,
+    genre
 FROM all_genres
 ORDER BY genre
