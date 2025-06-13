@@ -4,7 +4,7 @@ import click
 from loguru import logger as log
 
 from graph.embedding import NodeEmbedding, NodeEmbeddingAlgo
-from graph.manager import KuzuOps
+from graph.ops import KuzuOps
 from shared.lakehouse import Lakehouse
 from shared.settings import env
 
