@@ -17,7 +17,7 @@ class Lakehouse:
         engine_db = os.path.join(LOCAL_DIR, env.str("ENGINE_DB"))
 
         log.info("Connecting to DuckDB: {}", engine_db)
-        self.con = duckdb.connect(engine_db, read_only=read_only)
+        self.conn = duckdb.connect(engine_db, read_only=read_only)
 
         log.info("Initializing lakehouse with SQL script: {}", init_sql_path)
 
@@ -26,7 +26,7 @@ class Lakehouse:
 
         try:
             with open(init_sql_path) as fp:
-                self.con.execute(fp.read())
+                self.conn.execute(fp.read())
         except:
             raise LakehouseException(
                 f"Error executing init SQL script: {init_sql_path}"
@@ -36,7 +36,7 @@ class Lakehouse:
 
         log.info("Attaching {} DuckLake catalog", self.stage_catalog)
 
-        self.con.execute(
+        self.conn.execute(
             f"""
             ATTACH IF NOT EXISTS 'ducklake:sqlite:{LOCAL_DIR}/{env.str('STAGE_DB')}'
             (DATA_PATH 's3://{env.str('S3_BUCKET') }/{env.str('S3_STAGE_PREFIX')}')
@@ -56,7 +56,7 @@ class Lakehouse:
 
             log.info("Attaching {} DuckLake catalog", mart_catalog)
 
-            self.con.execute(
+            self.conn.execute(
                 f"""
                 ATTACH IF NOT EXISTS 'ducklake:sqlite:{LOCAL_DIR}/{value}'
                 (DATA_PATH 's3://{env.str('S3_BUCKET') }/{mart_s3_prefix}')
@@ -74,7 +74,7 @@ class Lakehouse:
 
         log.info("Exporting {}.{} to {}", catalog, schema, s3_export_path)
 
-        self.con.execute(
+        self.conn.execute(
             """
             SELECT
                 table_catalog,
@@ -89,7 +89,7 @@ class Lakehouse:
             (catalog, schema),
         )
 
-        tables = self.con.fetchall()
+        tables = self.conn.fetchall()
 
         log.info(
             "Found {} tables in {}.{} for exporting",
@@ -110,7 +110,7 @@ class Lakehouse:
 
             try:
                 log.info("Exporting {} to {}", table_fqn, path)
-                self.con.execute(f"COPY {table_fqn} TO '{path}' (FORMAT parquet)")
+                self.conn.execute(f"COPY {table_fqn} TO '{path}' (FORMAT parquet)")
             except:
                 log.error(f"Could not export {table_fqn}: COPY failed")
                 break
