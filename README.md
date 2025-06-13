@@ -39,6 +39,18 @@ source .venv/bin/activate
 dlctl ...
 ```
 
+> [!NOTE]
+> A few `torch` dependencies, like `torch_sparse` require that `UV_FIND_LINKS` is set
+> when adding/removing them, but not during install, where `uv.lock` already has the
+> required information.
+>
+> ```bash
+> export UV_FIND_LINKS="https://data.pyg.org/whl/torch-2.7.0+cu126.html"
+> uv add --no-build-isolation pyg_lib torch_scatter torch_sparse \
+>   torch_cluster torch_spline_conv
+> ```
+
+
 ## 🗃️ Storage Layout
 
 All data is stored in a single S3 bucket (e.g., `s3://lakehouse`, tested with MinIO), with directory structure:
