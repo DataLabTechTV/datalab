@@ -14,6 +14,11 @@ class KuzuOpsException(Exception):
     pass
 
 
+class KuzuNodeBatcher:
+    def __init__(self):
+        pass
+
+
 class KuzuOps:
     def __init__(self, dbname: str, overwrite: bool = False):
         db_path = os.path.join(LOCAL_DIR, dbname)

@@ -3,6 +3,7 @@ import os
 import click
 from loguru import logger as log
 
+from graph.embedding import NodeEmbedding, NodeEmbeddingAlgo
 from graph.manager import KuzuOps
 from shared.lakehouse import Lakehouse
 from shared.settings import env
@@ -51,6 +52,24 @@ def load(schema: str, overwrite: bool, force_export: bool):
         ops.load_music_graph(s3_path)
     except Exception as e:
         log.error(e)
+
+
+@graph.group()
+def compute():
+    pass
+
+
+@compute.command(help="Compute node embeddings using the selected algorithm")
+@click.option(
+    "--algo",
+    "-a",
+    type=click.Choice(algo.name for algo in NodeEmbeddingAlgo),
+    default=NodeEmbeddingAlgo.FRP.name,
+    help="Node embedding algorithm",
+)
+def embeddings(algo: str):
+    e = NodeEmbedding(algo=NodeEmbeddingAlgo[algo])
+    e.train()
 
 
 if __name__ == "__main__":
