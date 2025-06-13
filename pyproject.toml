@@ -1,7 +1,10 @@
+# When adding/removing dependencies, first run:
+# export UV_FIND_LINKS="https://data.pyg.org/whl/torch-2.7.0+cu126.html"
+
 [project]
 name = "datalab"
 version = "0.1.0"
-description = "Add your description here"
+description = "Tooling for a minimalist data lab running on top of DuckLake."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -16,6 +19,7 @@ dependencies = [
     "kuzu>=0.10.0",
     "loguru>=0.7.3",
     "minio>=7.2.15",
+    "pandas>=2.3.0",
     "platformdirs>=4.3.8",
     "pyg-lib>=0.4.0",
     "python-slugify>=8.0.4",
