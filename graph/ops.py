@@ -236,8 +236,8 @@ class KuzuOps:
             self.conn.execute(
                 """
                 UNWIND $batch AS batch
-                MATCH (n {node_id: $batch[0]})
-                SET n.embedding = $batch[1]
+                MATCH (n {node_id: batch[0]})
+                SET n.embedding = batch[1]
                 """,
                 parameters=dict(batch=batch),
             )
