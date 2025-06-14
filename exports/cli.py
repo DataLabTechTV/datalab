@@ -4,7 +4,7 @@ from loguru import logger as log
 from shared.storage import Storage, StoragePrefix
 
 
-@click.group()
+@click.group(invoke_without_command=True, help="Manage exported datasets")
 def exports():
     pass
 

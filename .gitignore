@@ -1,8 +1,7 @@
 # Project-specific
 local/**
 logs/**
-.vscode/
-/scripts/init.sql
+.vscode/**
 history.txt
 !.gitkeep
 

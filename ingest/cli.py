@@ -5,12 +5,12 @@ from ingest.handler import handle_hugging_face, handle_kaggle, handle_standalone
 from shared.storage import Storage, StoragePrefix
 
 
-@click.group()
+@click.group(invoke_without_command=True, help="Manage dataset ingestion")
 def ingest():
     pass
 
 
-@ingest.command()
+@ingest.command(help="Handle ingestion into a dated directory structure")
 @click.argument("dataset", type=click.STRING)
 @click.option(
     "-m",

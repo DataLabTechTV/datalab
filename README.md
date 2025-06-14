@@ -19,12 +19,6 @@ We purposely keep this simple with SQLite, using a backup/restore strategy to/fr
 
 Individual Bash or Python scripts for generic tasks, including catalog backup or restore.
 
-We also include a `scripts/init.example.sql`, which can be configured for manually connecting to your DuckLake, for example by running:
-
-```bash
-duckdb -init scripts/init.sql local/engine.duckdb
-```
-
 ### local/
 
 Untracked directory where all your local files will live. This includes the DuckLake catalog, which you can load from a backup, or create from scratch.
@@ -49,6 +43,13 @@ dlctl ...
 > uv add --no-build-isolation pyg_lib torch_scatter torch_sparse \
 >   torch_cluster torch_spline_conv
 > ```
+
+You should generate an `init.sql` once you setup your `.env`, so you can access your DuckLake from the CLI using `duckdb`:
+
+```bash
+dlctl tools generate-init-sql
+duckdb -init local/init.sql local/engine.duckdb
+```
 
 
 ## 🗃️ Storage Layout

@@ -9,7 +9,10 @@ from shared.lakehouse import Lakehouse
 from shared.settings import env
 
 
-@click.group()
+@click.group(
+    invoke_without_command=True,
+    help="Load, manage, and run graph computations on top of KùzuDB",
+)
 def graph():
     pass
 
@@ -54,7 +57,7 @@ def load(schema: str, overwrite: bool, force_export: bool):
         log.error(e)
 
 
-@graph.group()
+@graph.group(invoke_without_command=True, help="Run a graph computation workflow")
 def compute():
     pass
 
