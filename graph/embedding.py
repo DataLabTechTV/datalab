@@ -49,15 +49,8 @@ class NodeEmbedding:
                 batch_size=self.batch_size,
             )
 
-            log.info("Training FRP: Epoch {}", epoch)
-
             for batch in node_batcher:
-                log.info(
-                    "Training FRP: Batch {}",
-                    batch.nr,
-                    batch.nodes.min().iloc[0],
-                    batch.nodes.max().iloc[0],
-                )
+                log.info("Training FRP: Batch {}, Epoch {}", batch.nr, epoch)
 
                 edge_index = torch.tensor(
                     [batch.edges.source_id, batch.edges.target_id],
