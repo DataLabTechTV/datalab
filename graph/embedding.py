@@ -50,7 +50,7 @@ class NodeEmbedding:
             )
 
             for batch in node_batcher:
-                log.info("Training FRP: Batch {}, Epoch {}", batch.nr, epoch)
+                log.info("Training FRP: batch {}, epoch {}", batch.nr, epoch)
 
                 edge_index = torch.tensor(
                     [batch.edges.source_id, batch.edges.target_id],
