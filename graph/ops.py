@@ -226,10 +226,12 @@ class KuzuOps:
     ):
         log.info("Updating graph DB node embeddings (batch_size = {})", batch_size)
 
-        embeddings_lst = list(embeddings.items())
+        embeddings_lst = [[nid, e] for nid, e in embeddings.items()]
 
         for nr, start in enumerate(range(0, len(embeddings_lst), batch_size), 1):
             log.info("Updating embeddings: batch {}", nr)
+
+            batch = embeddings_lst[start : start + batch_size]
 
             self.conn.execute(
                 """
@@ -237,5 +239,5 @@ class KuzuOps:
                 MATCH (n {node_id: $batch[0]})
                 SET n.embedding = $batch[1]
                 """,
-                parameters=dict(batch=embeddings_lst[start : (start + batch_size)]),
+                parameters=dict(batch=batch),
             )
