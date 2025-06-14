@@ -69,10 +69,10 @@ class KuzuNodeBatcher:
 
         log.info(
             "Batch {} contains {} nodes, from node_id={} to node_id={}",
+            self.count,
             len(nodes),
             nodes.node_id.min(),
             nodes.node_id.max(),
-            self.count,
         )
 
         if self.include_edges:
