@@ -226,7 +226,13 @@ class KuzuOps:
     ):
         log.info("Updating graph DB node embeddings (batch_size = {})", batch_size)
 
-        embeddings_lst = [[nid, e] for nid, e in embeddings.items()]
+        log.info("Ensuring the embedding property exists in node tables")
+
+        self.conn.execute("ALTER TABLE User ADD IF NOT EXISTS embedding DOUBLE[]")
+        self.conn.execute("ALTER TABLE Genre ADD IF NOT EXISTS embedding DOUBLE[]")
+        self.conn.execute("ALTER TABLE Track ADD IF NOT EXISTS embedding DOUBLE[]")
+
+        embeddings_lst = [dict(nid=nid, e=e) for nid, e in embeddings.items()]
 
         for nr, start in enumerate(range(0, len(embeddings_lst), batch_size), 1):
             log.info("Updating embeddings: batch {}", nr)
@@ -236,8 +242,10 @@ class KuzuOps:
             self.conn.execute(
                 """
                 UNWIND $batch AS batch
-                MATCH (n {node_id: batch[0]})
-                SET n.embedding = batch[1]
+                MATCH (n {node_id: batch.nid})
+                SET n.embedding = batch.e
                 """,
                 parameters=dict(batch=batch),
             )
+
+        log.info("All node embeddings updated")
