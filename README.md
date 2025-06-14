@@ -36,7 +36,8 @@ dlctl ...
 > [!NOTE]
 > A few `torch` dependencies, like `torch_sparse` require that `UV_FIND_LINKS` is set
 > when adding/removing them, but not during install, where `uv.lock` already has the
-> required information.
+> required information. We're currently no longer using this, but, if we do in the
+> future, this is how to approach it:
 >
 > ```bash
 > export UV_FIND_LINKS="https://data.pyg.org/whl/torch-2.7.0+cu126.html"

@@ -8,6 +8,7 @@ description = "Tooling for a minimalist data lab running on top of DuckLake."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "bidict>=0.23.1",
     "boto3>=1.38.29",
     "boto3-stubs[s3]>=1.38.29",
     "click>=8.2.1",
@@ -21,14 +22,9 @@ dependencies = [
     "minio>=7.2.15",
     "pandas>=2.3.0",
     "platformdirs>=4.3.8",
-    "pyg-lib>=0.4.0",
     "python-slugify>=8.0.4",
     "torch>=2.7.1",
     "torch-cluster>=1.6.3",
-    "torch-geometric>=2.6.1",
-    "torch-scatter>=2.1.2",
-    "torch-sparse>=0.6.18",
-    "torch-spline-conv>=1.2.2",
 ]
 
 [project.scripts]
