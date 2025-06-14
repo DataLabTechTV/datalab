@@ -224,7 +224,7 @@ class KuzuOps:
         embeddings: dict[int, list[float]],
         batch_size: int = 1000,
     ):
-        log.info("Updating graph DB node embeddings (batch_size = {}})", batch_size)
+        log.info("Updating graph DB node embeddings (batch_size = {})", batch_size)
 
         embeddings_lst = list(embeddings.items())
 
