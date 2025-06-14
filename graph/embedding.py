@@ -2,9 +2,6 @@ from enum import Enum
 
 import torch
 from loguru import logger as log
-from torch.sparse import SparseSemiStructuredTensorCUSPARSELT
-from torch_geometric.data import Data
-from torch_sparse import SparseTensor
 
 from graph.batch import KuzuNodeBatcher
 
@@ -32,8 +29,6 @@ class NodeEmbedding:
         self.dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         log.info("Using device: {}", self.dev)
 
-        self._embeddings = None
-
     def _train_frp(self):
         log.info("Training FRP (Fast Random Projection)")
 
@@ -43,28 +38,29 @@ class NodeEmbedding:
             torch.nn.Linear(self.dim, self.dim),
         ).to(self.dev)
 
+        global_embeddings = {}
         embeddings = {}
 
-        node_batcher = KuzuNodeBatcher(
-            self.schema,
-            include_edges=True,
-            reindex=True,
-            batch_size=self.batch_size,
-        )
-
         for epoch in range(1, self.epochs + 1):
+            node_batcher = KuzuNodeBatcher(
+                self.schema,
+                include_edges=True,
+                reindex_edges=True,
+                batch_size=self.batch_size,
+            )
+
             log.info("Training FRP: Epoch {}", epoch)
 
             for batch in node_batcher:
                 log.info(
-                    "Training FRP: Batch {} (nodes {} to {})",
-                    batch.count,
-                    batch.from_node,
-                    batch.to_node,
+                    "Training FRP: Batch {}",
+                    batch.nr,
+                    batch.nodes.min().iloc[0],
+                    batch.nodes.max().iloc[0],
                 )
 
                 edge_index = torch.tensor(
-                    [batch.edges.source, batch.edges.target],
+                    [batch.edges.source_id, batch.edges.target_id],
                     dtype=torch.long,
                     device=self.dev,
                 )
@@ -72,10 +68,13 @@ class NodeEmbedding:
                 # Get or initialize node features
                 x = []
 
-                for idx in batch.nodes.index:
-                    if idx not in embeddings:
-                        embeddings[idx] = torch.randn(self.dim, device=self.dev)
-                    x.append(embeddings[idx])
+                for node_idx in batch.index.values():
+                    if node_idx not in global_embeddings:
+                        global_embeddings[node_idx] = torch.randn(
+                            self.dim,
+                            device=self.dev,
+                        )
+                    x.append(global_embeddings[node_idx])
 
                 x = torch.stack(x).to(self.dev)
 
@@ -96,11 +95,21 @@ class NodeEmbedding:
                 # Optionally apply non-linear update
                 updated = mlp(agg)
 
-                # Write back updated embeddings for batch_nodes only
-                for idx, node in batch.nodes.items():
-                    embeddings[node] = updated[idx].detach()
+                # Write back updated embeddings for batch.nodes only
+                for node_idx in batch.index.values():
+                    node_id = batch.index.inv[node_idx]
+                    embeddings[node_id] = updated[node_idx].detach()
+
+        log.info("Converting embeddings to CPU lists")
+
+        for node_id in embeddings:
+            embeddings[node_id] = embeddings[node_id].cpu().tolist()
 
         self._embeddings = embeddings
+
+        if torch.cuda.is_available():
+            log.info("Emptying CUDA cache")
+            torch.cuda.empty_cache()
 
     def train(self):
         match self.algo:
@@ -115,5 +124,7 @@ class NodeEmbedding:
 
     @property
     def embeddings(self):
-        # TODO: make sure no torch tensors are returned here
+        if not hasattr(self, "_embeddings"):
+            return
+
         return self._embeddings

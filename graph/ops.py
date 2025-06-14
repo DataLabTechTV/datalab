@@ -176,7 +176,23 @@ class KuzuOps:
             log.error("Failed to import nodes/edges for music_graph: {}", e)
             return
 
-    def query_node_batch(self, offset: int, limit: int) -> pd.Series:
+    @property
+    def num_nodes(self):
+        if not hasattr(self, "_num_nodes"):
+            log.info("Computing and caching number of nodes")
+            result = self.conn.execute("MATCH () RETURN COUNT(*) AS num_nodes")
+            self._num_nodes = result.get_as_df().num_nodes.iloc[0]
+
+        return self._num_nodes
+
+    def query_node_batch(self, offset: int, limit: int) -> pd.DataFrame:
+        if offset > self.num_nodes:
+            log.info(
+                "Offset reached a value higher than the number of nodes, "
+                "returning an empty DataFrame"
+            )
+            return pd.DataFrame(columns=["node_id"])
+
         result = self.conn.execute(
             """
             MATCH (n)
@@ -188,17 +204,38 @@ class KuzuOps:
             parameters=dict(skip=offset, limit=limit),
         )
 
-        return result.get_as_df().node_id
+        return result.get_as_df()
 
-    def query_neighbors(self, nodes: pd.Series):
+    def query_neighbors(self, nodes: pd.DataFrame):
         result = self.conn.execute(
             """
             MATCH (n)-->(m)
             WHERE n.node_id IN CAST($nodes AS INT64[])
-            RETURN n.node_id AS source, m.node_id AS target
-            ORDER BY source, target
+            RETURN n.node_id AS source_id, m.node_id AS target_id
+            ORDER BY source_id, target_id
             """,
-            parameters=dict(nodes=nodes.to_list()),
+            parameters=dict(nodes=nodes.node_id.to_list()),
         )
 
         return result.get_as_df()
+
+    def update_embeddings(
+        self,
+        embeddings: dict[int, list[float]],
+        batch_size: int = 1000,
+    ):
+        log.info("Updating graph DB node embeddings (batch_size = {}})", batch_size)
+
+        embeddings_lst = list(embeddings.items())
+
+        for nr, start in enumerate(range(0, len(embeddings_lst), batch_size), 1):
+            log.info("Updating embeddings: batch {}", nr)
+
+            self.conn.execute(
+                """
+                UNWIND $batch AS batch
+                MATCH (n {node_id: $batch[0]})
+                SET n.embedding = $batch[1]
+                """,
+                parameters=dict(batch=embeddings_lst[start : (start + batch_size)]),
+            )
