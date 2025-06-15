@@ -102,9 +102,6 @@ def embeddings(schema: str, dimension: int, batch_size: int, epochs: int, algo: 
             algo=NodeEmbeddingAlgo[algo],
         )
         e.train()
-
-        ops = KuzuOps(schema)
-        ops.update_embeddings(e.embeddings, batch_size=batch_size)
     except Exception as e:
         log.exception(e)
 

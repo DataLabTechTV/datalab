@@ -4,6 +4,7 @@ import torch
 from loguru import logger as log
 
 from graph.batch import KuzuNodeBatcher
+from graph.ops import KuzuOps
 
 
 class NodeEmbeddingAlgo(Enum):
@@ -25,6 +26,8 @@ class NodeEmbedding:
         self.batch_size = batch_size
         self.epochs = epochs
         self.algo = algo
+
+        self.ops = KuzuOps(schema)
 
         self.dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         log.info("Using device: {}", self.dev)
@@ -93,12 +96,17 @@ class NodeEmbedding:
                     node_id = batch.index.inv[node_idx]
                     embeddings[node_id] = updated[node_idx].detach()
 
-        log.info("Converting embeddings to CPU lists")
+        node_ids = list(embeddings.keys())
 
-        for node_id in embeddings:
-            embeddings[node_id] = embeddings[node_id].cpu().tolist()
+        for nr, start in enumerate(range(0, len(node_ids), self.batch_size), 1):
+            log.info("Updating embeddings batch {}", nr)
 
-        self._embeddings = embeddings
+            batch = {}
+
+            for node_id in node_ids[start : start + self.batch_size]:
+                batch[node_id] = embeddings[node_id].cpu().tolist()
+
+            self.ops.update_embeddings(batch)
 
         if torch.cuda.is_available():
             log.info("Emptying CUDA cache")
