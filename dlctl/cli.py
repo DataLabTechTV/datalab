@@ -4,7 +4,7 @@ import sys
 import click
 from loguru import logger as log
 
-import dlctl.tools as T
+import shared.tools as T
 from dlctl.dbt_handler import DBTHandler
 from exports.cli import exports
 from graph.cli import graph

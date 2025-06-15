@@ -1,13 +1,14 @@
 import os
+from typing import Optional
 
 from loguru import logger as log
 
-from dlctl.util import INIT_SQL_ATTACHED_DB_TPL, INIT_SQL_TPL, reformat_template_render
 from shared.settings import LOCAL_DIR, env
+from shared.util import INIT_SQL_ATTACHED_DB_TPL, INIT_SQL_TPL, reformat_template_render
 
 
-def generate_init_sql(path: str):
-    log.info("Generating {}", path)
+def generate_init_sql(path: Optional[str] = None) -> Optional[str]:
+    log.info("Generating init SQL")
 
     mart_db_varnames = []
 
@@ -16,7 +17,7 @@ def generate_init_sql(path: str):
             mart_db_varnames.append(varname)
 
     log.info(
-        "Found {} data mart DBs: {}",
+        "Found {} env vars for data mart DBs: {}",
         len(mart_db_varnames),
         ", ".join(mart_db_varnames),
     )
@@ -49,6 +50,9 @@ def generate_init_sql(path: str):
             s3_region=env.str("S3_REGION"),
         )
     )
+
+    if path is None:
+        return init_sql + "\n".join(attachments_sql)
 
     with open(path, "w") as fp:
         fp.write(init_sql)

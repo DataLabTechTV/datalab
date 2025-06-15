@@ -6,6 +6,7 @@ from loguru import logger as log
 
 from shared.settings import LOCAL_DIR, env
 from shared.storage import Storage, StoragePrefix
+from shared.tools import generate_init_sql
 
 
 class LakehouseException(Exception):
@@ -13,24 +14,19 @@ class LakehouseException(Exception):
 
 
 class Lakehouse:
-    def __init__(self, read_only: bool = True, init_sql_path: str = "scripts/init.sql"):
+    def __init__(self, read_only: bool = True):
         engine_db = os.path.join(LOCAL_DIR, env.str("ENGINE_DB"))
 
         log.info("Connecting to DuckDB: {}", engine_db)
         self.conn = duckdb.connect(engine_db, read_only=read_only)
 
-        log.info("Initializing lakehouse with SQL script: {}", init_sql_path)
-
-        if not os.path.exists(init_sql_path):
-            raise LakehouseException(f"Init SQL script not found: {init_sql_path}")
+        log.info("Initializing lakehouse with init SQL")
 
         try:
-            with open(init_sql_path) as fp:
-                self.conn.execute(fp.read())
-        except:
-            raise LakehouseException(
-                f"Error executing init SQL script: {init_sql_path}"
-            )
+            init_sql = generate_init_sql()
+            self.conn.execute(init_sql)
+        except Exception as e:
+            raise LakehouseException(f"Error executing init SQL: {e}")
 
         self.stage_catalog = os.path.splitext(os.path.split(env.str("STAGE_DB"))[-1])[0]
 
