@@ -60,8 +60,10 @@ All data is stored in a single S3 bucket (e.g., `s3://lakehouse`, tested with Mi
 ```
 s3://lakehouse/
 ├── catalog/
-│   ├── snapshots/
-│   │   └── metadata-YYYY_MM_DD_HH_MM_SS_sss.sqlite
+│   ├── snapshot-YYYY_MM_DD_HH_MM_SS_sss/
+│   │   ├── engine.duckdb
+│   │   ├── stage.sqlite
+│   │   └── marts/*.sqlite
 │   └── manifest.json
 ├── raw/
 │   └── <dataset-name>/
@@ -72,18 +74,19 @@ s3://lakehouse/
 │       │       └── *.parquet
 │       └── manifest.json
 ├── stage/
-│   └── *.parquet
+│   └── ducklake-*.parquet
 ├── marts/
 │   └── <domain>/
-│           └── *.parquet
+│           └── ducklake-*.parquet
 └── exports/
     └── <domain>/
         └── <dataset-name>/
-            └── YYYY_MM_DD/
-                └── HH_mm_SS_sss/
-                    ├── *.csv
-                    ├── *.json
-                    └── *.parquet
+            ├── YYYY_MM_DD/
+            │   └── HH_mm_SS_sss/
+            │       ├── *.csv
+            │       ├── *.json
+            │       └── *.parquet
+            └── manifest.json
 ```
 
 > [!NOTE]
