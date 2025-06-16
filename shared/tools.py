@@ -4,7 +4,7 @@ from typing import Optional
 from loguru import logger as log
 
 from shared.settings import LOCAL_DIR, env
-from shared.util import INIT_SQL_ATTACHED_DB_TPL, INIT_SQL_TPL, reformat_template_render
+from shared.templates import INIT_SQL_ATTACHED_DB_TPL, INIT_SQL_TPL, reformat_render
 
 
 def generate_init_sql(path: Optional[str] = None) -> Optional[str]:
@@ -30,7 +30,7 @@ def generate_init_sql(path: Optional[str] = None) -> Optional[str]:
         else:
             s3_prefix = env.str(f"S3_{varname.strip('_DB')}_PREFIX")
 
-        attachment_sql = reformat_template_render(
+        attachment_sql = reformat_render(
             INIT_SQL_ATTACHED_DB_TPL.substitute(
                 db_path=os.path.join(LOCAL_DIR, env.str(varname)),
                 s3_bucket=env.str("S3_BUCKET"),
@@ -40,7 +40,7 @@ def generate_init_sql(path: Optional[str] = None) -> Optional[str]:
 
         attachments_sql.append(attachment_sql)
 
-    init_sql = reformat_template_render(
+    init_sql = reformat_render(
         INIT_SQL_TPL.substitute(
             s3_access_key_id=env.str("S3_ACCESS_KEY_ID"),
             s3_secret_access_key=env.str("S3_SECRET_ACCESS_KEY"),

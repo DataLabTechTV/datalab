@@ -1,15 +1,25 @@
 import click
 from loguru import logger as log
 
+from shared.lakehouse import Lakehouse
+from shared.settings import MART_SCHEMAS
 from shared.storage import Storage, StoragePrefix
 
 
-@click.group(invoke_without_command=True, help="Manage exported datasets")
-def exports():
+@click.group(help="Manage dataset exporting")
+def export():
     pass
 
 
-@exports.command(help="List exported datasets")
+@export.command(help="Export latest version of dataset from data mart")
+@click.argument("catalog", type=click.Choice(MART_SCHEMAS))
+@click.argument("schema")
+def dataset(catalog: str, schema: str):
+    lh = Lakehouse()
+    lh.export(catalog, schema)
+
+
+@export.command(help="List exported datasets")
 @click.option(
     "--all",
     "-a",
@@ -25,7 +35,7 @@ def ls(include_all: bool):
     storage.ls(StoragePrefix.EXPORTS, include_all=include_all)
 
 
-@exports.command(help="Delete old dataset exports, only keeping the latest datasets")
+@export.command(help="Delete old dataset exports, only keeping the latest datasets")
 def prune():
     log.info("Pruning exported datasets")
     storage = Storage()
@@ -33,4 +43,4 @@ def prune():
 
 
 if __name__ == "__main__":
-    exports()
+    export()

@@ -6,16 +6,13 @@ from loguru import logger as log
 
 import shared.tools as T
 from dlctl.dbt_handler import DBTHandler
-from exports.cli import exports
+from export.cli import export
 from graph.cli import graph
 from ingest.cli import ingest
 from shared.settings import LOCAL_DIR
 
 
-@click.group(
-    invoke_without_command=True,
-    help="Data Lab, by https://youtube.com/@DataLabTechTV",
-)
+@click.group(help="Data Lab, by https://youtube.com/@DataLabTechTV")
 @click.option("--debug", is_flag=True, help="Globally enable logging debug mode")
 def dlctl(debug: bool):
     log.info("Welcome to Data Lab, by https://youtube.com/@DataLabTechTV")
@@ -25,7 +22,7 @@ def dlctl(debug: bool):
 
 
 dlctl.add_command(ingest)
-dlctl.add_command(exports)
+dlctl.add_command(export)
 dlctl.add_command(graph)
 
 
@@ -62,11 +59,7 @@ def test():
 # =============
 
 
-@dlctl.group(
-    name="docs",
-    invoke_without_command=True,
-    help="Generate or serve documentation",
-)
+@dlctl.group(name="docs", help="Generate or serve documentation")
 def docs():
     pass
 

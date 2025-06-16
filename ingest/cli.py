@@ -5,7 +5,7 @@ from ingest.handler import handle_hugging_face, handle_kaggle, handle_standalone
 from shared.storage import Storage, StoragePrefix
 
 
-@click.group(invoke_without_command=True, help="Manage dataset ingestion")
+@click.group(help="Manage dataset ingestion")
 def ingest():
     pass
 

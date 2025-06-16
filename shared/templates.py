@@ -34,5 +34,5 @@ INIT_SQL_TPL = Template(
 )
 
 
-def reformat_template_render(template: str):
+def reformat_render(template: str):
     return textwrap.dedent(template.replace("--sql\n", ""))
