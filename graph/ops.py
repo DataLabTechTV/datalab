@@ -8,7 +8,7 @@ import pandas as pd
 from loguru import logger as log
 
 from shared.settings import LOCAL_DIR, env
-from shared.storage import Storage
+from shared.storage import Storage, StoragePrefix
 
 
 class KuzuOps:
@@ -23,7 +23,7 @@ class KuzuOps:
 
         db = kuzu.Database(db_path)
         self.conn = kuzu.Connection(db)
-        self.storage = Storage()
+        self.storage = Storage(prefix=StoragePrefix.EXPORTS)
 
     def _create_music_graph_schema(self):
         # Nodes

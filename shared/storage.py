@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timezone
 from enum import Enum
 from fnmatch import fnmatch
-from typing import Any, Optional
+from typing import Any, Iterable, Optional
 
 import boto3
 from loguru import logger as log
@@ -18,10 +18,11 @@ IGNORE_PATTERNS = (".keep", "README", "*.md", MANIFEST)
 class StoragePrefix(Enum):
     INGEST = 1
     EXPORTS = 2
+    BACKUPS = 3
 
 
 class Storage:
-    def __init__(self):
+    def __init__(self, prefix: StoragePrefix):
         endpoint = env.str("S3_ENDPOINT", required=False)
         use_ssl = env.bool("S3_USE_SSL", default=True)
         access_key = env.str("S3_ACCESS_KEY_ID")
@@ -41,21 +42,13 @@ class Storage:
             region_name=region,
         )
 
+        # Bucket
+        # ======
+
         bucket_name = env.str("S3_BUCKET")
-        ingest_prefix = env.str("S3_INGEST_PREFIX")
-        exports_prefix = env.str("S3_EXPORTS_PREFIX")
 
         if bucket_name is None:
             raise ValueError("S3_BUCKET not defined")
-
-        if ingest_prefix is None:
-            raise ValueError("S3_INGEST_PREFIX not defined")
-
-        if exports_prefix is None:
-            raise ValueError("S3_EXPORTS_PREFIX not defined")
-
-        self.ingest_prefix = ingest_prefix.strip("/")
-        self.exports_prefix = exports_prefix.strip("/")
 
         bucket = self.s3.Bucket(bucket_name)
 
@@ -64,6 +57,34 @@ class Storage:
 
         self.bucket = bucket
 
+        # Prefix
+        # ======
+
+        match prefix:
+            case StoragePrefix.INGEST:
+                ingest_prefix = env.str("S3_INGEST_PREFIX")
+
+                if ingest_prefix is None:
+                    raise ValueError("S3_INGEST_PREFIX not defined")
+
+                self.prefix = ingest_prefix.strip("/")
+            case StoragePrefix.EXPORTS:
+                exports_prefix = env.str("S3_EXPORTS_PREFIX")
+
+                if exports_prefix is None:
+                    raise ValueError("S3_EXPORTS_PREFIX not defined")
+
+                self.prefix = exports_prefix.strip("/")
+            case StoragePrefix.BACKUPS:
+                backups_prefix = env.str("S3_BACKUPS_PREFIX")
+
+                if backups_prefix is None:
+                    raise ValueError("S3_BACKUPS_PREFIX not defined")
+
+                self.prefix = backups_prefix.strip("/")
+
+        log.info("Using prefix: {}", self.to_s3_path(self.prefix))
+
     def to_s3_path(self, prefix: str) -> str:
         return f"s3://{self.bucket.name}/{prefix}"
 
@@ -71,23 +92,13 @@ class Storage:
         prefix = "/".join(s3_path.split("/")[3:])
         return prefix
 
-    def from_storage_prefix(self, prefix: StoragePrefix) -> str:
-        match prefix:
-            case StoragePrefix.INGEST:
-                s3_prefix = self.ingest_prefix
-            case StoragePrefix.EXPORTS:
-                s3_prefix = self.exports_prefix
-
-        return s3_prefix
-
     def get_dir(
         self,
         ds_name: str,
         dated: bool = False,
         upload_placeholder: bool = False,
-        prefix: StoragePrefix = StoragePrefix.INGEST,
     ) -> str:
-        s3_prefix = f"{self.from_storage_prefix(prefix)}/{ds_name}"
+        s3_prefix = f"{self.prefix}/{ds_name}"
 
         if dated:
             now = datetime.now(timezone.utc)
@@ -106,7 +117,28 @@ class Storage:
 
         return s3_path
 
-    def upload_files(self, source_path: str, s3_target_path: str):
+    def upload_files(
+        self,
+        source_root: str,
+        source_files: Iterable[str],
+        s3_target_path: str,
+    ):
+        s3_target_prefix = self.from_s3_path(s3_target_path)
+
+        source_files = list(source_files)
+
+        log.info("Uploading {} files to {}", len(source_files), s3_target_path)
+
+        for source_path in source_files:
+            local_path = os.path.join(source_root, source_path)
+            log.info(f"Uploading {local_path} to {s3_target_path}/{source_path}")
+
+            self.bucket.upload_file(
+                Filename=local_path,
+                Key=f"{s3_target_prefix}/{source_path}",
+            )
+
+    def upload_dir(self, source_path: str, s3_target_path: str):
         s3_target_prefix = self.from_s3_path(s3_target_path)
 
         file_paths = []
@@ -138,12 +170,26 @@ class Storage:
             Filename=target_path,
         )
 
+    def download_dir(self, s3_source_path: str, target_path: str):
+        s3_source_prefix = self.from_s3_path(s3_source_path)
+
+        for obj in self.bucket.objects.filter(Prefix=s3_source_prefix):
+            relative_path = obj.key[len(s3_source_prefix) :]
+
+            if not relative_path:
+                continue
+
+            local_path = os.path.join(target_path, relative_path.lstrip("/"))
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+
+            log.info("Downloading {} to {}", self.to_s3_path(obj.key), local_path)
+            self.bucket.download_file(Key=obj.key, Filename=local_path)
+
     def upload_manifest(
         self,
         ds_name: str,
         *,
         latest: str,
-        prefix: StoragePrefix = StoragePrefix.INGEST,
     ):
         log.info("Setting latest for {} as {}", ds_name, latest)
 
@@ -154,22 +200,14 @@ class Storage:
             }
         )
 
-        prefix = self.from_storage_prefix(prefix)
-
         self.bucket.put_object(
-            Key=f"{prefix}/{ds_name}/{MANIFEST}",
+            Key=f"{self.prefix}/{ds_name}/{MANIFEST}",
             Body=data,
             ContentType="application/json",
         )
 
-    def load_manifest(
-        self,
-        path: str,
-        prefix: StoragePrefix,
-    ) -> Optional[dict[str, Any]]:
-        prefix = self.from_storage_prefix(prefix)
-
-        obj = self.bucket.Object(f"{prefix}/{path}/{MANIFEST}")
+    def load_manifest(self, path: str) -> Optional[dict[str, Any]]:
+        obj = self.bucket.Object(f"{self.prefix}/{path}/{MANIFEST}")
 
         try:
             manifest = json.loads(obj.get().get("Body").read().decode("utf-8"))
@@ -215,12 +253,10 @@ class Storage:
 
                 os.environ[env_prefix] = self.to_s3_path(data_obj.key)
 
-    def ls(self, prefix: StoragePrefix, include_all: bool = False) -> list[str]:
-        prefix = self.from_storage_prefix(prefix)
-
+    def ls(self, include_all: bool = False) -> list[str]:
         listing = {}
 
-        for obj in self.bucket.objects.filter(Prefix=prefix):
+        for obj in self.bucket.objects.filter(Prefix=self.prefix):
             key_parts = obj.key.strip("/").split("/")
 
             if key_parts[-1] != MANIFEST:

@@ -41,15 +41,15 @@ def ls(include_all: bool):
     versions = "all" if include_all else "latest"
     log.info("Listing ingested datasets: {} versions", versions)
 
-    storage = Storage()
-    storage.ls(StoragePrefix.INGEST, include_all=include_all)
+    storage = Storage(prefix=StoragePrefix.INGEST)
+    storage.ls(include_all=include_all)
 
 
 @ingest.command(help="Delete old dataset ingestions, only keeping the latest datasets")
 def prune():
     log.info("Pruning ingested datasets")
-    storage = Storage()
-    storage.prune(StoragePrefix.INGEST)
+    storage = Storage(prefix=StoragePrefix.INGEST)
+    storage.prune()
 
 
 if __name__ == "__main__":

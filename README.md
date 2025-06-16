@@ -59,12 +59,14 @@ All data is stored in a single S3 bucket (e.g., `s3://lakehouse`, tested with Mi
 
 ```
 s3://lakehouse/
-├── catalog/
-│   ├── snapshot-YYYY_MM_DD_HH_MM_SS_sss/
-│   │   ├── engine.duckdb
-│   │   ├── stage.sqlite
-│   │   └── marts/*.sqlite
-│   └── manifest.json
+├── backups/
+│   └── catalog/
+│       ├── YYYY_MM_DD/
+│       │   └── HH_mm_SS_sss/
+│       │       ├── engine.duckdb
+│       │       ├── stage.sqlite
+│       │       └── marts/*.sqlite
+│       └── manifest.json
 ├── raw/
 │   └── <dataset-name>/
 │       ├── YYYY_MM_DD/

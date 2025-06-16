@@ -3,28 +3,22 @@ from typing import Optional
 
 from loguru import logger as log
 
-from shared.settings import LOCAL_DIR, env
+from shared.settings import LOCAL_DIR, MART_DB_VARS, env
 from shared.templates import INIT_SQL_ATTACHED_DB_TPL, INIT_SQL_TPL, reformat_render
 
 
 def generate_init_sql(path: Optional[str] = None) -> Optional[str]:
     log.info("Generating init SQL")
 
-    mart_db_varnames = []
-
-    for varname in os.environ.keys():
-        if varname.endswith("_MART_DB"):
-            mart_db_varnames.append(varname)
-
     log.info(
         "Found {} env vars for data mart DBs: {}",
-        len(mart_db_varnames),
-        ", ".join(mart_db_varnames),
+        len(MART_DB_VARS),
+        ", ".join(MART_DB_VARS),
     )
 
     attachments_sql = []
 
-    for varname in ["STAGE_DB"] + mart_db_varnames:
+    for varname in ["STAGE_DB"] + MART_DB_VARS:
         if varname == "STAGE_DB":
             s3_prefix = env.str("S3_STAGE_PREFIX")
         else:
@@ -52,10 +46,11 @@ def generate_init_sql(path: Optional[str] = None) -> Optional[str]:
     )
 
     if path is None:
-        return init_sql + "\n".join(attachments_sql)
+        return f"{init_sql}\n{'\n'.join(attachments_sql)}".strip()
 
     with open(path, "w") as fp:
         fp.write(init_sql)
-        fp.writelines(attachments_sql)
+        fp.write("\n")
+        fp.write("\n".join(attachments_sql))
 
     log.info("File written: {}", path)

@@ -9,7 +9,7 @@ from loguru import logger as log
 from platformdirs import user_cache_dir
 from slugify import slugify
 
-from shared.storage import Storage
+from shared.storage import Storage, StoragePrefix
 
 
 def handle_standalone(dataset: str):
@@ -17,7 +17,7 @@ def handle_standalone(dataset: str):
     log.info("Standalone detected, creating dataset: {}", ds_name)
 
     try:
-        s = Storage()
+        s = Storage(prefix=StoragePrefix.INGEST)
         s3_dir_path = s.get_dir(ds_name, dated=True, upload_placeholder=True)
         s.upload_manifest(ds_name, latest=s3_dir_path)
     except Exception as e:
@@ -57,9 +57,9 @@ def handle_kaggle(dataset_url: str):
 
     try:
         kaggle_ds_path = kh.dataset_download(ds_url.handle)
-        s = Storage()
+        s = Storage(prefix=StoragePrefix.INGEST)
         s3_dir_path = s.get_dir(ds_url.name, dated=True)
-        s.upload_files(source_path=kaggle_ds_path, s3_target_path=s3_dir_path)
+        s.upload_dir(source_path=kaggle_ds_path, s3_target_path=s3_dir_path)
         s.upload_manifest(ds_url.name, latest=s3_dir_path)
     except:
         log.exception(
@@ -95,9 +95,9 @@ def handle_hugging_face(dataset_url: str):
                 else:
                     git_file_path.unlink()
 
-        s = Storage()
+        s = Storage(prefix=StoragePrefix.INGEST)
         s3_dir_path = s.get_dir(ds_url.name, dated=True)
-        s.upload_files(source_path=hf_ds_path, s3_target_path=s3_dir_path)
+        s.upload_dir(source_path=hf_ds_path, s3_target_path=s3_dir_path)
         s.upload_manifest(ds_url.name, latest=s3_dir_path)
     except Exception as e:
         log.exception("Couldn't download dataset: {}", e)

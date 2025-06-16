@@ -31,15 +31,15 @@ def ls(include_all: bool):
     versions = "all" if include_all else "latest"
     log.info("Listing exported datasets: {} versions", versions)
 
-    storage = Storage()
-    storage.ls(StoragePrefix.EXPORTS, include_all=include_all)
+    storage = Storage(prefix=StoragePrefix.EXPORTS)
+    storage.ls(include_all=include_all)
 
 
 @export.command(help="Delete old dataset exports, only keeping the latest datasets")
 def prune():
     log.info("Pruning exported datasets")
-    storage = Storage()
-    storage.prune(StoragePrefix.EXPORTS)
+    storage = Storage(prefix=StoragePrefix.EXPORTS)
+    storage.prune()
 
 
 if __name__ == "__main__":

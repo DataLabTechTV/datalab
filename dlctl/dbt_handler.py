@@ -7,7 +7,7 @@ from dbt.contracts.results import RunStatus
 from loguru import logger as log
 
 from shared.settings import LOCAL_DIR, env
-from shared.storage import Storage
+from shared.storage import Storage, StoragePrefix
 
 DBT_PROJECT_DIR = str((Path(__file__).parents[1] / "transform").resolve())
 
@@ -23,7 +23,7 @@ class DBTHandler:
         os.environ["DBT_PROJECT_DIR"] = DBT_PROJECT_DIR
         os.environ["LOCAL_DIR"] = LOCAL_DIR
 
-        s = Storage()
+        s = Storage(prefix=StoragePrefix.INGEST)
         s.latest_to_env()
 
         self.mkdirs()

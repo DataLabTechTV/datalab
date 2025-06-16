@@ -59,14 +59,10 @@ class Lakehouse:
                 """
             )
 
-        self.storage = Storage()
+        self.storage = Storage(prefix=StoragePrefix.EXPORTS)
 
     def export(self, catalog: str, schema: str) -> str:
-        s3_export_path = self.storage.get_dir(
-            f"{catalog}/{schema}",
-            dated=True,
-            prefix=StoragePrefix.EXPORTS,
-        )
+        s3_export_path = self.storage.get_dir(f"{catalog}/{schema}", dated=True)
 
         log.info("Exporting {}.{} to {}", catalog, schema, s3_export_path)
 
@@ -111,21 +107,14 @@ class Lakehouse:
                 log.error(f"Could not export {table_fqn}: COPY failed")
                 break
 
-        self.storage.upload_manifest(
-            f"{catalog}/{schema}",
-            latest=s3_export_path,
-            prefix=StoragePrefix.EXPORTS,
-        )
+        self.storage.upload_manifest(f"{catalog}/{schema}", latest=s3_export_path)
 
         log.info("Export completed: {}", s3_export_path)
 
         return s3_export_path
 
     def latest_export(self, catalog: str, schema: str) -> Optional[str]:
-        manifest = self.storage.load_manifest(
-            f"{catalog}/{schema}",
-            prefix=StoragePrefix.EXPORTS,
-        )
+        manifest = self.storage.load_manifest(f"{catalog}/{schema}")
 
         if manifest is None:
             return
