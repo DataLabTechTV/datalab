@@ -1,5 +1,7 @@
 import os
 import sys
+from datetime import datetime
+from typing import Optional
 
 import click
 from loguru import logger as log
@@ -34,12 +36,12 @@ dlctl.add_command(graph)
 # =======
 
 
-@dlctl.group(help="Manage catalog backups")
+@dlctl.group(help="Manage engine and catalog backups")
 def backup():
     pass
 
 
-@backup.command(name="create", help="Backup catalog into object storage")
+@backup.command(name="create", help="Backup engine and catalog into object storage")
 def backup_create():
     log.info("Creating a catalog backup")
 
@@ -61,24 +63,37 @@ def backup_create():
     log.info("Catalog backup created: {}", s3_backup_path)
 
 
-@backup.command(help="Restore catalog into directory")
+@backup.command(name="restore", help="Restore engine and catalog into a directory")
+@click.option(
+    "--source",
+    "source_date",
+    type=click.DateTime(formats=["%Y-%m-%dT%H:%M:%S.%f"]),
+    help="Timestamp for backup source (YYYY-mm-ddTHH:MM:SS.sss)",
+)
 @click.option("--target", default=LOCAL_DIR, type=click.STRING, help="Target directory")
-def restore(target: str):
-    log.info("Restoring catalog backup to {}", target)
-
+def backup_restore(source_date: Optional[datetime], target: str):
     os.makedirs(target, exist_ok=True)
 
     s = Storage(prefix=StoragePrefix.BACKUPS)
-    manifest = s.load_manifest("catalog")
 
-    if manifest is None or "latest" not in manifest:
-        log.error("No catalog backups found in manifest")
-        return
+    if source_date is None:
+        manifest = s.load_manifest("catalog")
 
-    s.download_dir(manifest["latest"], target)
+        if manifest is None or "latest" not in manifest:
+            log.error("No catalog backups found in manifest")
+            return
+
+        s3_path = manifest["latest"]
+    else:
+        date = source_date.strftime("%Y_%m_%d")
+        time = source_date.strftime("%H_%M_%S_%f")[:-3]
+        s3_path = s.to_s3_path(f"{env.str('S3_BACKUPS_PREFIX')}/catalog/{date}/{time}")
+
+    log.info("Restoring backup from {} into {}", s3_path, target)
+    s.download_dir(s3_path, target)
 
 
-@backup.command(help="List catalog backups")
+@backup.command(name="ls", help="List catalog backups")
 @click.option(
     "--all",
     "-a",
@@ -86,7 +101,7 @@ def restore(target: str):
     is_flag=True,
     help="Display all files (not only the top-level backup directory)",
 )
-def ls(include_all: bool):
+def backup_ls(include_all: bool):
     log.info("Listing all catalog backups")
 
     storage = Storage(prefix=StoragePrefix.BACKUPS)

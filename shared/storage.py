@@ -173,6 +173,8 @@ class Storage:
     def download_dir(self, s3_source_path: str, target_path: str):
         s3_source_prefix = self.from_s3_path(s3_source_path)
 
+        count = 0
+
         for obj in self.bucket.objects.filter(Prefix=s3_source_prefix):
             relative_path = obj.key[len(s3_source_prefix) :]
 
@@ -184,6 +186,11 @@ class Storage:
 
             log.info("Downloading {} to {}", self.to_s3_path(obj.key), local_path)
             self.bucket.download_file(Key=obj.key, Filename=local_path)
+
+            count += 1
+
+        if count == 0:
+            log.warning("No files were found in {}", s3_source_path)
 
     def upload_manifest(
         self,
