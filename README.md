@@ -83,7 +83,7 @@ dlctl ...
 
 ### ingest/
 
-Helps manage ingestion from difference data sources, creating the proper directory structure (see [Storage Layout](#storage-layout)) consisting of the retrieval for raw data and the creation proper directory structure creation. Raw data might be dropped manually, from Kaggle, Hugging Face, or some other source. This will make it easy to load it and keep it organized.
+Helps manage ingestion from difference data sources, creating the proper directory structure (see [Storage Layout](#%EF%B8%8F-storage-layout)) consisting of the retrieval for raw data and the creation proper directory structure creation. Raw data might be dropped manually, from Kaggle, Hugging Face, or some other source. This will make it easy to load it and keep it organized.
 
 ### transform/
 
@@ -91,13 +91,17 @@ This is the core of the data lakehouse, using [dbt](https://docs.getdbt.com/) to
 
 We purposely keep this simple with SQLite, using a backup/restore strategy to/from S3, as this assumes exploratory lab work, but you can easily replace [SQLite](https://ducklake.select/docs/stable/duckdb/usage/choosing_a_catalog_database#sqlite) with a [PostgreSQL](https://ducklake.select/docs/stable/duckdb/usage/choosing_a_catalog_database#postgresql) node, if you prefer.
 
+### export/
+
+Gold tier datasets under your data marts are only usable externally after you export them. This component manages exports, creating them for a specific data mart catalog and schema, listing them, or purging old versions.
+
 ### scripts/
 
 Individual Bash or Python scripts for generic tasks (e.g., launching KùzuDB Explorer).
 
 ### local/
 
-Untracked directory where all your local files will live. This includes the engine database (DuckDB) and the DuckLake catalogs (e.g., `stage.sqlite`, `marts/graphs.sqlite`), which you can restore from a [backup](#backup-and-restore), or create from scratch. KùzuDB databases will also live here, under `graphs/`, as well as the `init.sql` script for CLI access to the lakehouse.
+Untracked directory where all your local files will live. This includes the engine database (DuckDB) and the DuckLake catalogs (e.g., `stage.sqlite`, `marts/graphs.sqlite`), which you can restore from a [backup](#backup), or create from scratch. KùzuDB databases will also live here, under `graphs/`, as well as the `init.sql` script for CLI access to the lakehouse.
 
 
 ## 🗃️ Storage Layout
