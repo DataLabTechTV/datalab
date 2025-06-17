@@ -1,0 +1,34 @@
+services:
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: datalab-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=${S3_ACCESS_KEY_ID}
+      - MINIO_ROOT_PASSWORD=${S3_SECRET_ACCESS_KEY}
+    volumes:
+      - minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+
+  minio-mc:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    container_name: datalab-minio-mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set minio http://minio:9000 $S3_ACCESS_KEY_ID $S3_ACCESS_KEY_ID;
+      /usr/bin/mc mb --ignore-existing minio/${S3_BUCKET};
+      "
+    restart: no
+
+volumes:
+  minio:
