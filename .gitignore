@@ -3,6 +3,7 @@ local/**
 logs/**
 .vscode/**
 history.txt
+*:Zone.Identifier
 !.gitkeep
 
 # Byte-compiled / optimized / DLL files
