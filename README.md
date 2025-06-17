@@ -95,6 +95,20 @@ We purposely keep this simple with SQLite, using a backup/restore strategy to/fr
 
 Gold tier datasets under your data marts are only usable externally after you export them. This component manages exports, creating them for a specific data mart catalog and schema, listing them, or purging old versions.
 
+### graph/
+
+Graph loading and computation on top of KùzuDB. We support operations like graph loading from S3 parquet files, and node embedding via FRP (Fast Random Projection), which is implemented using node batching with input/output from/to KùzuDB and training on top of PyTorch.
+
+### shared/
+
+Includes five modules:
+
+- `settings`, which loads and provides access to environment variables and other relevant constants;
+- `storage`, which handles mid-level S3 storage operations, like creating a dated directory structure, uploading and downloading files and directories, or managing the manifest files;
+- `lakehouse`, which connects the DuckDB engine and helps with tasks like exporting datasets, or loading the latest snapshot for an export;
+- `templates` contains helper functions and `string.Template` instances to produce files like `init.sql`;
+- `tools` provides a function per CLI tool (callable via `dlctl tools`), for example to generate the `init.sql` file described in the `templates` module.
+
 ### scripts/
 
 Individual Bash or Python scripts for generic tasks (e.g., launching KùzuDB Explorer).
@@ -341,4 +355,22 @@ And you can list all files in all backups using:
 
 ```bash
 dlctl backup ls -a
+```
+
+### Graph
+
+#### Load
+
+This will load nodes and edges into a KùzuDB database stored under `local/graphs/<schema>`, where `schema` is a schema containing nodes and edges under the `graphs` data mart catalog. Table names for nodes or edges are usually prefixed with `<dataset>_nodes_` or `<dataset>_edges_`, respectively, and should follow the format described on KùzuDB's docs.
+
+```bash
+dlctl graph load "<schema>"
+```
+
+#### Compute
+
+A collection of graph computation calls will live here. These can be wrappers to native KùzuDB computations, or external computations. Currently, we just include the `embeddings` computation, which runs in Python using PyTorch. This will compute FRP embeddings with dimension 256, over batches of 9216 nodes, trained using 5 epochs, for the `<schema>` graph:
+
+```bash
+dlctl graph compute embeddings "<schema>" -d 256 -b 9216 -e 5
 ```
