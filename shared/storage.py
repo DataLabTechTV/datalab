@@ -253,7 +253,11 @@ class Storage:
 
                 os.environ[env_prefix] = self.to_s3_path(data_obj.key)
 
-    def ls(self, include_all: bool = False) -> list[str]:
+    def ls(
+        self,
+        include_all: bool = False,
+        display: bool = True,
+    ) -> dict[str, list[str]]:
         listing = {}
 
         for obj in self.bucket.objects.filter(Prefix=self.prefix):
@@ -288,15 +292,18 @@ class Storage:
 
                 listing[manifest["dataset"]].append(data_obj.key)
 
-        for dataset, files in listing.items():
-            print(dataset)
-            print("=" * len(dataset))
-            print()
+        if display:
+            for dataset, files in listing.items():
+                print(dataset)
+                print("=" * len(dataset))
+                print()
 
-            for file in files:
-                print(file)
+                for file in files:
+                    print(file)
 
-            print()
+                print()
+
+        return listing
 
     def prune(self, prefix: StoragePrefix) -> int:
         prefix = self.from_storage_prefix(prefix)

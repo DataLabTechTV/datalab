@@ -79,11 +79,44 @@ def restore(target: str):
 
 
 @backup.command(help="List catalog backups")
-def ls():
+@click.option(
+    "--all",
+    "-a",
+    "include_all",
+    is_flag=True,
+    help="Display all files (not only the top-level backup directory)",
+)
+def ls(include_all: bool):
     log.info("Listing all catalog backups")
 
     storage = Storage(prefix=StoragePrefix.BACKUPS)
-    storage.ls(include_all=True)
+
+    listing = storage.ls(include_all=True, display=False).get("catalog")
+
+    if listing is None:
+        return
+
+    if not include_all:
+        listing = set("/".join(path.split("/")[:4]) for path in listing)
+
+    timestamps_displayed = set()
+
+    for path in sorted(listing):
+        date, time = path.split("/")[2:4]
+
+        date = date.replace("_", "-")
+        time = time.replace("_", ":", 2).replace("_", ".")
+
+        timestamp = f"{date}T{time}"
+
+        if timestamp in timestamps_displayed:
+            print(f"{' ' * 23}\t    {path}")
+        else:
+            if include_all and len(timestamps_displayed) > 0:
+                print()
+
+            print(f"{timestamp}\t => {path}")
+            timestamps_displayed.add(timestamp)
 
 
 # Transform
