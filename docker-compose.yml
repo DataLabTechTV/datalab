@@ -25,7 +25,7 @@ services:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-      /usr/bin/mc alias set minio http://minio:9000 $S3_ACCESS_KEY_ID $S3_ACCESS_KEY_ID;
+      /usr/bin/mc alias set minio http://minio:9000 $S3_ACCESS_KEY_ID $S3_SECRET_ACCESS_KEY;
       /usr/bin/mc mb --ignore-existing minio/${S3_BUCKET};
       "
     restart: no
