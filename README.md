@@ -9,7 +9,7 @@ Tooling for a minimalist data lab running on top of DuckLake.
 
 I keep a MinIO instance on my tiny home lab, made of an old laptop running Proxmox, but you can easily spin up a MinIO instance using the `docker-compose.yml` that we provide (after setting up your `.env`, see below).
 
-> [!NOTE] dbt-duckdb
+> [!NOTE]
 > We rely on the official [duckdb/dbt-duckdb](https://github.com/duckdb/dbt-duckdb) adapter to connect to DuckLake. At this time, the latest stable version of the adapter does not support attaching the external DuckLake catalog with the `DATA_PATH` option and S3 credentials, but there is [PR #564](https://github.com/duckdb/dbt-duckdb/issues/564) that solves this, so we're using what is, at this point, unreleased code (see the [dbt-duckdb](pyproject.toml#L16) dependency and the corresponding entry under [[tools.uv.sources]](pyproject.toml#L37) in the [pyproject.toml](pyproject.toml) file).
 
 ## 🚀 Quick Start
@@ -72,7 +72,7 @@ source .venv/bin/activate
 dlctl ...
 ```
 
-> [!NOTE] Unindexed Dependencies
+> [!NOTE]
 > A few `torch` dependencies, like `torch_sparse` require `UV_FIND_LINKS` to be set when adding or removing any dependencies, but not during install, where `uv.lock` already has all the required information. We currently don't rely on this, but, if we do in the future, here's how to approach it:
 >
 > ```bash
