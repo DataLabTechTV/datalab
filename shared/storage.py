@@ -312,10 +312,8 @@ class Storage:
 
         return listing
 
-    def prune(self, prefix: StoragePrefix) -> int:
-        prefix = self.from_storage_prefix(prefix)
-
-        for obj in self.bucket.objects.filter(Prefix=prefix):
+    def prune(self) -> int:
+        for obj in self.bucket.objects.filter(Prefix=self.prefix):
             key_parts = obj.key.strip("/").split("/")
 
             if key_parts[-1] != MANIFEST:
