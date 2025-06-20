@@ -1,10 +1,19 @@
 {% macro load_deezer_genres(s3_path) %}
 
-WITH raw_json AS (
-    SELECT *
-    FROM read_json_auto('{{ s3_path }}')
+WITH user_genres AS (
+    UNPIVOT (
+        FROM read_json(
+            '{{ s3_path }}',
+            records=true,
+            map_inference_threshold=-1
+        )
+    )
+    ON *
+    INTO
+        NAME user_id
+        VALUE genres
 )
-SELECT CAST(je.key AS INTEGER) AS user_id, CAST(je.value AS VARCHAR[]) AS genres
-FROM raw_json rj, json_each(rj.json) AS je
+SELECT CAST(user_id AS iNTEGER) AS user_id, genres
+from user_genres
 
 {% endmacro %}
