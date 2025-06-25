@@ -219,10 +219,27 @@ class KuzuOps:
 
         return result.get_as_df()
 
-    def update_embeddings(self, embeddings: dict[int, list[float]]):
-        self.conn.execute("ALTER TABLE User ADD IF NOT EXISTS embedding DOUBLE[]")
-        self.conn.execute("ALTER TABLE Genre ADD IF NOT EXISTS embedding DOUBLE[]")
-        self.conn.execute("ALTER TABLE Track ADD IF NOT EXISTS embedding DOUBLE[]")
+    def update_embeddings(self, embeddings: dict[int, list[float]], dim: int):
+        self.conn.execute(
+            f"""
+            ALTER TABLE User
+            ADD IF NOT EXISTS embedding DOUBLE[{dim}]
+            """,
+        )
+
+        self.conn.execute(
+            f"""
+            ALTER TABLE Genre
+            ADD IF NOT EXISTS embedding DOUBLE[{dim}]
+            """
+        )
+
+        self.conn.execute(
+            f"""
+            ALTER TABLE Track
+            ADD IF NOT EXISTS embedding DOUBLE[{dim}]
+            """
+        )
 
         batch = [dict(nid=nid, e=e) for nid, e in embeddings.items()]
 
@@ -234,3 +251,63 @@ class KuzuOps:
             """,
             parameters=dict(batch=batch),
         )
+
+    def reindex_embeddings(self, column_name: str = "embedding"):
+        log.info("Re-indexing embeddings")
+
+        result = self.conn.execute(
+            """
+            CALL show_tables()
+            WHERE type = "NODE"
+            RETURN name AS table_name
+            """
+        )
+
+        table_names = []
+
+        for table_name in result.get_as_df()["table_name"]:
+            result = self.conn.execute(
+                f"""
+                CALL table_info("{table_name}")
+                WHERE name = $column_name
+                RETURN count(*) > 0 AS has_embedding
+                """,
+                dict(column_name=column_name),
+            )
+
+            has_embedding = result.get_as_df()["has_embedding"].iloc[0]
+
+            if has_embedding:
+                table_names.append(table_name)
+
+        log.info("Node tables with {} column: {}", column_name, ", ".join(table_names))
+
+        self.conn.execute(
+            """
+            INSTALL vector;
+            LOAD vector;
+            """
+        )
+
+        for table_name in table_names:
+            index_name = f"{table_name}_{column_name}_idx".lower()
+            log.info("Creating index {}", index_name)
+
+            self.conn.execute(
+                f"""
+                BEGIN TRANSACTION;
+
+                CALL drop_vector_index(
+                    "{table_name}",
+                    "{index_name}"
+                );
+
+                CALL create_vector_index(
+                    "{table_name}",
+                    "{index_name}",
+                    "{column_name}"
+                );
+
+                COMMIT;
+                """
+            )

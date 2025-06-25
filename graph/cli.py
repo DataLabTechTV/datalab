@@ -95,5 +95,15 @@ def embeddings(schema: str, dimension: int, batch_size: int, epochs: int, algo: 
         log.exception(e)
 
 
+@graph.command()
+@click.argument("schema", type=click.STRING)
+def reindex(schema: str):
+    try:
+        ops = KuzuOps(schema)
+        ops.reindex_embeddings()
+    except Exception as e:
+        log.error(e)
+
+
 if __name__ == "__main__":
     graph()

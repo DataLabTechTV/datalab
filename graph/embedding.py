@@ -106,7 +106,7 @@ class NodeEmbedding:
             for node_id in node_ids[start : start + self.batch_size]:
                 batch[node_id] = embeddings[node_id].cpu().tolist()
 
-            self.ops.update_embeddings(batch)
+            self.ops.update_embeddings(batch, dim=self.dim)
 
         if torch.cuda.is_available():
             log.info("Emptying CUDA cache")
