@@ -265,9 +265,13 @@ dependencies = [
     { name = "minio" },
     { name = "pandas" },
     { name = "platformdirs" },
-    { name = "python-semantic-release" },
     { name = "python-slugify" },
     { name = "torch" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "python-semantic-release" },
 ]
 
 [package.metadata]
@@ -286,10 +290,12 @@ requires-dist = [
     { name = "minio", specifier = ">=7.2.15" },
     { name = "pandas", specifier = ">=2.3.0" },
     { name = "platformdirs", specifier = ">=4.3.8" },
-    { name = "python-semantic-release", specifier = ">=9.21.1" },
     { name = "python-slugify", specifier = ">=8.0.4" },
     { name = "torch", specifier = ">=2.7.1" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "python-semantic-release", specifier = ">=9.21.1" }]
 
 [[package]]
 name = "dbt-adapters"

@@ -22,9 +22,13 @@ dependencies = [
   "minio>=7.2.15",
   "pandas>=2.3.0",
   "platformdirs>=4.3.8",
-  "python-semantic-release>=9.21.1",
   "python-slugify>=8.0.4",
   "torch>=2.7.1",
+]
+
+[dependency-groups]
+dev = [
+    "python-semantic-release>=9.21.1",
 ]
 
 [project.scripts]
@@ -43,5 +47,4 @@ include = ["dlctl", "shared", "ingest", "transform", "export", "graph"]
 commit_parser = "conventional"
 version_variables = ["pyproject.toml:project.version"]
 changelog_file = "CHANGELOG.md"
-branches = ["main"]
 upload_to_vcs_release = true
