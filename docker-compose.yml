@@ -28,5 +28,42 @@ services:
       "
     restart: no
 
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    runtime: nvidia
+    healthcheck:
+      test: ["CMD", "ollama", "ls"]
+      interval: 10s
+      retries: 3
+    restart: unless-stopped
+
+  ollama-models:
+    image: alpine/curl:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      MODELS: gemma3:latest,nomic-embed-text
+    entrypoint: |
+      /bin/sh -c '
+      IFS=,; set -- $${MODELS};
+      for model in "$$@"; do
+        echo "==> Downloading model: $$model"
+        curl -X POST http://ollama:11434/api/pull \
+          -H "Content-Type: application/json" \
+          -d "{\"name\": \"$$model\"}"
+      done
+      '
+    restart: no
 volumes:
   minio:
+  ollama:
