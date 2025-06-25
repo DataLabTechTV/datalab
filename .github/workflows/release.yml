@@ -25,7 +25,10 @@ jobs:
       - name: Run semantic-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SEMANTIC_RELEASE: uvx --from="python-semantic-release@9.21.1" semantic-release
-        run: |
-          $SEMANTIC_RELEASE version
-          $SEMANTIC_RELEASE publish
+        run: | #shell
+          sr() {
+            uvx --from="python-semantic-release@9.21.1" semantic-release "$@"
+          }
+
+          sr version
+          sr publish
