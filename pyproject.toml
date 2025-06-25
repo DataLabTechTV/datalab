@@ -46,6 +46,8 @@ include = ["dlctl", "shared", "ingest", "transform", "export", "graph"]
 [tool.semantic_release]
 commit_parser = "conventional"
 version_variables = ["pyproject.toml:project.version"]
-changelog_file = "CHANGELOG.md"
 upload_to_vcs_release = true
 allow_zero_version = true
+
+[tool.semantic_release.changelog.default_templates]
+changelog_file = "CHANGELOG.md"
