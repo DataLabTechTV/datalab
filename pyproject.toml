@@ -22,6 +22,7 @@ dependencies = [
   "minio>=7.2.15",
   "pandas>=2.3.0",
   "platformdirs>=4.3.8",
+  "python-semantic-release>=9.21.1",
   "python-slugify>=8.0.4",
   "torch>=2.7.1",
 ]
@@ -37,3 +38,10 @@ dbt-duckdb = { git = "https://github.com/duckdb/dbt-duckdb.git", rev = "afc39991
 
 [tool.setuptools.packages.find]
 include = ["dlctl", "shared", "ingest", "transform", "export", "graph"]
+
+[tool.semantic_release]
+commit_parser = "conventional"
+version_variables = ["pyproject.toml:project.version"]
+changelog_file = "CHANGELOG.md"
+branches = ["main"]
+upload_to_vcs_release = true
