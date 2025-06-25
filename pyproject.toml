@@ -20,6 +20,7 @@ dependencies = [
   "kuzu>=0.10.0",
   "loguru>=0.7.3",
   "minio>=7.2.15",
+  "ollama>=0.5.1",
   "pandas>=2.3.0",
   "platformdirs>=4.3.8",
   "python-slugify>=8.0.4",
