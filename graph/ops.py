@@ -290,24 +290,43 @@ class KuzuOps:
         )
 
         for table_name in table_names:
+            # if table_name in ("User",):
+            #     log.critical("Skipping some tables for debugging (DELETEME)")
+            #     continue
+
             index_name = f"{table_name}_{column_name}_idx".lower()
+
+            result = self.conn.execute(
+                f"""
+                CALL show_indexes()
+                WHERE `index name` = $index_name
+                RETURN count(*) > 0 AS index_exists
+                """,
+                dict(index_name=index_name),
+            )
+
+            index_exists = result.get_as_df()["index_exists"].iloc[0]
+
+            if index_exists:
+                log.info("Dropping existing index {}", index_name)
+
+                self.conn.execute(
+                    f"""
+                    CALL drop_vector_index(
+                        "{table_name}",
+                        "{index_name}"
+                    )
+                    """
+                )
+
             log.info("Creating index {}", index_name)
 
             self.conn.execute(
                 f"""
-                BEGIN TRANSACTION;
-
-                CALL drop_vector_index(
-                    "{table_name}",
-                    "{index_name}"
-                );
-
                 CALL create_vector_index(
                     "{table_name}",
                     "{index_name}",
                     "{column_name}"
                 );
-
-                COMMIT;
                 """
             )
