@@ -7,6 +7,7 @@ from typing import Any, Iterable, Optional
 
 import boto3
 from loguru import logger as log
+from mypy_boto3_s3.service_resource import Bucket
 from slugify import slugify
 
 from shared.settings import env
@@ -23,67 +24,50 @@ class StoragePrefix(Enum):
 
 class Storage:
     def __init__(self, prefix: StoragePrefix):
-        endpoint = env.str("S3_ENDPOINT", required=False)
-        use_ssl = env.bool("S3_USE_SSL", default=True)
-        access_key = env.str("S3_ACCESS_KEY_ID")
-        secret_key = env.str("S3_SECRET_ACCESS_KEY")
-        region = env.str("S3_REGION")
+        self.endpoint = env.str("S3_ENDPOINT", required=False)
+        self.use_ssl = env.bool("S3_USE_SSL", default=True)
+        self.access_key = env.str("S3_ACCESS_KEY_ID")
+        self.secret_key = env.str("S3_SECRET_ACCESS_KEY")
+        self.region = env.str("S3_REGION")
 
-        if endpoint is None:
-            endpoint_url = None
-        else:
-            endpoint_url = f"https://{endpoint}" if use_ssl else f"http://{endpoint}"
-
-        self.s3 = boto3.resource(
-            "s3",
-            endpoint_url=endpoint_url,
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-            region_name=region,
-        )
-
-        # Bucket
-        # ======
-
-        bucket_name = env.str("S3_BUCKET")
-
-        if bucket_name is None:
-            raise ValueError("S3_BUCKET not defined")
-
-        bucket = self.s3.Bucket(bucket_name)
-
-        if bucket not in self.s3.buckets.all():
-            raise FileNotFoundError("Bucket does not exist: {}", self.bucket.name)
-
-        self.bucket = bucket
-
-        # Prefix
-        # ======
+        if self.endpoint is not None:
+            self.endpoint = (
+                f"https://{self.endpoint}"
+                if self.use_ssl
+                else f"http://{self.endpoint}"
+            )
 
         match prefix:
             case StoragePrefix.INGEST:
-                ingest_prefix = env.str("S3_INGEST_PREFIX")
-
-                if ingest_prefix is None:
-                    raise ValueError("S3_INGEST_PREFIX not defined")
-
-                self.prefix = ingest_prefix.strip("/")
+                self.prefix = env.str("S3_INGEST_PREFIX").strip("/")
             case StoragePrefix.EXPORTS:
-                exports_prefix = env.str("S3_EXPORTS_PREFIX")
-
-                if exports_prefix is None:
-                    raise ValueError("S3_EXPORTS_PREFIX not defined")
-
-                self.prefix = exports_prefix.strip("/")
+                self.prefix = env.str("S3_EXPORTS_PREFIX").strip("/")
             case StoragePrefix.BACKUPS:
-                backups_prefix = env.str("S3_BACKUPS_PREFIX")
+                self.prefix = env.str("S3_BACKUPS_PREFIX").strip("/")
 
-                if backups_prefix is None:
-                    raise ValueError("S3_BACKUPS_PREFIX not defined")
+        log.info("Using prefix: {}", self.prefix)
 
-                self.prefix = backups_prefix.strip("/")
+        self._bucket = None
 
-        log.info("Using prefix: {}", self.to_s3_path(self.prefix))
+    @property
+    def bucket(self) -> Bucket:
+        if self._bucket is None:
+            s3 = boto3.resource(
+                "s3",
+                endpoint_url=self.endpoint,
+                aws_access_key_id=self.access_key,
+                aws_secret_access_key=self.secret_key,
+                region_name=self.region,
+            )
+
+            bucket = s3.Bucket(env.str("S3_BUCKET"))
+
+            if bucket not in s3.buckets.all():
+                raise FileNotFoundError("Bucket does not exist: {}", bucket.name)
+
+            self._bucket = bucket
+
+        return self._bucket
 
     def to_s3_path(self, prefix: str) -> str:
         return f"s3://{self.bucket.name}/{prefix}"
