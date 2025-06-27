@@ -326,3 +326,34 @@ class KuzuOps:
                 );
                 """
             )
+
+    def get_schema(self):
+        schema = []
+
+        result = self.conn.execute(
+            """
+            CALL show_tables()
+            WHERE type = "REL"
+            RETURN name AS table_name;
+            """
+        )
+
+        rel_tables = [table_name for table_name in result.get_as_df()["table_name"]]
+
+        for rel_table in rel_tables:
+            result = self.conn.execute(
+                f"""
+                CALL show_connection("{rel_table}")
+                RETURN
+                    `source table name` AS source,
+                    `destination table name` AS target;
+                """
+            )
+
+            result = result.get_as_df()
+            source = result["source"].iloc[0]
+            target = result["target"].iloc[0]
+
+            schema.append(f"({source})-[:{rel_table}]->({target})")
+
+        return schema
