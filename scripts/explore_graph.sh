@@ -1,5 +1,7 @@
 #!/bin/bash
 
+KUZUDB_EXPLORER_VERSION=0.10.0
+
 if ! which docker >/dev/null; then
     echo "docker: not found"
     exit 1
@@ -100,7 +102,7 @@ else
     docker run -d --name kuzudb-explorer \
         -p 8000:8000 -v "${kuzudb_path}:/database" \
         -e MODE=$MODE \
-        kuzudb/explorer:latest >/dev/null
+        kuzudb/explorer:$KUZUDB_EXPLORER_VERSION >/dev/null
 fi
 
 echo "==> Opening browser at http://localhost:8000..."
