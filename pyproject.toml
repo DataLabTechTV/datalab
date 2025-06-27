@@ -32,6 +32,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pytest>=8.4.1",
     "python-semantic-release>=9.21.1",
 ]
 
@@ -43,6 +44,9 @@ package = true
 
 [tool.uv.sources]
 dbt-duckdb = { git = "https://github.com/duckdb/dbt-duckdb.git", rev = "afc39991158c0f719e5e57469ab466cfb63fbb8c" }
+
+[tool.pytest.ini_options]
+addopts = "--capture=no --maxfail=1 --disable-warnings"
 
 [tool.setuptools.packages.find]
 include = ["dlctl", "shared", "ingest", "transform", "export", "graph"]
