@@ -1,6 +1,7 @@
 import os
 import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 import click
@@ -11,18 +12,35 @@ from dlctl.dbt_handler import DBTHandler
 from export.cli import export
 from graph.cli import graph
 from ingest.cli import ingest
-from shared.lakehouse import Lakehouse
 from shared.settings import LOCAL_DIR, MART_DB_VARS, env
 from shared.storage import Storage, StoragePrefix
 
+LOG_FILE = Path(__file__).resolve().parents[1] / "logs/datalab.log"
+
 
 @click.group(help="Data Lab, by https://youtube.com/@DataLabTechTV")
-@click.option("--debug", is_flag=True, help="Globally enable logging debug mode")
-def dlctl(debug: bool):
-    log.info("Welcome to Data Lab, by https://youtube.com/@DataLabTechTV")
+@click.option(
+    "--debug",
+    is_flag=True,
+    help="Globally enable logging debug mode",
+)
+@click.option(
+    "--no-logfile",
+    "logfile_enabled",
+    is_flag=True,
+    default=True,
+    help=f"Disable file logging ({LOG_FILE.relative_to(Path.cwd())})",
+)
+def dlctl(debug: bool, logfile_enabled: bool):
+    level = "DEBUG" if debug else "INFO"
 
     log.remove()
-    log.add(sys.stderr, level="DEBUG" if debug else "INFO")
+    log.add(sys.stderr, level=level)
+
+    if logfile_enabled:
+        log.add(LOG_FILE, rotation="10 MB", retention="7 days", level=level)
+
+    log.info("Welcome to Data Lab, by https://youtube.com/@DataLabTechTV")
 
 
 # External
