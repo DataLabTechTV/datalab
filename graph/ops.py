@@ -327,8 +327,8 @@ class KuzuOps:
                 """
             )
 
-    def get_schema(self):
-        schema = []
+    def get_rels_schema(self) -> list[str]:
+        rels_schema = []
 
         result = self.conn.execute(
             """
@@ -354,6 +354,38 @@ class KuzuOps:
             source = result["source"].iloc[0]
             target = result["target"].iloc[0]
 
-            schema.append(f"({source})-[:{rel_table}]->({target})")
+            rels_schema.append(f"({source})-[:{rel_table}]->({target})")
 
-        return schema
+        return rels_schema
+
+    def get_nodes_schema(self) -> list[str]:
+        node_props_schema = []
+
+        result = self.conn.execute(
+            """
+            CALL show_tables()
+            WHERE type = "NODE"
+            RETURN name AS table_name;
+            """
+        )
+
+        node_tables = [table_name for table_name in result.get_as_df()["table_name"]]
+
+        for node_table in node_tables:
+            result = self.conn.execute(
+                f"""
+                CALL table_info("{node_table}")
+                RETURN name, type;
+                """
+            )
+
+            props = []
+
+            for _, row in result.get_as_df().iterrows():
+                props.append(f"{row['name']} {row['type']}")
+
+            props = ", ".join(props)
+
+            node_props_schema.append(f"{node_table}({props})")
+
+        return node_props_schema
