@@ -219,27 +219,27 @@ class KuzuOps:
 
         return result.get_as_df()
 
-    def update_embeddings(self, embeddings: dict[int, list[float]], dim: int):
-        self.conn.execute(
-            f"""
-            ALTER TABLE User
-            ADD IF NOT EXISTS embedding DOUBLE[{dim}]
-            """,
-        )
-
-        self.conn.execute(
-            f"""
-            ALTER TABLE Genre
-            ADD IF NOT EXISTS embedding DOUBLE[{dim}]
+    def update_embeddings(
+        self,
+        embeddings: dict[int, list[float]],
+        dim: int,
+        column_name: str = "embedding",
+    ):
+        result = self.conn.execute(
+            """
+            CALL show_tables()
+            WHERE type = "NODE"
+            RETURN name AS table_name
             """
         )
 
-        self.conn.execute(
-            f"""
-            ALTER TABLE Track
-            ADD IF NOT EXISTS embedding DOUBLE[{dim}]
-            """
-        )
+        for table_name in result.get_as_df()["table_name"]:
+            self.conn.execute(
+                f"""
+                ALTER TABLE {table_name}
+                ADD IF NOT EXISTS {column_name} DOUBLE[{dim}]
+                """
+            )
 
         batch = [dict(nid=nid, e=e) for nid, e in embeddings.items()]
 
