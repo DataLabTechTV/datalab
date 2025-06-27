@@ -289,11 +289,7 @@ class KuzuOps:
             """
         )
 
-        for table_name in table_names:
-            # if table_name in ("User",):
-            #     log.critical("Skipping some tables for debugging (DELETEME)")
-            #     continue
-
+        for table_name in sorted(table_names):
             index_name = f"{table_name}_{column_name}_idx".lower()
 
             result = self.conn.execute(
@@ -308,7 +304,7 @@ class KuzuOps:
             index_exists = result.get_as_df()["index_exists"].iloc[0]
 
             if index_exists:
-                log.info("Dropping existing index {}", index_name)
+                log.warning("Dropping existing index {}", index_name)
 
                 self.conn.execute(
                     f"""
