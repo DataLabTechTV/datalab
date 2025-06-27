@@ -45,7 +45,7 @@ class Storage:
             case StoragePrefix.BACKUPS:
                 self.prefix = env.str("S3_BACKUPS_PREFIX").strip("/")
 
-        log.info("Using prefix: {}", self.prefix)
+        log.debug("Using prefix: {}", self.prefix)
 
         self._bucket = None
 
