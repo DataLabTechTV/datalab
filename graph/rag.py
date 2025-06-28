@@ -1,11 +1,14 @@
 import re
 import textwrap
-from enum import Enum
+from typing import Any
 
+import ollama
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema.runnable import Runnable
 from langchain.schema.runnable.config import RunnableConfig
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_kuzu.chains.graph_qa.kuzu import KuzuQAChain
+from langchain_kuzu.graphs.kuzu_graph import KuzuGraph
 from langchain_ollama import ChatOllama
 from loguru import logger as log
 from platformdirs import user_config_path
@@ -49,8 +52,6 @@ class GraphRAG(Runnable):
         self,
         schema: str,
         model: str = "phi4:latest",
-        # model: str = "deepseek-r1:7b",
-        # model: str = "gemma3:latest",
         column_name: str = "embedding",
     ):
         self.schema = schema
@@ -59,90 +60,111 @@ class GraphRAG(Runnable):
 
         self.ops = KuzuOps(schema)
 
-        self.chain = self.cypher_prompt | self.llm
+    def ensure_model(self):
+        ollama_models = {m.model for m in ollama.list().models}
+
+        if self.model not in ollama_models:
+            log.warning("{}: ollama model not found, pulling...", self.model)
+            ollama.pull(self.model)
 
     @property
-    def cypher_prompt(self) -> ChatPromptTemplate:
-        if not hasattr(self, "_cypher_prompt"):
-            nodes_schema = self.ops.get_nodes_schema()
-            nodes_schema = "\n".join(f"- {node_schema}" for node_schema in nodes_schema)
+    def chain(self):
+        self.ensure_model()
 
-            rels_schema = self.ops.get_rels_schema()
-            rels_schema = "\n".join(f"- {rel_schema}" for rel_schema in rels_schema)
+        if not hasattr(self, "_chain"):
+            self._chain = self.entities_prompt | self.graph_retriever
 
+        return self._chain
+
+    @property
+    def entities_prompt(self) -> ChatPromptTemplate:
+        if not hasattr(self, "_entities_prompt"):
             tpl = textwrap.dedent(
                 """
-                You are an AI assistant that generates Cypher queries based on user requests and a provided graph schema.
+                You are an AI assistant that extracts entities from a given user query using named entity recognition and matches them to nodes in a knowledge graph, returning the node_id properties of those nodes, and nothing more.
 
                 Input:
-
-                1. Graph schema:
-                - Nodes: Each node label with its properties and their types.
-                - Relationships: Each relationship type, its direction, and the connected node labels.
-
-                2. User natural language query: a sentence or question describing what data to retrieve.
+                User query: a sentence or question mentioning entities to retrieve from the knowledge graph.
 
                 Task:
-
-                Step 1: Extract from the user query all relevant entities as nodes and their properties, and the relationships (with directions) between those nodes, but only using the nodes, properties, and relationships defined in the schema.
-
-                Step 2: Write a valid Cypher query that fulfills the user query, strictly using the schema's nodes, properties, and relationships.
+                Extract all relevant entities from the user query as nodes represented by their node_id property.
 
                 Rules:
-                - Only use properties and relationship types defined in the schema.
+                - Only use node properties defined in the schema.
                 - Use exact property names and values as extracted from the user query.
                 - If a property value is not specified, do not guess it.
                 - Ignore user query requests, and just return the node_id property for nodes matching named entities explicitly mentioned in the user query.
-                - Output should be a column with node_id only.
-                - Do not make recommendations. This is not a recommendation task.
+                - Do not make recommendations. Only return the node_id properties for extracted entities that have a node in the graph.
 
-                ---
+                Example:
 
-                Nodes schema:
-                %(nodes_schema)s
+                If the user mentions Nirvana and there is an artist property on a Track node, then all nodes matching Nirvana should be retrieved as follows:
 
-                Relationships schema:
-                %(rels_schema)s
+                ```cypher
+                MATCH (t:Track {{artist: "Nirvana"}})
+                RETURN t.node_id AS node_id;
+                ```
+
+                If, in addition to Nirvana, the user algo mentions the grunge genre, and there is a genre property of a Genre node, then all nodes matching grunge should be added to be previous query as follows:
+
+                ```cypher
+                MATCH (t:Track)
+                WHERE LOWER(t.artist) = LOWER("Nirvana")
+                RETURN t.node_id AS node_id
+
+                UNION
+
+                MATCH (g:Genre)
+                WHERE LOWER(g.genre) = LOWER("grunge")
+                RETURN g.node_id AS node_id
+                ```
 
                 User query:
                 "{user_query}"
 
                 ---
 
-                Step 1: Extracted entities and relationships:
-
-                [Your output here]
-
-                Step 2: Generated Cypher query:
+                Here are the node_id properties for all nodes matching the extracted entities:
 
                 [Your output here]
                 """
-            )
+            ).strip("\n")
 
-            tpl = tpl.strip("\n")
+            log.debug("entities prompt:\n{}", tpl)
 
-            tpl %= dict(
-                nodes_schema=nodes_schema,
-                rels_schema=rels_schema,
-            )
+            self._entities_prompt = ChatPromptTemplate.from_template(tpl)
 
-            log.debug("cypher prompt:\n{}", tpl)
-
-            self._cypher_prompt = ChatPromptTemplate.from_template(tpl)
-
-        return self._cypher_prompt
+        return self._entities_prompt
 
     @property
     def llm(self) -> BaseChatModel:
         if not hasattr(self, "_llm"):
-            self._llm = ChatOllama(model=self.model, temperature=0)
+            self._llm = ChatOllama(model=self.model, temperature=0.3)
 
         return self._llm
 
     @property
+    def graph_retriever(self) -> KuzuQAChain:
+        if not hasattr(self, "_graph_retriever"):
+            graph = KuzuGraph(
+                self.ops.conn.database,
+                allow_dangerous_requests=True,
+            )
+
+            self._graph_retriever = KuzuQAChain.from_llm(
+                llm=self.llm,
+                graph=graph,
+                verbose=True,
+                allow_dangerous_requests=True,
+            )
+
+        return self._graph_retriever
+
+    @property
     def context_assembler(self) -> str: ...
 
-    def invoke(self, input, config: RunnableConfig = None):
+    def invoke(self, input, config: RunnableConfig = None) -> dict[str, Any]:
+        log.debug("user query: {}", input["user_query"])
         return self.chain.invoke(input, config=config)
 
     def interactive(self):

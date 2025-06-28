@@ -21,5 +21,5 @@ def test_graph_rag():
     gr = GraphRAG("music_taste")
 
     for prompt in PROMPTS:
-        result = gr.invoke(dict(user_query=prompt))
-        print(result.content)
+        response = gr.invoke(dict(user_query=prompt))
+        print(response["result"])
