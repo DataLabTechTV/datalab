@@ -1,6 +1,7 @@
 import os
 import sys
 from datetime import datetime
+from importlib.metadata import version
 from pathlib import Path
 from typing import Optional
 
@@ -18,7 +19,10 @@ from shared.storage import Storage, StoragePrefix
 LOG_FILE = Path(__file__).resolve().parents[1] / "logs/datalab.log"
 
 
-@click.group(help="Data Lab, by https://youtube.com/@DataLabTechTV")
+@click.group(
+    help="Data Lab, by https://youtube.com/@DataLabTechTV",
+    invoke_without_command=True,
+)
 @click.option(
     "--debug",
     is_flag=True,
@@ -31,7 +35,22 @@ LOG_FILE = Path(__file__).resolve().parents[1] / "logs/datalab.log"
     default=True,
     help=f"Disable file logging ({LOG_FILE.relative_to(Path.cwd())})",
 )
-def dlctl(debug: bool, logfile_enabled: bool):
+@click.option(
+    "--version",
+    "show_version",
+    is_flag=True,
+    help="Show current version for datalab",
+)
+@click.pass_context
+def dlctl(ctx: click.Context, debug: bool, logfile_enabled: bool, show_version: bool):
+    if show_version:
+        print(f"datalab version {version('datalab')}")
+        ctx.exit(0)
+
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        ctx.exit(1)
+
     level = "DEBUG" if debug else "INFO"
 
     log.remove()
