@@ -19,6 +19,7 @@ dependencies = [
   "kagglehub>=0.3.12",
   "kuzu>=0.10.0",
   "langchain>=0.3.26",
+  "langchain-kuzu>=0.4.2",
   "langchain-ollama>=0.3.3",
   "loguru>=0.7.3",
   "minio>=7.2.15",
