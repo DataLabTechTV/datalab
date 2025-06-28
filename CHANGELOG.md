@@ -1,33 +1,6 @@
 # CHANGELOG
 
 
-## v0.2.0 (2025-06-25)
-
-### Chores
-
-- Container names will now use the default naming schema
-  ([`6d267b8`](https://github.com/DataLabTechTV/datalab/commit/6d267b873d5ce8fd07b61a3b0595cc4700f95603))
-
-### Continuous Integration
-
-- Add missing version to semantic-version command
-  ([`c6facd1`](https://github.com/DataLabTechTV/datalab/commit/c6facd16d251c97967d21c9668452dd980a93802))
-
-- Fix call to semantic release using a function
-  ([`d577a45`](https://github.com/DataLabTechTV/datalab/commit/d577a45625c46d0081242fdb911b8f1d09af742c))
-
-- Fix changelog_file config location
-  ([`b5bb8d7`](https://github.com/DataLabTechTV/datalab/commit/b5bb8d780084f955bdc234120a5f766bc685a4fc))
-
-- Remove redundant build option, already set on pyproject.toml
-  ([`e8f6d6b`](https://github.com/DataLabTechTV/datalab/commit/e8f6d6baf47609fbd00bd5bcd2003c1e954be2d0))
-
-### Features
-
-- Ollama service with gemma3 and nomic-embed-text
-  ([`83b68dd`](https://github.com/DataLabTechTV/datalab/commit/83b68dd5c23e767789c935e24cc55317a35e133d))
-
-
 ## v0.1.0 (2025-06-25)
 
 ### Bug Fixes
