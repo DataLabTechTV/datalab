@@ -101,7 +101,8 @@ class GraphRAG(Runnable):
                 If the user mentions Nirvana and there is an artist property on a Track node, then all nodes matching Nirvana should be retrieved as follows:
 
                 ```cypher
-                MATCH (t:Track {{artist: "Nirvana"}})
+                MATCH (t:Track)
+                WHERE LOWER(t.artist) = LOWER("Nirvana")
                 RETURN t.node_id AS node_id;
                 ```
 
@@ -139,7 +140,7 @@ class GraphRAG(Runnable):
     @property
     def llm(self) -> BaseChatModel:
         if not hasattr(self, "_llm"):
-            self._llm = ChatOllama(model=self.model, temperature=0.3)
+            self._llm = ChatOllama(model=self.model, temperature=0.2)
 
         return self._llm
 
