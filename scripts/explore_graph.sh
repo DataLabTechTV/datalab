@@ -1,5 +1,7 @@
 #!/bin/bash
 
+KUZUDB_EXPLORER_VERSION=0.10.0
+
 if ! which docker >/dev/null; then
     echo "docker: not found"
     exit 1
@@ -22,6 +24,8 @@ container_exists() {
 }
 
 kuzudb_container_mode() {
+    local mode
+
     mode=$(docker inspect kuzudb-explorer \
         --format='{{range .Config.Env}}{{println .}}{{end}}' |
         awk '{ if (match($0, /MODE=(.*)/, m)) print m[1] }')
@@ -32,6 +36,22 @@ kuzudb_container_mode() {
     fi
 
     echo "$mode"
+}
+
+kuzudb_container_db_path_cmp() {
+    local new_db_path
+    local cur_db_path
+
+    if [ $# -lt 1 ]; then
+        exit 3
+    fi
+
+    new_db_path=$(readlink -f "$1")
+
+    fmt='{{range .Mounts}}{{if eq .Destination "/database"}}{{.Source}}{{end}}{{end}}'
+    cur_db_path=$(docker inspect kuzudb-explorer --format "$fmt")
+
+    [ "$cur_db_path" = "$new_db_path" ]
 }
 
 trap cleanup SIGINT SIGTERM
@@ -58,17 +78,18 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-kuzudb_path=$1
-
-if [[ "$kuzudb_path" != /* && "$kuzudb_path" != ./* ]]; then
-    kuzudb_path="./$kuzudb_path"
-fi
+kuzudb_path=$(readlink -f "$1")
 
 if container_exists; then
     current_mode=$(kuzudb_container_mode)
 
     if [ "$current_mode" != $MODE ]; then
         echo "==> Removing existing $current_mode kuzudb-explorer container"
+        docker rm -f kuzudb-explorer >/dev/null
+    fi
+
+    if ! kuzudb_container_db_path_cmp "$kuzudb_path"; then
+        echo "==> Removing existing kuzudb-explorer container for $kuzudb_path"
         docker rm -f kuzudb-explorer >/dev/null
     fi
 fi
@@ -81,7 +102,7 @@ else
     docker run -d --name kuzudb-explorer \
         -p 8000:8000 -v "${kuzudb_path}:/database" \
         -e MODE=$MODE \
-        kuzudb/explorer:latest >/dev/null
+        kuzudb/explorer:$KUZUDB_EXPLORER_VERSION >/dev/null
 fi
 
 echo "==> Opening browser at http://localhost:8000..."

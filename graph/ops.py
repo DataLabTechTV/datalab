@@ -219,10 +219,27 @@ class KuzuOps:
 
         return result.get_as_df()
 
-    def update_embeddings(self, embeddings: dict[int, list[float]]):
-        self.conn.execute("ALTER TABLE User ADD IF NOT EXISTS embedding DOUBLE[]")
-        self.conn.execute("ALTER TABLE Genre ADD IF NOT EXISTS embedding DOUBLE[]")
-        self.conn.execute("ALTER TABLE Track ADD IF NOT EXISTS embedding DOUBLE[]")
+    def update_embeddings(
+        self,
+        embeddings: dict[int, list[float]],
+        dim: int,
+        column_name: str = "embedding",
+    ):
+        result = self.conn.execute(
+            """
+            CALL show_tables()
+            WHERE type = "NODE"
+            RETURN name AS table_name
+            """
+        )
+
+        for table_name in result.get_as_df()["table_name"]:
+            self.conn.execute(
+                f"""
+                ALTER TABLE {table_name}
+                ADD IF NOT EXISTS {column_name} DOUBLE[{dim}]
+                """
+            )
 
         batch = [dict(nid=nid, e=e) for nid, e in embeddings.items()]
 
@@ -234,3 +251,141 @@ class KuzuOps:
             """,
             parameters=dict(batch=batch),
         )
+
+    def reindex_embeddings(self, column_name: str = "embedding"):
+        log.info("Re-indexing embeddings")
+
+        result = self.conn.execute(
+            """
+            CALL show_tables()
+            WHERE type = "NODE"
+            RETURN name AS table_name
+            """
+        )
+
+        table_names = []
+
+        for table_name in result.get_as_df()["table_name"]:
+            result = self.conn.execute(
+                f"""
+                CALL table_info("{table_name}")
+                WHERE name = $column_name
+                RETURN count(*) > 0 AS has_embedding
+                """,
+                dict(column_name=column_name),
+            )
+
+            has_embedding = result.get_as_df()["has_embedding"].iloc[0]
+
+            if has_embedding:
+                table_names.append(table_name)
+
+        log.info("Node tables with {} column: {}", column_name, ", ".join(table_names))
+
+        self.conn.execute(
+            """
+            INSTALL vector;
+            LOAD vector;
+            """
+        )
+
+        for table_name in sorted(table_names):
+            index_name = f"{table_name}_{column_name}_idx".lower()
+
+            result = self.conn.execute(
+                f"""
+                CALL show_indexes()
+                WHERE `index name` = $index_name
+                RETURN count(*) > 0 AS index_exists
+                """,
+                dict(index_name=index_name),
+            )
+
+            index_exists = result.get_as_df()["index_exists"].iloc[0]
+
+            if index_exists:
+                log.warning("Dropping existing index {}", index_name)
+
+                self.conn.execute(
+                    f"""
+                    CALL drop_vector_index(
+                        "{table_name}",
+                        "{index_name}"
+                    )
+                    """
+                )
+
+            log.info("Creating index {}", index_name)
+
+            self.conn.execute(
+                f"""
+                CALL create_vector_index(
+                    "{table_name}",
+                    "{index_name}",
+                    "{column_name}"
+                );
+                """
+            )
+
+    def get_rels_schema(self) -> list[str]:
+        rels_schema = []
+
+        result = self.conn.execute(
+            """
+            CALL show_tables()
+            WHERE type = "REL"
+            RETURN name AS table_name;
+            """
+        )
+
+        rel_tables = [table_name for table_name in result.get_as_df()["table_name"]]
+
+        for rel_table in rel_tables:
+            result = self.conn.execute(
+                f"""
+                CALL show_connection("{rel_table}")
+                RETURN
+                    `source table name` AS source,
+                    `destination table name` AS target;
+                """
+            )
+
+            result = result.get_as_df()
+            source = result["source"].iloc[0]
+            target = result["target"].iloc[0]
+
+            rels_schema.append(f"({source})-[:{rel_table}]->({target})")
+
+        return rels_schema
+
+    def get_nodes_schema(self) -> list[str]:
+        node_props_schema = []
+
+        result = self.conn.execute(
+            """
+            CALL show_tables()
+            WHERE type = "NODE"
+            RETURN name AS table_name;
+            """
+        )
+
+        node_tables = [table_name for table_name in result.get_as_df()["table_name"]]
+
+        for node_table in node_tables:
+            result = self.conn.execute(
+                f"""
+                CALL table_info("{node_table}")
+                RETURN name, type;
+                """
+            )
+
+            props = []
+
+            for _, row in result.get_as_df().iterrows():
+                props.append(f"{row['name']} {row['type']}")
+
+            props = ", ".join(props)
+
+            node_props_schema.append(f"{node_table}({props})")
+
+        return node_props_schema
