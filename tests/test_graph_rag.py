@@ -6,7 +6,7 @@ from graph.rag import GraphRAG
 from shared.settings import LOCAL_DIR, env
 
 PROMPTS = (
-    "If like metal artists like Metallica or Iron Maiden, but also listen to IDM, what other artists and genres could I listen to?",
+    "If I like metal artists like Metallica or Iron Maiden, but also listen to IDM, what other artists and genres could I listen to?",
 )
 
 
