@@ -9,6 +9,7 @@ import kuzu
 import numpy as np
 import pandas as pd
 from loguru import logger as log
+from more_itertools import interleave_longest
 
 from shared.settings import LOCAL_DIR, env
 from shared.storage import Storage, StoragePrefix
@@ -435,10 +436,12 @@ class KuzuOps:
 
         result = self.conn.execute(
             f"""
-            MATCH p = (a)-[* SHORTEST {min_length}..{max_length} ]-(b)
+            MATCH p = (a)-[* SHORTEST {min_length}..{max_length}]-(b)
             WHERE a.node_id IN $source_node_ids
                 AND b.node_id IN $target_node_ids
-            RETURN list_transform(nodes(p), n -> n.node_id) AS paths;
+            RETURN
+                list_transform(nodes(p), n -> n.node_id) AS nodes,
+                list_transform(rels(p), r -> label(r)) AS rels;
             """,
             dict(
                 source_node_ids=source_node_ids,
@@ -447,6 +450,11 @@ class KuzuOps:
         )
 
         paths_df = result.get_as_df().sample(n)
+        paths_df = (
+            paths_df.apply(lambda row: list(interleave_longest(*row)), axis=1)
+            .rename("paths")
+            .to_frame()
+        )
 
         return paths_df
 
@@ -469,13 +477,13 @@ class KuzuOps:
         def sample_neighbor(
             source_node_id: int,
             prev_node_id: Optional[int] = None,
-        ) -> Optional[int]:
+        ) -> Optional[tuple[str, int]]:
             result = self.conn.execute(
                 f"""
-                MATCH p = (n)--(m)
+                MATCH p = (n)-[r]-(m)
                 WHERE n.node_id = $source_node_id
                     AND m.node_id <> $prev_node_id
-                RETURN m.node_id AS target_node_id;
+                RETURN label(r) AS rel, m.node_id AS node;
                 """,
                 dict(
                     source_node_id=source_node_id,
@@ -488,7 +496,9 @@ class KuzuOps:
             if len(neighbors) == 0:
                 return
 
-            return neighbors.sample(1).target_node_id.iloc[0].item()
+            next_in_path = neighbors.sample(1).iloc[0]
+
+            return next_in_path.rel, next_in_path.node.item()
 
         paths = []
 
@@ -498,15 +508,42 @@ class KuzuOps:
             rand_len = np.random.randint(min_length, max_length + 1)
 
             for i in range(rand_len):
-                next_node_id = sample_neighbor(path[i], None if i == 0 else path[i - 1])
+                next_in_path = sample_neighbor(
+                    path[i * 2],
+                    None if i == 0 else path[i * 2 - 2],
+                )
 
-                if next_node_id is None:
+                if next_in_path is None:
                     break
 
-                path.append(next_node_id)
+                rel_type, node_id = next_in_path
+                path.append(rel_type)
+                path.append(node_id)
 
             paths.append(path)
 
         paths_df = pd.DataFrame(dict(source_node_id=source_node_id, paths=paths))
 
         return paths_df
+
+    def hydrate_path(self, path: list[int | str]) -> str:
+        stmt = []
+
+        for i in range(0, len(path), 2):
+            stmt.append("({ node_id: %d })" % path[i])
+
+            if i + 1 < len(path):
+                stmt.append("[:%s]" % path[i + 1])
+
+        result = self.conn.execute(
+            """
+            MATCH p = %s
+            RETURN nodes(p) AS nodes, rels(p) AS rels
+            """
+            % "-".join(stmt)
+        )
+
+        hydrate_df = result.get_as_df()
+
+        node_descriptions = []
+        rel_descriptions = []
