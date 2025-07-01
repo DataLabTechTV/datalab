@@ -4,10 +4,12 @@ from typing import Any
 
 import ollama
 from langchain.prompts import ChatPromptTemplate
+from langchain.schema import AIMessage
 from langchain.schema.runnable import Runnable
 from langchain.schema.runnable.config import RunnableConfig
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_kuzu.chains.graph_qa.kuzu import KuzuQAChain
+from langchain_kuzu.chains.graph_qa.kuzu import extract_cypher, remove_prefix
+from langchain_kuzu.chains.graph_qa.prompts import KUZU_GENERATION_PROMPT
 from langchain_kuzu.graphs.kuzu_graph import KuzuGraph
 from langchain_ollama import ChatOllama
 from loguru import logger as log
@@ -47,32 +49,59 @@ class CommandLexer(Lexer):
         return get_line
 
 
+class ContextAssembler(Runnable):
+    def invoke(self, inputs, config: RunnableConfig = None) -> dict[str, Any]:
+        print(inputs["context"])
+
+
 class GraphRAG(Runnable):
     def __init__(
         self,
         schema: str,
-        model: str = "phi4:latest",
+        code_model: str = "phi4:latest",
+        chat_model: str = "gemma3:latest",
         column_name: str = "embedding",
     ):
         self.schema = schema
-        self.model = model
+        self.code_model = code_model
+        self.chat_model = chat_model
         self.column_name = column_name
 
         self.ops = KuzuOps(schema)
 
-    def ensure_model(self):
+        self.graph = KuzuGraph(
+            self.ops.conn.database,
+            allow_dangerous_requests=True,
+        )
+
+    def setup_llm_models(self):
         ollama_models = {m.model for m in ollama.list().models}
 
-        if self.model not in ollama_models:
-            log.warning("{}: ollama model not found, pulling...", self.model)
-            ollama.pull(self.model)
+        for model in self.code_model, self.chat_model:
+            if model not in ollama_models:
+                log.warning("{}: ollama model not found, pulling...", model)
+                ollama.pull(model)
+
+    @property
+    def code_llm(self) -> BaseChatModel:
+        if not hasattr(self, "_code_llm"):
+            self._chat_llm = ChatOllama(model=self.code_model, temperature=0.2)
+
+        return self._chat_llm
+
+    @property
+    def chat_llm(self) -> BaseChatModel:
+        if not hasattr(self, "_chat_llm"):
+            self._chat_llm = ChatOllama(model=self.chat_model, temperature=0.2)
+
+        return self._chat_llm
 
     @property
     def chain(self):
-        self.ensure_model()
+        self.setup_llm_models()
 
         if not hasattr(self, "_chain"):
-            self._chain = self.entities_prompt | self.graph_retriever
+            self._chain = self.graph_retriever | self.context_assembler
 
         return self._chain
 
@@ -138,35 +167,46 @@ class GraphRAG(Runnable):
         return self._entities_prompt
 
     @property
-    def llm(self) -> BaseChatModel:
-        if not hasattr(self, "_llm"):
-            self._llm = ChatOllama(model=self.model, temperature=0.2)
-
-        return self._llm
-
-    @property
-    def graph_retriever(self) -> KuzuQAChain:
+    def graph_retriever(self) -> Runnable:
         if not hasattr(self, "_graph_retriever"):
-            graph = KuzuGraph(
-                self.ops.conn.database,
-                allow_dangerous_requests=True,
-            )
 
-            self._graph_retriever = KuzuQAChain.from_llm(
-                llm=self.llm,
-                graph=graph,
-                verbose=True,
-                allow_dangerous_requests=True,
+            def entities_prompt_to_kuzu_inputs(
+                inputs: dict[str, Any],
+            ) -> dict[str, str]:
+                self.graph.refresh_schema()
+
+                return {
+                    "schema": self.graph.get_schema,
+                    "question": self.entities_prompt.format(**inputs),
+                }
+
+            def cypher_from_ai_message(ai_msg: AIMessage) -> str:
+                return remove_prefix(extract_cypher(ai_msg.content), "cypher")
+
+            def query_graph(cypher_query: str) -> dict[str, Any]:
+                context = self.graph.query(cypher_query)
+                return dict(context=context)
+
+            self._graph_retriever = (
+                entities_prompt_to_kuzu_inputs
+                | KUZU_GENERATION_PROMPT
+                | self.code_llm
+                | cypher_from_ai_message
+                | query_graph
             )
 
         return self._graph_retriever
 
     @property
-    def context_assembler(self) -> str: ...
+    def context_assembler(self) -> Runnable:
+        if not hasattr(self, "_context_assembler"):
+            self._context_assembler = ContextAssembler()
 
-    def invoke(self, input, config: RunnableConfig = None) -> dict[str, Any]:
-        log.debug("user query: {}", input["user_query"])
-        return self.chain.invoke(input, config=config)
+        return self._context_assembler
+
+    def invoke(self, inputs, config: RunnableConfig = None) -> dict[str, Any]:
+        log.debug("user query: {}", inputs["user_query"])
+        return self.chain.invoke(inputs, config=config)
 
     def interactive(self):
         config_path = user_config_path("datalab", "DataLabTechTV")
