@@ -1,8 +1,9 @@
 import re
 import textwrap
-from typing import Any
+from typing import Any, Callable, Optional
 
 import ollama
+import pandas as pd
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import AIMessage
 from langchain.schema.runnable import Runnable
@@ -21,7 +22,7 @@ from prompt_toolkit.history import FileHistory
 from prompt_toolkit.lexers import Lexer
 from prompt_toolkit.styles import Style
 
-from graph.ops import KuzuOps
+from graph.ops import KuzuOps, KuzuTableType
 
 COMMAND_INFO = {
     ".help": "Shows this message",
@@ -47,11 +48,6 @@ class CommandLexer(Lexer):
             return tokens
 
         return get_line
-
-
-class ContextAssembler(Runnable):
-    def invoke(self, inputs, config: RunnableConfig = None) -> dict[str, Any]:
-        print(inputs["context"])
 
 
 class GraphRAG(Runnable):
@@ -85,7 +81,7 @@ class GraphRAG(Runnable):
     @property
     def code_llm(self) -> BaseChatModel:
         if not hasattr(self, "_code_llm"):
-            self._chat_llm = ChatOllama(model=self.code_model, temperature=0.2)
+            self._chat_llm = ChatOllama(model=self.code_model, temperature=0.0)
 
         return self._chat_llm
 
@@ -95,15 +91,6 @@ class GraphRAG(Runnable):
             self._chat_llm = ChatOllama(model=self.chat_model, temperature=0.2)
 
         return self._chat_llm
-
-    @property
-    def chain(self):
-        self.setup_llm_models()
-
-        if not hasattr(self, "_chain"):
-            self._chain = self.graph_retriever | self.context_assembler
-
-        return self._chain
 
     @property
     def entities_prompt(self) -> ChatPromptTemplate:
@@ -166,6 +153,32 @@ class GraphRAG(Runnable):
 
         return self._entities_prompt
 
+    def cypher_from_ai_message(self, message: AIMessage) -> dict[str, Any]:
+        cypher = remove_prefix(extract_cypher(message.content), "cypher")
+        log.debug("cypher from ai message:\n{}", cypher)
+        return dict(query=cypher)
+
+    def query_graph(
+        self,
+        shuffle: bool = False,
+        limit: Optional[int] = None,
+    ) -> Callable[[dict[str, Any]], dict[str, Any]]:
+        def run(inputs: dict[str, Any]) -> dict[str, Any]:
+            query = inputs["query"]
+            params = inputs.get("params")
+
+            context_df = pd.DataFrame(self.graph.query(query, params))
+
+            if shuffle:
+                context_df = context_df.sample(frac=1)
+
+            if limit is not None:
+                context_df = context_df.head(limit)
+
+            return dict(context=context_df)
+
+        return run
+
     @property
     def graph_retriever(self) -> Runnable:
         if not hasattr(self, "_graph_retriever"):
@@ -180,33 +193,56 @@ class GraphRAG(Runnable):
                     "question": self.entities_prompt.format(**inputs),
                 }
 
-            def cypher_from_ai_message(ai_msg: AIMessage) -> str:
-                return remove_prefix(extract_cypher(ai_msg.content), "cypher")
-
-            def query_graph(cypher_query: str) -> dict[str, Any]:
-                context = self.graph.query(cypher_query)
-                return dict(context=context)
-
             self._graph_retriever = (
                 entities_prompt_to_kuzu_inputs
                 | KUZU_GENERATION_PROMPT
                 | self.code_llm
-                | cypher_from_ai_message
-                | query_graph
+                | self.cypher_from_ai_message
+                | self.query_graph(shuffle=True, limit=100)
             )
 
         return self._graph_retriever
 
+    def combined_knn(self, k: int) -> Callable[[dict[str, Any]], dict[str, Any]]:
+        knn_per_node_dfs = []
+
+        def run(inputs: dict[str, Any]) -> dict[str, Any]:
+            context = inputs["context"]
+
+            for node_id in context.node_id:
+                knn_df = self.ops.knn(node_id, k=k)
+                knn_per_node_dfs.append(knn_df)
+
+            combined_knn_node_ids = (
+                pd.concat(knn_per_node_dfs)
+                .groupby("node_id")
+                .mean()
+                .reset_index()
+                .sort_values("distance")
+                .head(k)["node_id"]
+                .to_list()
+            )
+
+            return dict(knn=combined_knn_node_ids)
+
+        return run
+
     @property
     def context_assembler(self) -> Runnable:
         if not hasattr(self, "_context_assembler"):
-            self._context_assembler = ContextAssembler()
+            self._context_assembler = self.combined_knn(k=100)
 
         return self._context_assembler
 
     def invoke(self, inputs, config: RunnableConfig = None) -> dict[str, Any]:
+        self.setup_llm_models()
+
+        chain = self.graph_retriever | self.context_assembler
+
         log.debug("user query: {}", inputs["user_query"])
-        return self.chain.invoke(inputs, config=config)
+        result = chain.invoke(inputs, config=config)
+
+        return result
 
     def interactive(self):
         config_path = user_config_path("datalab", "DataLabTechTV")
