@@ -285,23 +285,42 @@ class GraphRAG(Runnable):
 
         return run
 
+    def combine_paths(self, inputs: dict[str, Any]) -> dict[str, Any]:
+        dfs = [paths_df[["paths"]] for paths_df in inputs.values()]
+        combined_df = pd.concat(dfs).reset_index(drop=True)
+        return dict(paths=combined_df)
+
+    def hydrate_paths(self, inputs: dict[str, Any]) -> dict[str, Any]:
+        paths_df = inputs["paths"]
+        context_df = paths_df.apply(
+            lambda row: self.ops.hydrate_path(row.item()),
+            axis=1,
+        )
+        return dict(context=context_df)
+
     @property
     def context_assembler(self) -> Runnable:
         if not hasattr(self, "_context_assembler"):
-            self._context_assembler = RunnableParallel(
-                graph_retrieval=RunnablePassthrough(),
-                combined_knn=self.combined_knn(k=100),
-            ) | RunnableParallel(
-                nn_shortest_paths=self.nn_sample_shortest_paths(
-                    n=10,
-                    min_length=1,
-                    max_length=3,
-                ),
-                nn_profile_paths=self.nn_random_walks(
-                    n=10,
-                    min_length=1,
-                    max_length=4,
-                ),
+            self._context_assembler = (
+                RunnableParallel(
+                    graph_retrieval=RunnablePassthrough(),
+                    combined_knn=self.combined_knn(k=100),
+                )
+                | RunnableParallel(
+                    # TODO: debug: remove empty paths (shortest paths might not exist)
+                    nn_shortest_paths=self.nn_sample_shortest_paths(
+                        n=10,
+                        min_length=1,
+                        max_length=3,
+                    ),
+                    # nn_profile_paths=self.nn_random_walks(
+                    #     n=10,
+                    #     min_length=1,
+                    #     max_length=4,
+                    # ),
+                )
+                | self.combine_paths
+                | self.hydrate_paths
             )
 
         return self._context_assembler
