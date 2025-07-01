@@ -1,6 +1,7 @@
 import os
 import shutil
 import tempfile
+from enum import Enum
 from string import Template
 
 import kuzu
@@ -9,6 +10,11 @@ from loguru import logger as log
 
 from shared.settings import LOCAL_DIR, env
 from shared.storage import Storage, StoragePrefix
+
+
+class KuzuTableType(Enum):
+    NODE = "NODE"
+    REL = "REL"
 
 
 class KuzuOps:
@@ -219,24 +225,32 @@ class KuzuOps:
 
         return result.get_as_df()
 
+    def get_table_names(self, type_: KuzuTableType = KuzuTableType.NODE) -> list[str]:
+        result = self.conn.execute(
+            """
+            CALL show_tables()
+            WHERE type = $type
+            RETURN name AS table_name;
+            """,
+            {"type": type_.value},
+        )
+
+        table_names = result.get_as_df()["table_name"].to_list()
+
+        return table_names
+
     def update_embeddings(
         self,
         embeddings: dict[int, list[float]],
         dim: int,
         column_name: str = "embedding",
     ):
-        result = self.conn.execute(
-            """
-            CALL show_tables()
-            WHERE type = "NODE"
-            RETURN name AS table_name
-            """
-        )
+        node_tables = self.get_table_names(KuzuTableType.NODE)
 
-        for table_name in result.get_as_df()["table_name"]:
+        for node_table in node_tables:
             self.conn.execute(
                 f"""
-                ALTER TABLE {table_name}
+                ALTER TABLE {node_table}
                 ADD IF NOT EXISTS {column_name} DOUBLE[{dim}]
                 """
             )
@@ -255,20 +269,14 @@ class KuzuOps:
     def reindex_embeddings(self, column_name: str = "embedding"):
         log.info("Re-indexing embeddings")
 
-        result = self.conn.execute(
-            """
-            CALL show_tables()
-            WHERE type = "NODE"
-            RETURN name AS table_name
-            """
-        )
+        node_tables = self.get_table_names(KuzuTableType.NODE)
 
-        table_names = []
+        embedding_tables = []
 
-        for table_name in result.get_as_df()["table_name"]:
+        for node_table in node_tables:
             result = self.conn.execute(
                 f"""
-                CALL table_info("{table_name}")
+                CALL table_info("{node_table}")
                 WHERE name = $column_name
                 RETURN count(*) > 0 AS has_embedding
                 """,
@@ -278,9 +286,11 @@ class KuzuOps:
             has_embedding = result.get_as_df()["has_embedding"].iloc[0]
 
             if has_embedding:
-                table_names.append(table_name)
+                embedding_tables.append(node_table)
 
-        log.info("Node tables with {} column: {}", column_name, ", ".join(table_names))
+        log.info(
+            "Node tables with {} column: {}", column_name, ", ".join(embedding_tables)
+        )
 
         self.conn.execute(
             """
@@ -289,8 +299,8 @@ class KuzuOps:
             """
         )
 
-        for table_name in sorted(table_names):
-            index_name = f"{table_name}_{column_name}_idx".lower()
+        for node_table in sorted(embedding_tables):
+            index_name = f"{node_table}_{column_name}_idx".lower()
 
             result = self.conn.execute(
                 f"""
@@ -309,7 +319,7 @@ class KuzuOps:
                 self.conn.execute(
                     f"""
                     CALL drop_vector_index(
-                        "{table_name}",
+                        "{node_table}",
                         "{index_name}"
                     )
                     """
@@ -320,25 +330,64 @@ class KuzuOps:
             self.conn.execute(
                 f"""
                 CALL create_vector_index(
-                    "{table_name}",
+                    "{node_table}",
                     "{index_name}",
                     "{column_name}"
                 );
                 """
             )
 
-    def get_rels_schema(self) -> list[str]:
-        rels_schema = []
+    def knn(
+        self,
+        node_id: int,
+        column_name: str = "embedding",
+        k: int = 10,
+    ) -> pd.DataFrame:
+        log.info("Retrieving {}-nearest neighbors for node_id={}", k, node_id)
+
+        self.conn.execute("LOAD vector")
+
+        node_tables = self.get_table_names(KuzuTableType.NODE)
 
         result = self.conn.execute(
             """
-            CALL show_tables()
-            WHERE type = "REL"
-            RETURN name AS table_name;
-            """
+            MATCH (n)
+            WHERE n.node_id = $node_id
+            RETURN n.embedding AS embedding
+            LIMIT 1
+            """,
+            dict(node_id=node_id),
         )
 
-        rel_tables = [table_name for table_name in result.get_as_df()["table_name"]]
+        node_embedding = result.get_as_df()["embedding"].iloc[0]
+
+        nn_dfs = []
+
+        for node_table in node_tables:
+            index_name = f"{node_table}_{column_name}_idx".lower()
+
+            result = self.conn.execute(
+                f"""
+                CALL query_vector_index(
+                    '{node_table}',
+                    '{index_name}',
+                    $node_embedding,
+                    {k}
+                )
+                RETURN node.node_id AS node_id, distance
+                ORDER BY distance;
+                """,
+                dict(node_embedding=node_embedding),
+            )
+
+            nn_dfs.append(result.get_as_df())
+
+        return pd.concat(nn_dfs)
+
+    def get_rels_schema(self) -> list[str]:
+        rels_schema = []
+
+        rel_tables = self.get_table_names(KuzuTableType.REL)
 
         for rel_table in rel_tables:
             result = self.conn.execute(
@@ -361,15 +410,7 @@ class KuzuOps:
     def get_nodes_schema(self) -> list[str]:
         node_props_schema = []
 
-        result = self.conn.execute(
-            """
-            CALL show_tables()
-            WHERE type = "NODE"
-            RETURN name AS table_name;
-            """
-        )
-
-        node_tables = [table_name for table_name in result.get_as_df()["table_name"]]
+        node_tables = self.get_table_names(KuzuTableType.NODE)
 
         for node_table in node_tables:
             result = self.conn.execute(
