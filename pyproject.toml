@@ -23,6 +23,7 @@ dependencies = [
   "langchain-ollama>=0.3.3",
   "loguru>=0.7.3",
   "minio>=7.2.15",
+  "more-itertools>=10.7.0",
   "ollama>=0.5.1",
   "pandas>=2.3.0",
   "platformdirs>=4.3.8",
