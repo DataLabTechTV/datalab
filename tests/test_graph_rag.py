@@ -22,4 +22,4 @@ def test_graph_rag():
 
     for prompt in PROMPTS:
         response = gr.invoke(dict(user_query=prompt))
-        print(response["result"])
+        print(response)

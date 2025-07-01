@@ -3,8 +3,10 @@ import shutil
 import tempfile
 from enum import Enum
 from string import Template
+from typing import Optional
 
 import kuzu
+import numpy as np
 import pandas as pd
 from loguru import logger as log
 
@@ -341,9 +343,18 @@ class KuzuOps:
         self,
         node_id: int,
         column_name: str = "embedding",
-        k: int = 10,
+        max_k: int = 10,
+        max_distance: float = 0.75,
+        exclude: Optional[list[int]] = None,
     ) -> pd.DataFrame:
-        log.info("Retrieving {}-nearest neighbors for node_id={}", k, node_id)
+        log.info(
+            "Retrieving {}-nearest neighbors for node_id={} at a maximum distance of "
+            "{} and excluding {} nodes",
+            max_k,
+            node_id,
+            max_distance,
+            len(exclude or []),
+        )
 
         self.conn.execute("LOAD vector")
 
@@ -363,6 +374,9 @@ class KuzuOps:
 
         nn_dfs = []
 
+        exclude = exclude or []
+        adj_k = max_k + len(exclude)
+
         for node_table in node_tables:
             index_name = f"{node_table}_{column_name}_idx".lower()
 
@@ -372,61 +386,127 @@ class KuzuOps:
                     '{node_table}',
                     '{index_name}',
                     $node_embedding,
-                    {k}
+                    {adj_k}
                 )
+                WHERE distance <= $max_distance
+                    AND NOT node.node_id IN $exclude
                 RETURN node.node_id AS node_id, distance
                 ORDER BY distance;
                 """,
-                dict(node_embedding=node_embedding),
+                dict(
+                    node_embedding=node_embedding,
+                    max_distance=max_distance,
+                    exclude=exclude,
+                ),
             )
 
-            nn_dfs.append(result.get_as_df())
+            nn_df = result.get_as_df()
+            nn_df["table"] = node_table
+
+            log.debug(
+                "Found {} nearest neighbor {} nodes for node_id={}",
+                len(nn_df),
+                node_table,
+                node_id,
+            )
+
+            nn_dfs.append(nn_df)
 
         return pd.concat(nn_dfs)
 
-    def get_rels_schema(self) -> list[str]:
-        rels_schema = []
+    def sample_shortest_paths(
+        self,
+        source_node_ids: list[int],
+        target_node_ids: list[int],
+        n: int,
+        min_length: int,
+        max_length: int,
+    ) -> pd.DataFrame:
+        log.info(
+            "Computing a sample of size {} of shortest paths between "
+            "{} source nodes and {} target nodes, at distances ranging between "
+            "{} and {} hops",
+            n,
+            len(source_node_ids),
+            len(target_node_ids),
+            min_length,
+            max_length,
+        )
 
-        rel_tables = self.get_table_names(KuzuTableType.REL)
+        result = self.conn.execute(
+            f"""
+            MATCH p = (a)-[* SHORTEST {min_length}..{max_length} ]-(b)
+            WHERE a.node_id IN $source_node_ids
+                AND b.node_id IN $target_node_ids
+            RETURN list_transform(nodes(p), n -> n.node_id) AS paths;
+            """,
+            dict(
+                source_node_ids=source_node_ids,
+                target_node_ids=target_node_ids,
+            ),
+        )
 
-        for rel_table in rel_tables:
+        paths_df = result.get_as_df().sample(n)
+
+        return paths_df
+
+    def random_walk(
+        self,
+        source_node_id: int,
+        n: int,
+        min_length: int,
+        max_length: int,
+    ) -> list[int]:
+        log.info(
+            "Computing {} random walks starting from node_id={} and ranging between "
+            "{} and {} hops",
+            n,
+            source_node_id,
+            min_length,
+            max_length,
+        )
+
+        def sample_neighbor(
+            source_node_id: int,
+            prev_node_id: Optional[int] = None,
+        ) -> Optional[int]:
             result = self.conn.execute(
                 f"""
-                CALL show_connection("{rel_table}")
-                RETURN
-                    `source table name` AS source,
-                    `destination table name` AS target;
-                """
+                MATCH p = (n)--(m)
+                WHERE n.node_id = $source_node_id
+                    AND m.node_id <> $prev_node_id
+                RETURN m.node_id AS target_node_id;
+                """,
+                dict(
+                    source_node_id=source_node_id,
+                    prev_node_id=prev_node_id or -1,
+                ),
             )
 
-            result = result.get_as_df()
-            source = result["source"].iloc[0]
-            target = result["target"].iloc[0]
+            neighbors = result.get_as_df()
 
-            rels_schema.append(f"({source})-[:{rel_table}]->({target})")
+            if len(neighbors) == 0:
+                return
 
-        return rels_schema
+            return neighbors.sample(1).target_node_id.iloc[0].item()
 
-    def get_nodes_schema(self) -> list[str]:
-        node_props_schema = []
+        paths = []
 
-        node_tables = self.get_table_names(KuzuTableType.NODE)
+        for _ in range(n):
+            path = [source_node_id]
 
-        for node_table in node_tables:
-            result = self.conn.execute(
-                f"""
-                CALL table_info("{node_table}")
-                RETURN name, type;
-                """
-            )
+            rand_len = np.random.randint(min_length, max_length + 1)
 
-            props = []
+            for i in range(rand_len):
+                next_node_id = sample_neighbor(path[i], None if i == 0 else path[i - 1])
 
-            for _, row in result.get_as_df().iterrows():
-                props.append(f"{row['name']} {row['type']}")
+                if next_node_id is None:
+                    break
 
-            props = ", ".join(props)
+                path.append(next_node_id)
 
-            node_props_schema.append(f"{node_table}({props})")
+            paths.append(path)
 
-        return node_props_schema
+        paths_df = pd.DataFrame(dict(source_node_id=source_node_id, paths=paths))
+
+        return paths_df

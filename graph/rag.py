@@ -9,6 +9,7 @@ from langchain.schema import AIMessage
 from langchain.schema.runnable import Runnable
 from langchain.schema.runnable.config import RunnableConfig
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_kuzu.chains.graph_qa.kuzu import extract_cypher, remove_prefix
 from langchain_kuzu.chains.graph_qa.prompts import KUZU_GENERATION_PROMPT
 from langchain_kuzu.graphs.kuzu_graph import KuzuGraph
@@ -22,7 +23,10 @@ from prompt_toolkit.history import FileHistory
 from prompt_toolkit.lexers import Lexer
 from prompt_toolkit.styles import Style
 
-from graph.ops import KuzuOps, KuzuTableType
+from graph.ops import KuzuOps
+
+RunnableFn = Callable[[dict[str, Any]], dict[str, Any]]
+
 
 COMMAND_INFO = {
     ".help": "Shows this message",
@@ -162,7 +166,7 @@ class GraphRAG(Runnable):
         self,
         shuffle: bool = False,
         limit: Optional[int] = None,
-    ) -> Callable[[dict[str, Any]], dict[str, Any]]:
+    ) -> RunnableFn:
         def run(inputs: dict[str, Any]) -> dict[str, Any]:
             query = inputs["query"]
             params = inputs.get("params")
@@ -203,19 +207,26 @@ class GraphRAG(Runnable):
 
         return self._graph_retriever
 
-    def combined_knn(self, k: int) -> Callable[[dict[str, Any]], dict[str, Any]]:
+    def combined_knn(self, k: int) -> RunnableFn:
         knn_per_node_dfs = []
 
         def run(inputs: dict[str, Any]) -> dict[str, Any]:
             context = inputs["context"]
+            node_ids = context.node_id.to_list()
 
-            for node_id in context.node_id:
-                knn_df = self.ops.knn(node_id, k=k)
+            for node_id in node_ids:
+                knn_df = self.ops.knn(
+                    node_id,
+                    max_k=k,
+                    max_distance=0.25,
+                    exclude=node_ids,
+                )
+
                 knn_per_node_dfs.append(knn_df)
 
             combined_knn_node_ids = (
                 pd.concat(knn_per_node_dfs)
-                .groupby("node_id")
+                .groupby(["table", "node_id"])
                 .mean()
                 .reset_index()
                 .sort_values("distance")
@@ -227,10 +238,71 @@ class GraphRAG(Runnable):
 
         return run
 
+    def nn_sample_shortest_paths(
+        self,
+        n: int,
+        min_length: int,
+        max_length: int,
+    ) -> RunnableFn:
+        def run(inputs: dict[str, Any]) -> dict[str, Any]:
+            source_node_ids = inputs["graph_retrieval"]["context"].node_id.to_list()
+            target_node_ids = inputs["combined_knn"]["knn"]
+
+            paths_df = self.ops.sample_shortest_paths(
+                source_node_ids,
+                target_node_ids,
+                n,
+                min_length,
+                max_length,
+            )
+
+            return paths_df
+
+        return run
+
+    def nn_random_walks(
+        self,
+        n: int,
+        min_length: int,
+        max_length: int,
+    ) -> RunnableFn:
+        def run(inputs: dict[str, Any]) -> dict[str, Any]:
+            source_node_ids = inputs["combined_knn"]["knn"]
+
+            paths_dfs = []
+
+            for source_node_id in source_node_ids:
+                paths_df = self.ops.random_walk(
+                    source_node_id,
+                    n,
+                    min_length,
+                    max_length,
+                )
+
+                paths_dfs.append(paths_df)
+
+            return pd.concat(paths_dfs)
+
+        return run
+
     @property
     def context_assembler(self) -> Runnable:
         if not hasattr(self, "_context_assembler"):
-            self._context_assembler = self.combined_knn(k=100)
+            self._context_assembler = RunnableParallel(
+                graph_retrieval=RunnablePassthrough(),
+                combined_knn=self.combined_knn(k=100),
+            ) | RunnableParallel(
+                nn_shortest_paths=self.nn_sample_shortest_paths(
+                    n=10,
+                    min_length=1,
+                    max_length=3,
+                ),
+                nn_profile_paths=self.nn_random_walks(
+                    n=10,
+                    min_length=1,
+                    max_length=4,
+                ),
+            )
 
         return self._context_assembler
 
