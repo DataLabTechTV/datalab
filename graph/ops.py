@@ -1,9 +1,10 @@
 import os
 import shutil
 import tempfile
+import textwrap
 from enum import Enum
 from string import Template
-from typing import Optional
+from typing import Any, Optional
 
 import kuzu
 import numpy as np
@@ -367,7 +368,7 @@ class KuzuOps:
 
         log.info(
             "Retrieving {}-nearest neighbors for node_id={} at a maximum distance of "
-            "{} and excluding {} nodes",
+            "{} ∈ [0, 2] and excluding {} nodes",
             max_k,
             node_id,
             max_distance,
@@ -543,7 +544,108 @@ class KuzuOps:
 
         return paths_df
 
-    def hydrate_path(self, path: list[int | str]) -> str:
+    def node_properties(self, nodes: list[dict[str, Any]]) -> dict[str, Any]:
+        node_tables = self.get_table_names(KuzuTableType.NODE)
+
+        node_props_schema = {}
+
+        for node_table in node_tables:
+            result = self.conn.execute(
+                f"""
+                CALL table_info("{node_table}")
+                RETURN name;
+                """
+            )
+
+            node_props_schema[node_table] = result.get_as_df()["name"].to_list()
+
+        node_props = []
+
+        for node in nodes:
+            node_props.append(
+                {
+                    k: v
+                    for k, v in node.items()
+                    if k in node_props_schema[node["_label"]] + ["_label"]
+                }
+            )
+
+        return node_props
+
+    def rel_properties(self, rels: list[dict[str, Any]]) -> dict[str, Any]:
+        rel_tables = self.get_table_names(KuzuTableType.REL)
+
+        rel_props_schema = {}
+
+        for rel_table in rel_tables:
+            result = self.conn.execute(
+                f"""
+                CALL table_info("{rel_table}")
+                RETURN name;
+                """
+            )
+
+            rel_props_schema[rel_table] = result.get_as_df()["name"].to_list()
+
+        rel_props = []
+
+        for rel in rels:
+            rel_props.append(
+                {
+                    k: v
+                    for k, v in rel.items()
+                    if k in rel_props_schema[rel["_label"]] + ["_label"]
+                }
+            )
+
+        return rel_props
+
+    def node_description(
+        self,
+        node: dict[str, Any],
+        exclude_props: Optional[list[str]] = None,
+    ) -> str:
+        exclude_props = exclude_props or []
+        exclude_props = exclude_props + ["_label", "node_id"]
+
+        label = node["_label"]
+        node_id = node["node_id"]
+
+        props = [f"{k}={v}" for k, v in node.items() if k not in exclude_props]
+        props = "" if len(props) == 0 else ", " + ", ".join(props)
+
+        description = f"{label}(node_id={node_id}{props})"
+
+        return description
+
+    def rel_description(
+        self,
+        source_node: dict[str, Any],
+        rel: dict[str, Any],
+        target_node: dict[str, Any],
+        exclude_props: Optional[list[str]] = None,
+    ) -> str:
+        exclude_props = exclude_props or []
+        exclude_props += ["_label"]
+
+        label = rel["_label"]
+
+        props = [f"{k}={v}" for k, v in rel.items() if k not in exclude_props]
+        props = "" if len(props) == 0 else " {%s}" % ", ".join(props)
+
+        description = (
+            f"({source_node['node_id']})-[:{label}{props}]-({target_node['node_id']})"
+        )
+
+        return description
+
+    def hydrate_path(
+        self,
+        path: list[int | str],
+        exclude_props: Optional[list[str]] = None,
+    ) -> pd.DataFrame:
+        exclude_props = exclude_props or []
+
         stmt = []
 
         for i in range(0, len(path), 2):
@@ -560,7 +662,54 @@ class KuzuOps:
             % "-".join(stmt)
         )
 
-        hydrate_df = result.get_as_df()
+        hydrate_df = result.get_as_df().iloc[0]
 
-        node_descriptions = []
-        rel_descriptions = []
+        return hydrate_df
+
+    def path_descriptions(
+        self,
+        paths_df: pd.DataFrame,
+        exclude_props: Optional[list[str]] = None,
+    ) -> str:
+        exclude_props = exclude_props or []
+        hydrate_df = paths_df.apply(lambda row: self.hydrate_path(row.item()), axis=1)
+
+        hydrate_df.nodes = hydrate_df.nodes.apply(self.node_properties)
+        hydrate_df.rels = hydrate_df.rels.apply(self.rel_properties)
+
+        node_descriptions = set()
+
+        for nodes in hydrate_df.nodes:
+            node_descriptions |= set(
+                self.node_description(node, exclude_props=exclude_props)
+                for node in nodes
+            )
+
+        node_descriptions = "\n".join(node_descriptions)
+
+        rel_descriptions = set()
+
+        for _, row in hydrate_df.iterrows():
+            path = list(interleave_longest(row.nodes, row.rels))
+
+            for i in range(0, len(path) - 1, 2):
+                source_node = path[i]
+                rel = path[i + 1]
+                target_node = path[i + 2]
+
+                description = self.rel_description(
+                    source_node,
+                    rel,
+                    target_node,
+                    exclude_props=exclude_props,
+                )
+
+                rel_descriptions.add(description)
+
+        rel_descriptions = "\n".join(rel_descriptions)
+
+        description = (
+            f"Nodes:\n{node_descriptions}\n\nRelationships:\n{rel_descriptions}"
+        )
+
+        return description
