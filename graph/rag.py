@@ -1,5 +1,7 @@
 import re
 import textwrap
+import threading
+import time
 from typing import Any, Callable, Optional
 
 import ollama
@@ -329,15 +331,88 @@ class GraphRAG(Runnable):
 
         return self._context_assembler
 
-    def invoke(self, inputs, config: RunnableConfig = None) -> dict[str, Any]:
+    def answer_inputs_transform(self, inputs: dict[str, Any]) -> dict[str, Any]:
+        user_query = inputs["user_query"]
+        context = inputs["kg"]["context"]
+        return dict(user_query=user_query, context=context)
+
+    @property
+    def final_prompt(self) -> ChatPromptTemplate:
+        if not hasattr(self, "_final_prompt"):
+            tpl = textwrap.dedent(
+                """
+                You are an AI assistant who responds to user queries, taking into account additional context from a knowledge graph, provided in a cypher compatible format.
+
+                Input:
+                User query: a question about entities and relationships on a knowledge graph.
+                Nodes: relevant nodes to help establish a context.
+                Relationships: relevant relationships, between the provided nodes, to help establish a context.
+
+                Task:
+                Answer the user based on what you know and the additional knowledge provided by the context.
+
+                User query:
+                "{user_query}"
+
+                {context}
+
+                ---
+
+                Here is the answer to your question, based on what I know and the knowledge graph I have access to:
+
+                [Your output here]
+                """
+            ).strip("\n")
+
+            log.debug("final prompt:\n{}", tpl)
+
+            self._final_prompt = ChatPromptTemplate.from_template(tpl)
+
+        return self._final_prompt
+
+    @property
+    def answer_generator(self) -> Runnable:
+        if not hasattr(self, "_answer_generator"):
+            self._answer_generator = (
+                self.answer_inputs_transform | self.final_prompt | self.chat_llm
+            )
+
+        return self._answer_generator
+
+    def invoke(self, inputs, config: RunnableConfig = None) -> AIMessage:
+        log.info("Running Graph RAG for user query:\n{}", inputs["user_query"])
+
         self.setup_llm_models()
 
-        chain = self.graph_retriever | self.context_assembler
+        chain = (
+            RunnableParallel(
+                user_query=lambda inputs: inputs["user_query"],
+                kg=self.graph_retriever | self.context_assembler,
+            )
+            | self.answer_generator
+        )
 
         log.debug("user query: {}", inputs["user_query"])
         result = chain.invoke(inputs, config=config)
 
         return result
+
+    def loader(self, stop_event: threading.Event):
+        start_time = time.time()
+        symbols = ["⣾", "⣷", "⣯", "⣟", "⡿", "⢿", "⣻", "⣽"]
+
+        while not stop_event.is_set():
+            for symbol in symbols:
+                elapsed = time.strftime(
+                    "%H:%M:%S",
+                    time.gmtime(time.time() - start_time),
+                )
+
+                print(f"\r⏱ {elapsed} {symbol} ", end="", flush=True)
+
+                time.sleep(0.1)
+
+        print(f"\r⏱ {elapsed}\n")
 
     def interactive(self):
         config_path = user_config_path("datalab", "DataLabTechTV")
@@ -376,4 +451,19 @@ class GraphRAG(Runnable):
                         open(history_path, "w").close()
                         session.default_buffer.history._loaded_strings.clear()
                     case _:
-                        print(self.invoke(user_query=user_query))
+                        log.remove()
+
+                        stop_event = threading.Event()
+
+                        loader_thread = threading.Thread(
+                            target=self.loader,
+                            args=(stop_event,),
+                        )
+                        loader_thread.start()
+
+                        output = self.invoke(dict(user_query=user_query))
+
+                        stop_event.set()
+                        loader_thread.join()
+
+                        print(output["context"])

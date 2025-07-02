@@ -686,6 +686,9 @@ class KuzuOps:
         hydrate_df = paths_df.apply(lambda row: self.hydrate_path(row.item()), axis=1)
         hydrate_df = hydrate_df.dropna()
 
+        if len(hydrate_df) == 0:
+            return ""
+
         hydrate_df.nodes = hydrate_df.nodes.apply(self.node_properties)
         hydrate_df.rels = hydrate_df.rels.apply(self.rel_properties)
 
