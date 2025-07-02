@@ -256,7 +256,7 @@ class GraphRAG(Runnable):
                 max_length,
             )
 
-            return paths_df
+            return dict(paths=paths_df)
 
         return run
 
@@ -281,21 +281,26 @@ class GraphRAG(Runnable):
 
                 paths_dfs.append(paths_df)
 
-            return pd.concat(paths_dfs)
+            return dict(paths=pd.concat(paths_dfs))
 
         return run
 
     def combine_paths(self, inputs: dict[str, Any]) -> dict[str, Any]:
-        dfs = [paths_df[["paths"]] for paths_df in inputs.values()]
+        log.info("Combining paths from multiple outputs")
+
+        dfs = [paths_df["paths"][["paths"]] for paths_df in inputs.values()]
         combined_df = pd.concat(dfs).reset_index(drop=True)
+
         return dict(paths=combined_df)
 
     def hydrate_paths(self, inputs: dict[str, Any]) -> dict[str, Any]:
         paths_df = inputs["paths"]
-        context_df = paths_df.apply(
-            lambda row: self.ops.hydrate_path(row.item()),
-            axis=1,
+
+        context_df = self.ops.path_descriptions(
+            paths_df,
+            exclude_props=[self.column_name],
         )
+
         return dict(context=context_df)
 
     @property
@@ -304,20 +309,19 @@ class GraphRAG(Runnable):
             self._context_assembler = (
                 RunnableParallel(
                     graph_retrieval=RunnablePassthrough(),
-                    combined_knn=self.combined_knn(k=100),
+                    combined_knn=self.combined_knn(k=10),
                 )
                 | RunnableParallel(
-                    # TODO: debug: remove empty paths (shortest paths might not exist)
                     nn_shortest_paths=self.nn_sample_shortest_paths(
                         n=10,
                         min_length=1,
                         max_length=3,
                     ),
-                    # nn_profile_paths=self.nn_random_walks(
-                    #     n=10,
-                    #     min_length=1,
-                    #     max_length=4,
-                    # ),
+                    nn_profile_paths=self.nn_random_walks(
+                        n=3,
+                        min_length=1,
+                        max_length=3,
+                    ),
                 )
                 | self.combine_paths
                 | self.hydrate_paths

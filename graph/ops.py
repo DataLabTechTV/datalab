@@ -410,7 +410,8 @@ class KuzuOps:
                 WHERE distance <= $max_distance
                     AND NOT node.node_id IN $exclude
                 RETURN node.node_id AS node_id, distance
-                ORDER BY distance;
+                ORDER BY distance
+                LIMIT {max_k};
                 """,
                 dict(
                     node_embedding=node_embedding,
@@ -467,7 +468,9 @@ class KuzuOps:
             ),
         )
 
-        paths_df = result.get_as_df().sample(n)
+        paths_df = result.get_as_df()
+        paths_df = paths_df.sample(n)
+
         paths_df = (
             paths_df.apply(lambda row: list(interleave_longest(*row)), axis=1)
             .rename("paths")
@@ -634,7 +637,9 @@ class KuzuOps:
         props = "" if len(props) == 0 else " {%s}" % ", ".join(props)
 
         description = (
-            f"({source_node['node_id']})-[:{label}{props}]-({target_node['node_id']})"
+            f"({{ node_id: {source_node['node_id']} }})"
+            f"-[:{label}{props}]-"
+            f"({{ node_id: {target_node['node_id']} }})"
         )
 
         return description
@@ -662,17 +667,24 @@ class KuzuOps:
             % "-".join(stmt)
         )
 
-        hydrate_df = result.get_as_df().iloc[0]
+        hydrate_df = result.get_as_df()
 
-        return hydrate_df
+        if len(hydrate_df) == 0:
+            log.warning("Could not match path: {}", path)
+            return
+
+        return hydrate_df.iloc[0]
 
     def path_descriptions(
         self,
         paths_df: pd.DataFrame,
         exclude_props: Optional[list[str]] = None,
     ) -> str:
+        log.info("Computing node and rel descriptions for {} paths", len(paths_df))
+
         exclude_props = exclude_props or []
         hydrate_df = paths_df.apply(lambda row: self.hydrate_path(row.item()), axis=1)
+        hydrate_df = hydrate_df.dropna()
 
         hydrate_df.nodes = hydrate_df.nodes.apply(self.node_properties)
         hydrate_df.rels = hydrate_df.rels.apply(self.rel_properties)
