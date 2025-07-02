@@ -12,4 +12,4 @@ def test_graph_rag(graph_db_schema):
 
     for prompt in PROMPTS:
         response = gr.invoke(dict(user_query=prompt))
-        print(response)
+        print(response.content)
