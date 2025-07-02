@@ -345,9 +345,26 @@ class KuzuOps:
         node_id: int,
         column_name: str = "embedding",
         max_k: int = 10,
-        max_distance: float = 0.75,
+        max_distance: float = 1.0,
         exclude: Optional[list[int]] = None,
     ) -> pd.DataFrame:
+        """
+        Compute k-nearest neighbors, within the given constraints.
+
+        Args:
+            node_id: Source node ID for which the k-NN to be computed.
+            column_name: Column name of the node property containing the embeddings.
+                These should be indexed by `reindex_embeddings()`.
+            max_k: Target number of neighbors to retrieve.
+            max_distance: Neighbors above this threshold won't be returned. Since we're
+                using the cosine distance, which ranges between 0 and 2, a value of 1.0
+                here is equivalent to a 50% threshold.
+            exclude: Optional list with node IDs to exclude.
+
+        Returns:
+            Pandas DataFrame with columns table, node_id and distance.
+        """
+
         log.info(
             "Retrieving {}-nearest neighbors for node_id={} at a maximum distance of "
             "{} and excluding {} nodes",
