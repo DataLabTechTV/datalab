@@ -1,6 +1,176 @@
 # CHANGELOG
 
 
+## v0.2.0 (2025-07-04)
+
+### Bug Fixes
+
+- Correct logic for deleting vector index if exists
+  ([`516b677`](https://github.com/DataLabTechTV/datalab/commit/516b67790aaed0a1b2d6d2736d52a611d7c34375))
+
+### Chores
+
+- Add missing word in prompt
+  ([`2001d8d`](https://github.com/DataLabTechTV/datalab/commit/2001d8d76e28d788266a2b65b0d219d078e10496))
+
+- Container names will now use the default naming schema
+  ([`6d267b8`](https://github.com/DataLabTechTV/datalab/commit/6d267b873d5ce8fd07b61a3b0595cc4700f95603))
+
+- Ensure predictable table indexing order
+  ([`4547bd3`](https://github.com/DataLabTechTV/datalab/commit/4547bd31b9d6ba7c104ebc027a1ce57d163f16be))
+
+- Graph retriever and context assembler class scaffolds
+  ([`eae806d`](https://github.com/DataLabTechTV/datalab/commit/eae806d2cd5eba6e7a4384ac8c272b35ceca44a4))
+
+- Make sure kuzudb-explorer is using a fixed image version (0.10.0 currently)
+  ([`80c8aca`](https://github.com/DataLabTechTV/datalab/commit/80c8aca4f74034e69c7ca18b324289b2770a91b3))
+
+- Path combination and scaffolding for hydrating
+  ([`1c7db62`](https://github.com/DataLabTechTV/datalab/commit/1c7db625c3bd80604d67d4b9194e807b61db3314))
+
+- Prefix log message is now debug-level
+  ([`de7d708`](https://github.com/DataLabTechTV/datalab/commit/de7d708cb53280b8de149e5a3b6220e5456cd159))
+
+- Print version from pyproject.toml via CLI argument
+  ([`2fa5b86`](https://github.com/DataLabTechTV/datalab/commit/2fa5b86c8e5c5e9ae4d7d4c4a8cbee77d40bdf44))
+
+- Remove unused semantic-release config
+  ([`1692e14`](https://github.com/DataLabTechTV/datalab/commit/1692e1473e8cc5c0811a49f31555cf5ec87d37a6))
+
+This option was set in the wrong location, so it did nothing. We don't need it.
+
+- Replace default nomic-embed-text ollama model with phi4:latest
+  ([`ee324f1`](https://github.com/DataLabTechTV/datalab/commit/ee324f1ef3b41716cabf2f5f67f4ddf9888e3772))
+
+- Setup ollama service and add env var for default model install
+  ([`4af078b`](https://github.com/DataLabTechTV/datalab/commit/4af078ba17bcffdbd23c392459f66271bab4a761))
+
+- **deps**: Add ollama dependency
+  ([`4d1608d`](https://github.com/DataLabTechTV/datalab/commit/4d1608dd05b638224773bcb91a2aadfda22e7f08))
+
+- **deps**: Add pytest to dev deps and configure default CLI options
+  ([`baabcd5`](https://github.com/DataLabTechTV/datalab/commit/baabcd5055887fd9b47f6d203eeaacf51923ce32))
+
+- **deps**: Langchain with ollama support, and a prompt helper library
+  ([`4565ec9`](https://github.com/DataLabTechTV/datalab/commit/4565ec9444ca3242f7166c2dcef4df3b69df6254))
+
+- **deps**: Langchain-kuzu
+  ([`eed603d`](https://github.com/DataLabTechTV/datalab/commit/eed603d6e331bf0bc3781c35e247bdc3fcb1a3e3))
+
+- **deps**: More-itertools
+  ([`ecb7f9c`](https://github.com/DataLabTechTV/datalab/commit/ecb7f9c6ce6df46a197630abd92b3e4023c32fb5))
+
+### Continuous Integration
+
+- Add missing version to semantic-version command
+  ([`c6facd1`](https://github.com/DataLabTechTV/datalab/commit/c6facd16d251c97967d21c9668452dd980a93802))
+
+- Fix call to semantic release using a function
+  ([`d577a45`](https://github.com/DataLabTechTV/datalab/commit/d577a45625c46d0081242fdb911b8f1d09af742c))
+
+- Fix changelog_file config location
+  ([`b5bb8d7`](https://github.com/DataLabTechTV/datalab/commit/b5bb8d780084f955bdc234120a5f766bc685a4fc))
+
+- Fix pyproject.toml version setting for semantic release
+  ([`db96d22`](https://github.com/DataLabTechTV/datalab/commit/db96d2204984a9303a62fb58117e3ca856aec810))
+
+- Remove redundant build option, already set on pyproject.toml
+  ([`e8f6d6b`](https://github.com/DataLabTechTV/datalab/commit/e8f6d6baf47609fbd00bd5bcd2003c1e954be2d0))
+
+### Documentation
+
+- Add knn method info to clarify the max_distance param
+  ([`0fdf01f`](https://github.com/DataLabTechTV/datalab/commit/0fdf01f37c85e99165ee2ddd465c816a2998eecd))
+
+### Features
+
+- Add file logging by default (and option to disable)
+  ([`2f9a36e`](https://github.com/DataLabTechTV/datalab/commit/2f9a36e07a3fd895952aa9aa32c1790b4877b75e))
+
+- Add final answer pipeline and improve interactive mode
+  ([`58bff5a`](https://github.com/DataLabTechTV/datalab/commit/58bff5adb0285f43e83b117dcc668b3a6ec177c8))
+
+- Basic prompt for graph RAG and langchain scaffolding
+  ([`50173de`](https://github.com/DataLabTechTV/datalab/commit/50173de3fbee66e34e7a4c97ad9e0a53fc2b6a02))
+
+- Combined knn step for context assembler
+  ([`33b20ab`](https://github.com/DataLabTechTV/datalab/commit/33b20abcfd6983a6b8d5420cb63bad5ccf32f651))
+
+- Context assembly based on ANN, paths to neighbors, and random walks from neighbors
+  ([`9323352`](https://github.com/DataLabTechTV/datalab/commit/932335291cc4eb62d657db7a424320d9b219a8b7))
+
+- Cypher friendly schema format
+  ([`87f8171`](https://github.com/DataLabTechTV/datalab/commit/87f81711718ed77caeac1c2e89c7515f8a484c58))
+
+- First working NER implementation based on langchain-kuzu
+  ([`a743062`](https://github.com/DataLabTechTV/datalab/commit/a74306230e6f109ede1b26e0c1d6b62b7ed1c507))
+
+- Graphrag is now a LangChain Runnable and components became methods
+  ([`cd04d33`](https://github.com/DataLabTechTV/datalab/commit/cd04d33776debd768a882085119515483f639529))
+
+- Knn query support
+  ([`2bca4a0`](https://github.com/DataLabTechTV/datalab/commit/2bca4a090d3539977bc956420732b359d46cc041))
+
+- Knn, shortest paths sampler and random walk computation for context assembler
+  ([`22d4f0a`](https://github.com/DataLabTechTV/datalab/commit/22d4f0a4079d0820efa0cf52d9980dfc8817fce1))
+
+- Kuzudb-explorer launcher script now handles different paths
+  ([`4dc65a9`](https://github.com/DataLabTechTV/datalab/commit/4dc65a9406c9cf34aa82f0fb2e908bff48f31ad4))
+
+- Lazy singleton S3 resource and bucket connection
+  ([`63388a1`](https://github.com/DataLabTechTV/datalab/commit/63388a1d97dd254f45c4b253bca3c99339feb6b9))
+
+- Ollama service with gemma3 and nomic-embed-text
+  ([`83b68dd`](https://github.com/DataLabTechTV/datalab/commit/83b68dd5c23e767789c935e24cc55317a35e133d))
+
+- Path hydration and bulk description
+  ([`97ea465`](https://github.com/DataLabTechTV/datalab/commit/97ea465f721930afe64d09bb114e29d38ff1e92a))
+
+- Return paths as interleavings of node_id and rel label
+  ([`17b790a`](https://github.com/DataLabTechTV/datalab/commit/17b790ad7b5463af56ef1c409d60732fe861b7a5))
+
+- Support for indexing embeddings
+  ([`c687f81`](https://github.com/DataLabTechTV/datalab/commit/c687f81f4fbcec6aad30d3402881b2a4c62bef9d))
+
+- **graph.ops**: Automatically add a custom embeddings column to all node tables
+  ([`1900f21`](https://github.com/DataLabTechTV/datalab/commit/1900f2135b8a5be406cb38b3d4a06cbcd45fb7ce))
+
+Closes #2
+
+- **graph.ops**: Produce node schema with properties names and types
+  ([`291d42f`](https://github.com/DataLabTechTV/datalab/commit/291d42f59914f296efffc8f54cc44df074a27e33))
+
+### Performance Improvements
+
+- Migrated from KuzuQAChain to a custom strategy still based on langchain-kuzu
+  ([`ebce585`](https://github.com/DataLabTechTV/datalab/commit/ebce5853e1121e3fe7aba56be4107ca359828f45))
+
+### Refactoring
+
+- Change property match to WHERE cond and lower the temperature
+  ([`f0f9198`](https://github.com/DataLabTechTV/datalab/commit/f0f919895c4079d0c88f998dbb657346666859d2))
+
+### Testing
+
+- Correct paths_df fixture and add missing exclude_props
+  ([`c167b0c`](https://github.com/DataLabTechTV/datalab/commit/c167b0cb0dc318999d383ab2444f557487096aff))
+
+- Invoke test for GraphRAG runnable
+  ([`f724224`](https://github.com/DataLabTechTV/datalab/commit/f72422478f13505d5c9545dd1d3ec68f3346a79b))
+
+- Move graph db check to global fixtures
+  ([`d2963e3`](https://github.com/DataLabTechTV/datalab/commit/d2963e3b1027de909f64f497629004ac6a7514a3))
+
+- Print final chain output
+  ([`40f2d14`](https://github.com/DataLabTechTV/datalab/commit/40f2d14540167791e970607f6a5c06a9684278ff))
+
+- Setup ops and paths_df to test path_descriptions()
+  ([`3f3c160`](https://github.com/DataLabTechTV/datalab/commit/3f3c1602f239c9f142e3d54efd3fa991f52b5f17))
+
+- Tests will only print logs to stderr and always use debug level
+  ([`fafb3bf`](https://github.com/DataLabTechTV/datalab/commit/fafb3bfdbb854a3134b01bdb0fe1d7b47abd8611))
+
+
 ## v0.1.0 (2025-06-25)
 
 ### Bug Fixes
