@@ -5,6 +5,7 @@ from loguru import logger as log
 
 from graph.embedding import NodeEmbedding, NodeEmbeddingAlgo
 from graph.ops import KuzuOps
+from graph.rag import GraphRAG
 from shared.lakehouse import Lakehouse
 from shared.settings import env
 
@@ -93,6 +94,23 @@ def embeddings(schema: str, dimension: int, batch_size: int, epochs: int, algo: 
         e.train()
     except Exception as e:
         log.exception(e)
+
+
+@graph.command()
+@click.argument("schema", type=click.STRING)
+def reindex(schema: str):
+    try:
+        ops = KuzuOps(schema)
+        ops.reindex_embeddings()
+    except Exception as e:
+        log.error(e)
+
+
+@graph.command()
+@click.argument("schema", type=click.STRING)
+def rag(schema: str):
+    gr = GraphRAG(schema)
+    gr.interactive()
 
 
 if __name__ == "__main__":

@@ -52,7 +52,7 @@ services:
       ollama:
         condition: service_healthy
     environment:
-      MODELS: gemma3:latest,nomic-embed-text
+      MODELS: ${OLLAMA_MODELS}
     entrypoint: |
       /bin/sh -c '
       IFS=,; set -- $${MODELS};

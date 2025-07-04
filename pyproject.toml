@@ -18,16 +18,23 @@ dependencies = [
   "gitpython>=3.1.44",
   "kagglehub>=0.3.12",
   "kuzu>=0.10.0",
+  "langchain>=0.3.26",
+  "langchain-kuzu>=0.4.2",
+  "langchain-ollama>=0.3.3",
   "loguru>=0.7.3",
   "minio>=7.2.15",
+  "more-itertools>=10.7.0",
+  "ollama>=0.5.1",
   "pandas>=2.3.0",
   "platformdirs>=4.3.8",
+  "prompt-toolkit>=3.0.51",
   "python-slugify>=8.0.4",
   "torch>=2.7.1",
 ]
 
 [dependency-groups]
 dev = [
+    "pytest>=8.4.1",
     "python-semantic-release>=9.21.1",
 ]
 
@@ -40,13 +47,15 @@ package = true
 [tool.uv.sources]
 dbt-duckdb = { git = "https://github.com/duckdb/dbt-duckdb.git", rev = "afc39991158c0f719e5e57469ab466cfb63fbb8c" }
 
+[tool.pytest.ini_options]
+addopts = "--capture=no --maxfail=1 --disable-warnings"
+
 [tool.setuptools.packages.find]
 include = ["dlctl", "shared", "ingest", "transform", "export", "graph"]
 
 [tool.semantic_release]
 commit_parser = "conventional"
-version_variables = ["pyproject.toml:project.version"]
-upload_to_vcs_release = true
+version_toml = ["pyproject.toml:project.version"]
 allow_zero_version = true
 
 [tool.semantic_release.changelog.default_templates]
