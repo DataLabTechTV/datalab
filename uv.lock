@@ -261,13 +261,14 @@ wheels = [
 
 [[package]]
 name = "datalab"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "bidict" },
     { name = "boto3" },
     { name = "boto3-stubs", extra = ["s3"] },
     { name = "click" },
+    { name = "colorama" },
     { name = "dbt-core" },
     { name = "dbt-duckdb" },
     { name = "environs" },
@@ -300,6 +301,7 @@ requires-dist = [
     { name = "boto3", specifier = ">=1.38.29" },
     { name = "boto3-stubs", extras = ["s3"], specifier = ">=1.38.29" },
     { name = "click", specifier = ">=8.2.1" },
+    { name = "colorama", specifier = ">=0.4.6" },
     { name = "dbt-core", specifier = ">=1.9.6" },
     { name = "dbt-duckdb", git = "https://github.com/duckdb/dbt-duckdb.git?rev=afc39991158c0f719e5e57469ab466cfb63fbb8c" },
     { name = "environs", specifier = ">=14.2.0" },

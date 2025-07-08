@@ -4,6 +4,7 @@ from graph.rag import GraphRAG
 
 PROMPTS = (
     "If I like metal artists like Metallica or Iron Maiden, but also listen to IDM, what other artists and genres could I listen to?",
+    "What other bands like Anthrax are there?",
 )
 
 
