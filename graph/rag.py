@@ -6,6 +6,7 @@ from typing import Any, Callable, Optional
 
 import ollama
 import pandas as pd
+from colorama import Fore
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import AIMessage
 from langchain.schema.runnable import Runnable
@@ -54,6 +55,16 @@ class CommandLexer(Lexer):
             return tokens
 
         return get_line
+
+
+class GraphRetrievalException(Exception):
+    def __init__(self, message, query):
+        self.query = query
+        super().__init__(message)
+
+
+class ContextAssemblerException(Exception):
+    pass
 
 
 class GraphRAG(Runnable):
@@ -170,18 +181,27 @@ class GraphRAG(Runnable):
         limit: Optional[int] = None,
     ) -> RunnableFn:
         def run(inputs: dict[str, Any]) -> dict[str, Any]:
+            log.info(
+                "Querying graph for matching entities (shuffle={}, limit={})",
+                shuffle,
+                limit,
+            )
+
             query = inputs["query"]
             params = inputs.get("params")
 
-            context_df = pd.DataFrame(self.graph.query(query, params))
+            try:
+                context_df = pd.DataFrame(self.graph.query(query, params))
 
-            if shuffle:
-                context_df = context_df.sample(frac=1)
+                if shuffle:
+                    context_df = context_df.sample(frac=1)
 
-            if limit is not None:
-                context_df = context_df.head(limit)
+                if limit is not None:
+                    context_df = context_df.head(limit)
 
-            return dict(context=context_df)
+                return dict(context=context_df)
+            except:
+                raise GraphRetrievalException("Graph query failed", query=query)
 
         return run
 
@@ -214,6 +234,10 @@ class GraphRAG(Runnable):
 
         def run(inputs: dict[str, Any]) -> dict[str, Any]:
             context = inputs["context"]
+
+            if context is None or len(context) == 0:
+                raise ContextAssemblerException("Context not found")
+
             node_ids = context.node_id.to_list()
 
             for node_id in node_ids:
@@ -247,8 +271,16 @@ class GraphRAG(Runnable):
         max_length: int,
     ) -> RunnableFn:
         def run(inputs: dict[str, Any]) -> dict[str, Any]:
-            source_node_ids = inputs["graph_retrieval"]["context"].node_id.to_list()
+            context = inputs["graph_retrieval"]["context"]
+
+            if context is None or len(context) == 0:
+                raise ContextAssemblerException("Context not found")
+
+            source_node_ids = context.node_id.to_list()
             target_node_ids = inputs["combined_knn"]["knn"]
+
+            if target_node_ids is None or len(target_node_ids) == 0:
+                raise ContextAssemblerException("Nearest neighbors not found")
 
             paths_df = self.ops.sample_shortest_paths(
                 source_node_ids,
@@ -270,6 +302,9 @@ class GraphRAG(Runnable):
     ) -> RunnableFn:
         def run(inputs: dict[str, Any]) -> dict[str, Any]:
             source_node_ids = inputs["combined_knn"]["knn"]
+
+            if source_node_ids is None or len(source_node_ids) == 0:
+                raise ContextAssemblerException("Nearest neighbors not found")
 
             paths_dfs = []
 
@@ -412,7 +447,7 @@ class GraphRAG(Runnable):
 
                 time.sleep(0.1)
 
-        print(f"\r⏱ {elapsed}\n")
+        print("\b\b\b   ", end="\n\n", flush=True)
 
     def interactive(self):
         config_path = user_config_path("datalab", "DataLabTechTV")
@@ -461,9 +496,17 @@ class GraphRAG(Runnable):
                         )
                         loader_thread.start()
 
-                        output = self.invoke(dict(user_query=user_query))
-
-                        stop_event.set()
-                        loader_thread.join()
-
-                        print(output["context"])
+                        try:
+                            response = self.invoke(dict(user_query=user_query))
+                            stop_event.set()
+                            loader_thread.join()
+                            print(response.content)
+                        except GraphRetrievalException as e:
+                            stop_event.set()
+                            loader_thread.join()
+                            print(Fore.RED + "Error: " + str(e))
+                            print(Fore.MAGENTA + e.query + Fore.RESET)
+                        except ContextAssemblerException as e:
+                            stop_event.set()
+                            loader_thread.join()
+                            print(Fore.RED + "Error: " + str(e) + Fore.RESET)
