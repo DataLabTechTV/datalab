@@ -1,6 +1,29 @@
 # CHANGELOG
 
 
+## v0.3.0 (2025-07-08)
+
+### Bug Fixes
+
+- Add error control to the GraphRAG chain
+  ([`4f015ca`](https://github.com/DataLabTechTV/datalab/commit/4f015ca309974f1623a36a5b2dfd09d6c86a5484))
+
+### Chores
+
+- **deps**: Add colorama to color error messages
+  ([`389a8a1`](https://github.com/DataLabTechTV/datalab/commit/389a8a1399d6dfdfeefe8038b85322f5eeb22384))
+
+### Features
+
+- Graph rag CLI options for interactive and direct querying
+  ([`8f54d81`](https://github.com/DataLabTechTV/datalab/commit/8f54d812d1e17196da01aac9c2d7e0dc1bc9e9f9))
+
+### Refactoring
+
+- Remove unused import
+  ([`c5bfb82`](https://github.com/DataLabTechTV/datalab/commit/c5bfb825ccdea4166f4952d2fa6c8642c817008c))
+
+
 ## v0.2.0 (2025-07-04)
 
 ### Bug Fixes
