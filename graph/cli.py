@@ -1,11 +1,12 @@
 import os
+from typing import Optional
 
 import click
 from loguru import logger as log
 
 from graph.embedding import NodeEmbedding, NodeEmbeddingAlgo
 from graph.ops import KuzuOps
-from graph.rag import GraphRAG
+from graph.rag import ContextAssemblerException, GraphRAG, GraphRetrievalException
 from shared.lakehouse import Lakehouse
 from shared.settings import env
 
@@ -96,7 +97,7 @@ def embeddings(schema: str, dimension: int, batch_size: int, epochs: int, algo: 
         log.exception(e)
 
 
-@graph.command()
+@graph.command(help="Reindex embedding property")
 @click.argument("schema", type=click.STRING)
 def reindex(schema: str):
     try:
@@ -106,11 +107,36 @@ def reindex(schema: str):
         log.error(e)
 
 
-@graph.command()
+@graph.command(help="Run GraphRAG pipeline")
 @click.argument("schema", type=click.STRING)
-def rag(schema: str):
+@click.option(
+    "--interactive",
+    "-i",
+    is_flag=True,
+    help="Run in interactive mode using a REPL",
+)
+@click.option(
+    "--query",
+    "-q",
+    type=click.STRING,
+    help="User query prompt",
+)
+def rag(schema: str, interactive: bool, query: Optional[str]):
     gr = GraphRAG(schema)
-    gr.interactive()
+
+    if interactive and query is not None:
+        raise click.UsageError("--interactive and --query cannot be used together")
+
+    if query is not None:
+        try:
+            response = gr.invoke(dict(user_query=query))
+            log.info("Final response:\n{}", response.content)
+        except GraphRetrievalException as e:
+            log.error("{}\n{}", e, e.query)
+        except ContextAssemblerException as e:
+            log.error(e)
+    else:
+        gr.interactive()
 
 
 if __name__ == "__main__":
