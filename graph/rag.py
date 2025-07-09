@@ -369,6 +369,9 @@ class GraphRAG(Runnable):
     def answer_inputs_transform(self, inputs: dict[str, Any]) -> dict[str, Any]:
         user_query = inputs["user_query"]
         context = inputs["kg"]["context"]
+
+        log.debug("Context:\n{}", context)
+
         return dict(user_query=user_query, context=context)
 
     @property
