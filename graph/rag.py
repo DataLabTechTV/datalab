@@ -191,15 +191,15 @@ class GraphRAG(Runnable):
             params = inputs.get("params")
 
             try:
-                context_df = pd.DataFrame(self.graph.query(query, params))
+                entities_df = pd.DataFrame(self.graph.query(query, params))
 
                 if shuffle:
-                    context_df = context_df.sample(frac=1)
+                    entities_df = entities_df.sample(frac=1)
 
                 if limit is not None:
-                    context_df = context_df.head(limit)
+                    entities_df = entities_df.head(limit)
 
-                return dict(context=context_df)
+                return dict(entities=entities_df)
             except:
                 raise GraphRetrievalException("Graph query failed", query=query)
 
@@ -233,12 +233,12 @@ class GraphRAG(Runnable):
         knn_per_node_dfs = []
 
         def run(inputs: dict[str, Any]) -> dict[str, Any]:
-            context = inputs["context"]
+            entities = inputs["entities"]
 
-            if context is None or len(context) == 0:
-                raise ContextAssemblerException("Context not found")
+            if entities is None or len(entities) == 0:
+                raise ContextAssemblerException("Entities not found")
 
-            node_ids = context.node_id.to_list()
+            node_ids = entities.node_id.to_list()
 
             for node_id in node_ids:
                 knn_df = self.ops.knn(
@@ -271,12 +271,12 @@ class GraphRAG(Runnable):
         max_length: int,
     ) -> RunnableFn:
         def run(inputs: dict[str, Any]) -> dict[str, Any]:
-            context = inputs["graph_retrieval"]["context"]
+            entities = inputs["graph_retrieval"]["entities"]
 
-            if context is None or len(context) == 0:
-                raise ContextAssemblerException("Context not found")
+            if entities is None or len(entities) == 0:
+                raise ContextAssemblerException("Entities not found")
 
-            source_node_ids = context.node_id.to_list()
+            source_node_ids = entities.node_id.to_list()
             target_node_ids = inputs["combined_knn"]["knn"]
 
             if target_node_ids is None or len(target_node_ids) == 0:
