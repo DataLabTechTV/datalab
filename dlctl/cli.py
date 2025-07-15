@@ -13,6 +13,7 @@ from dlctl.dbt_handler import DBTHandler
 from export.cli import export
 from graph.cli import graph
 from ingest.cli import ingest
+from shared.cache import expunge_cache
 from shared.settings import LOCAL_DIR, MART_DB_VARS, env
 from shared.storage import Storage, StoragePrefix
 
@@ -241,6 +242,35 @@ def tools():
 )
 def generate_init_sql(path: str):
     T.generate_init_sql(path)
+
+
+# Cache
+# =====
+
+
+@dlctl.group(help="Manage cache (requests, etc.)")
+def cache():
+    pass
+
+
+@cache.command(name="clean", help="Expunge cache")
+@click.option(
+    "-ns",
+    "--namespace",
+    type=click.Choice(["requests", "huggingface"]),
+    help="Limit cache cleaning to a namespace",
+)
+@click.option(
+    "-n",
+    "--name",
+    type=click.STRING,
+    help="Limit cache cleaning to a specific name (namespace required as well)",
+)
+def cache_clean(namespace: Optional[str], name: Optional[str]):
+    if namespace is None and name is not None:
+        raise click.UsageError("name requires that namespace is set")
+
+    expunge_cache(namespace, name)
 
 
 if __name__ == "__main__":
