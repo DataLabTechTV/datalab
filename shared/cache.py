@@ -2,6 +2,7 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
+import humanize
 from loguru import logger as log
 from platformdirs import user_cache_dir
 from requests_cache.session import CachedSession
@@ -34,3 +35,30 @@ def expunge_cache(namespace: Optional[str] = None, name: Optional[str] = None):
         case _:
             log.info("Cleaning cache for {}: {}", namespace, name)
             shutil.rmtree(cache_dir / namespace / name)
+
+
+def cache_usage():
+    log.info("Calculating cache usage statistics")
+
+    cache_dir = get_cache_dir()
+
+    total_size_bytes = 0
+    byte_size_per_dir = {}
+
+    for path in cache_dir.iterdir():
+        if path.is_dir():
+            dir_name = f"{path.relative_to(cache_dir)}/"
+
+            byte_size_per_dir[dir_name] = sum(
+                f.stat().st_size for f in path.rglob("*") if f.is_file()
+            )
+
+            total_size_bytes += byte_size_per_dir[dir_name]
+
+        elif path.is_file():
+            total_size_bytes += path.stat().st_size
+
+    print("Total:", humanize.naturalsize(total_size_bytes))
+
+    for dir_name, dir_size in byte_size_per_dir.items():
+        print(f"\t{dir_name}", humanize.naturalsize(dir_size))

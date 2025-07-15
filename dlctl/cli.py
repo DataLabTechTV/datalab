@@ -13,7 +13,7 @@ from dlctl.dbt_handler import DBTHandler
 from export.cli import export
 from graph.cli import graph
 from ingest.cli import ingest
-from shared.cache import expunge_cache
+from shared.cache import cache_usage, expunge_cache
 from shared.settings import LOCAL_DIR, MART_DB_VARS, env
 from shared.storage import Storage, StoragePrefix
 
@@ -271,6 +271,11 @@ def cache_clean(namespace: Optional[str], name: Optional[str]):
         raise click.UsageError("name requires that namespace is set")
 
     expunge_cache(namespace, name)
+
+
+@cache.command(name="df", help="Calculate cache usage statistics")
+def cache_df():
+    cache_usage()
 
 
 if __name__ == "__main__":
