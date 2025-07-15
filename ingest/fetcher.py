@@ -98,7 +98,7 @@ class DataCiteFetcher:
                         desc=tmp.name,
                     ) as pb,
                 ):
-                    for chunk in r.iter_content(chunk_size=8192):
+                    for chunk in r.iter_content(chunk_size=262144):
                         if chunk is not None:
                             fp.write(chunk)
                             pb.update(len(chunk))
@@ -115,6 +115,8 @@ class DataCiteFetcher:
         files = self.get_files_list(ds_url)
 
         for file_id, filename in files:
-            tmp_path = self.download_file(ds_url, file_id)
-            self.storage.upload_file(tmp_path, f"{target}/{filename}")
-            os.unlink(tmp_path)
+            try:
+                tmp_path = self.download_file(ds_url, file_id)
+                self.storage.upload_file(tmp_path, f"{target}/{filename}")
+            finally:
+                os.unlink(tmp_path)
