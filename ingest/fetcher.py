@@ -82,8 +82,7 @@ class DataCiteFetcher:
 
             log.info("Downloading {} to {}", file_id, ds_api_url, tmp.name)
 
-            # Uncached here
-            with requests.get(ds_api_url, stream=True) as r:
+            with self.session.get(ds_api_url, stream=True) as r:
                 r.raise_for_status()
 
                 total_size = int(r.headers.get("content-length", 0))
