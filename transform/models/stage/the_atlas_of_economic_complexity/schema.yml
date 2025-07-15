@@ -1,0 +1,98 @@
+
+version: 2
+
+models:
+  - name: taoec_hs92_ccp_trade
+    description: Country Trade by Partner and Product (HS92), covering only 2020-2023.
+    columns:
+      - name: country_id
+        description: >-
+          Numerical country ID (internal to Growth Labs) for the reporting country.
+          This matches the IDs in the countries classification table.
+        data_tests:
+          - not_null
+      - name: country_iso3_code
+        description: >-
+          Three digit country code (e.g., USA, PRT) for the reporting country.
+        data_tests:
+          - not_null
+      - name: partner_country_id
+        description: >-
+          Numerical country ID (internal to Growth Labs) for the partner country.
+          This matches the IDs in the countries classification table.
+        data_tests:
+          - not_null
+      - name: partner_iso3_code
+        description: >-
+          Three digit country code (e.g., USA, PRT) for the partner country.
+        data_tests:
+          - not_null
+      - name: product_id
+        description: Numerical product ID (internal to Growth Labs).
+        data_tests:
+          - not_null
+      - name: product_hs92_code
+        description: >-
+          HS92 6-digit product code. HS stands for Harmonized System, and it's a
+          classification system used in international trade to categorize goods.
+        data_tests:
+          - not_null
+      - name: year
+        description: Calendar year.
+        data_tests:
+          - not_null
+      - name: export_value
+        description: Export value in dollars (USD).
+        data_tests:
+          - not_null
+      - name: import_value
+        description: Import value in dollars (USD).
+        data_tests:
+          - not_null
+  - name: taoec_hs92_products
+    columns:
+      - name: product_id
+        description: Numerical product ID (internal to Growth Labs).
+        data_tests:
+          - not_null
+      - name: product_hs92_code
+        description: >-
+          HS92 product code. HS stands for Harmonized System, and it's a classification
+          system used in international trade to categorize goods.
+        data_tests:
+          - not_null
+      - name: product_level
+        description: Granularity of 1, 2, 4 or 6 digits for HS92.
+        data_tests:
+          - not_null
+      - name: product_name
+        description: >-
+          Categorical product name (e.g., Musical instruments; parts and accessories of
+          such articles).
+        data_tests:
+          - not_null
+      - name: product_name_short
+        description: Readable product name.
+        data_tests:
+          - not_null
+      - name: product_parent_id
+        description: >-
+          Numerical product ID (internal to Growth Labs) of the parent product category.
+        data_tests:
+          - not_null
+      - name: product_id_hierarchy
+        description: Dot-separated product ID hierarchy (e.g., 5.180.1593).
+        data_tests:
+          - not_null
+      - name: show_feasibility
+        description: >-
+          Reliability regarding analysis feasibility due to trade discrepancies,
+          natural resource requirements, etc.
+        data_tests:
+          - not_null
+      - name: natural_resource
+        description: Flags product as a natural resource.
+        data_tests:
+          - not_null
+      - name: green_product
+        description: Products associated with green energy, or environmentally friendly.
