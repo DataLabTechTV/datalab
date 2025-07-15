@@ -3,7 +3,9 @@ import tempfile
 from pathlib import Path
 from urllib.parse import parse_qs, urljoin, urlsplit, urlunsplit
 
+import requests
 from loguru import logger as log
+from tqdm import tqdm
 
 from shared.cache import get_requests_cache_session
 from shared.storage import Storage, StoragePrefix
@@ -47,6 +49,8 @@ class DataCiteFetcher:
         )
 
         ds_api_resp = self.session.get(ds_api_url)
+        ds_api_resp.raise_for_status()
+
         ds_files = ds_api_resp.json()["data"]["latestVersion"]["files"]
 
         files = []
@@ -64,8 +68,6 @@ class DataCiteFetcher:
 
     def download_file(self, ds_url: str, file_id: int) -> str:
         with tempfile.NamedTemporaryFile(delete=False) as tmp:
-            log.info("Downloading file {} to {}", file_id, tmp.name)
-
             ds_url_parts = urlsplit(ds_url)
 
             ds_api_url = urlunsplit(
@@ -78,10 +80,28 @@ class DataCiteFetcher:
                 )
             )
 
-            ds_api_resp = self.session.get(ds_api_url)
+            log.info("Downloading {} to {}", file_id, ds_api_url, tmp.name)
 
-            with open(tmp.name, "wb") as fp:
-                fp.write(ds_api_resp.content)
+            # Uncached here
+            with requests.get(ds_api_url, stream=True) as r:
+                r.raise_for_status()
+
+                total_size = int(r.headers.get("content-length", 0))
+
+                with (
+                    open(tmp.name, "wb") as fp,
+                    tqdm(
+                        total=total_size,
+                        unit="B",
+                        unit_scale=True,
+                        unit_divisor=1024,
+                        desc=tmp.name,
+                    ) as pb,
+                ):
+                    for chunk in r.iter_content(chunk_size=8192):
+                        if chunk is not None:
+                            fp.write(chunk)
+                            pb.update(len(chunk))
 
             return tmp.name
 
