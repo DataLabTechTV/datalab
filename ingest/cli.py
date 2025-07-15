@@ -42,7 +42,7 @@ def dataset(dataset: str, manual: Optional[bool], template: Optional[str]):
     if manual:
         handle_standalone(dataset)
     elif template:
-        handle_template(DatasetTemplateID(template))
+        handle_template(dataset, DatasetTemplateID(template))
     elif dataset.startswith("https://www.kaggle.com/datasets/"):
         handle_kaggle(dataset_url=dataset)
     elif dataset.startswith("https://huggingface.co/datasets/"):

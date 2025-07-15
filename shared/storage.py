@@ -101,6 +101,11 @@ class Storage:
 
         return s3_path
 
+    def upload_file(self, source_path: str, s3_target_path: str):
+        log.info(f"Uploading {source_path} to {s3_target_path}")
+        s3_target_prefix = self.from_s3_path(s3_target_path)
+        self.bucket.upload_file(Filename=source_path, Key=s3_target_prefix)
+
     def upload_files(
         self,
         source_root: str,

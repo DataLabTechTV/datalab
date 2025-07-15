@@ -1,15 +1,20 @@
+import os
+import tempfile
 from pathlib import Path
 from urllib.parse import parse_qs, urljoin, urlsplit, urlunsplit
 
 from loguru import logger as log
 
 from shared.cache import get_requests_cache_session
+from shared.storage import Storage, StoragePrefix
 
 DATACITE_API_URL = "https://api.datacite.org/"
 
 
 class DataCiteFetcher:
-    def __init__(self):
+    def __init__(self, s3_dir_path: str):
+        self.s3_dir_path = s3_dir_path
+        self.storage = Storage(StoragePrefix.INGEST)
         self.session = get_requests_cache_session("datacite")
 
     def to_canonical_doi(self, doi: str) -> str:
@@ -27,7 +32,7 @@ class DataCiteFetcher:
 
         return ds_url
 
-    def get_files(self, ds_url: str) -> dict[int, str]:
+    def get_files_list(self, ds_url: str) -> list[tuple[int, str]]:
         ds_url_parts = urlsplit(ds_url)
         ds_persistent_id = parse_qs(ds_url_parts.query)["persistentId"][0]
 
@@ -37,14 +42,14 @@ class DataCiteFetcher:
                 ds_url_parts.netloc,
                 "/api/datasets/:persistentId",
                 f"persistentId={ds_persistent_id}",
-                "",
+                None,
             )
         )
 
         ds_api_resp = self.session.get(ds_api_url)
         ds_files = ds_api_resp.json()["data"]["latestVersion"]["files"]
 
-        files = {}
+        files = []
 
         for ds_file in ds_files:
             if "dataFile" not in ds_file:
@@ -53,9 +58,32 @@ class DataCiteFetcher:
             file_id = ds_file["dataFile"]["id"]
             filename = ds_file["dataFile"]["filename"]
 
-            files[file_id] = filename
+            files.append((file_id, filename))
 
         return files
+
+    def download_file(self, ds_url: str, file_id: int) -> str:
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            log.info("Downloading file {} to {}", file_id, tmp.name)
+
+            ds_url_parts = urlsplit(ds_url)
+
+            ds_api_url = urlunsplit(
+                (
+                    ds_url_parts.scheme,
+                    ds_url_parts.netloc,
+                    f"/api/access/datafile/{file_id}",
+                    None,
+                    None,
+                )
+            )
+
+            ds_api_resp = self.session.get(ds_api_url)
+
+            with open(tmp.name, "wb") as fp:
+                fp.write(ds_api_resp.content)
+
+            return tmp.name
 
     def download(self, doi: str, target: Path):
         log.info("Processing DOI: {}", doi)
@@ -63,8 +91,10 @@ class DataCiteFetcher:
         canonical_doi = self.to_canonical_doi(doi)
         ds_url = self.get_url_from_datacite(canonical_doi)
 
-        files = self.get_files(ds_url)
+        log.info("Getting files from {}", ds_url)
+        files = self.get_files_list(ds_url)
 
-        for file_id, filename in files.items():
-            download_url = ...
-            print(file_id, filename)
+        for file_id, filename in files:
+            tmp_path = self.download_file(ds_url, file_id)
+            self.storage.upload_file(tmp_path, f"{target}/{filename}")
+            os.unlink(tmp_path)

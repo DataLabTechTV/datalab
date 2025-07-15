@@ -24,16 +24,31 @@ def handle_standalone(dataset: str):
         log.error("Could not create directory {} for {}: {}", ds_name, dataset, e)
 
 
-def handle_template(template_id: DatasetTemplateID):
+def handle_template(dataset: str, template_id: DatasetTemplateID):
+    ds_name = slugify(dataset, separator="_")
     template = DatasetTemplate.from_id(template_id)
+
+    log.info(
+        "{} template detected, downloading dataset: {}",
+        template.__class__.__name__,
+        ds_name,
+    )
+
+    try:
+        s = Storage(prefix=StoragePrefix.INGEST)
+        s3_dir_path = s.get_dir(ds_name, dated=True, upload_placeholder=True)
+        s.upload_manifest(ds_name, latest=s3_dir_path)
+    except Exception as e:
+        log.error("Could not create directory {} for {}: {}", ds_name, dataset, e)
+        return
 
     match template:
         case DataCiteTemplate():
-            dcdl = DataCiteFetcher()
+            dcdl = DataCiteFetcher(s3_dir_path)
 
             for source, target, attribution in template:
                 log.info("Downloading: {}", attribution.replace("\n", " ").strip())
-                dcdl.download(doi=source, target=target)
+                dcdl.download(doi=source, target=f"{s3_dir_path}/{target}")
 
 
 def handle_kaggle(dataset_url: str):
