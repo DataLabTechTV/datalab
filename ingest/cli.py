@@ -1,7 +1,15 @@
+from typing import Optional
+
 import click
 from loguru import logger as log
 
-from ingest.handler import handle_hugging_face, handle_kaggle, handle_standalone
+from ingest.handler import (
+    handle_hugging_face,
+    handle_kaggle,
+    handle_standalone,
+    handle_template,
+)
+from ingest.template.base import DatasetTemplateID
 from shared.storage import Storage, StoragePrefix
 
 
@@ -10,7 +18,13 @@ def ingest():
     pass
 
 
-@ingest.command(help="Handle ingestion into a dated directory structure")
+@ingest.command(
+    help="""
+        Handle ingestion into a dated directory structure.
+
+        Supports Kaggle and Hugging Face URLs for DATASET.
+    """
+)
 @click.argument("dataset", type=click.STRING)
 @click.option(
     "-m",
@@ -18,11 +32,17 @@ def ingest():
     is_flag=True,
     help="Dataset argument will be used to create an empty directory in S3",
 )
-def dataset(dataset: str, manual: bool):
+@click.option("-t", "--template", type=click.Choice(t.value for t in DatasetTemplateID))
+def dataset(dataset: str, manual: Optional[bool], template: Optional[str]):
     log.info("Running ingestion for: {}", dataset)
+
+    if manual and template:
+        raise click.UsageError("--manual and --template cannot be used together")
 
     if manual:
         handle_standalone(dataset)
+    elif template:
+        handle_template(DatasetTemplateID(template))
     elif dataset.startswith("https://www.kaggle.com/datasets/"):
         handle_kaggle(dataset_url=dataset)
     elif dataset.startswith("https://huggingface.co/datasets/"):
