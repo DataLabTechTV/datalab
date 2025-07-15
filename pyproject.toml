@@ -32,6 +32,7 @@ dependencies = [
   "python-slugify>=8.0.4",
   "requests-cache>=1.2.1",
   "torch>=2.7.1",
+  "tqdm>=4.67.1",
 ]
 
 [dependency-groups]
