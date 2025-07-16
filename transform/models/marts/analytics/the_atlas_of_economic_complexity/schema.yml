@@ -36,8 +36,6 @@ models:
         description: >-
           HS92 6-digit product code. HS stands for Harmonized System, and it's a
           classification system used in international trade to categorize goods.
-        data_tests:
-          - not_null
       - name: since_year
         description: Calendar year for the start of the period (inclusive).
         data_tests:

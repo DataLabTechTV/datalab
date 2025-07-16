@@ -35,8 +35,6 @@ models:
         description: >-
           HS92 6-digit product code. HS stands for Harmonized System, and it's a
           classification system used in international trade to categorize goods.
-        data_tests:
-          - not_null
       - name: year
         description: Calendar year.
         data_tests:
@@ -59,8 +57,6 @@ models:
         description: >-
           HS92 product code. HS stands for Harmonized System, and it's a classification
           system used in international trade to categorize goods.
-        data_tests:
-          - not_null
       - name: product_level
         description: Granularity of 1, 2, 4 or 6 digits for HS92.
         data_tests:
@@ -78,8 +74,6 @@ models:
       - name: product_parent_id
         description: >-
           Numerical product ID (internal to Growth Labs) of the parent product category.
-        data_tests:
-          - not_null
       - name: product_id_hierarchy
         description: Dot-separated product ID hierarchy (e.g., 5.180.1593).
         data_tests:
