@@ -43,7 +43,14 @@ def load(schema: str, overwrite: bool):
 
     try:
         ops = KuzuOps(schema, overwrite=overwrite)
-        ops.load_music_graph(s3_path)
+
+        match schema:
+            case "music_taste":
+                ops.load_music_taste(s3_path)
+            case "econ_comp":
+                ops.load_econ_comp(s3_path)
+            case _:
+                raise click.UsageError(f"{schema}: graph unsupported")
     except Exception as e:
         log.error(e)
 
