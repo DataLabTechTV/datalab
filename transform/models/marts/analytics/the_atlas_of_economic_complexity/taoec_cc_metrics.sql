@@ -1,15 +1,28 @@
 {{ config(alias='cc_metrics') }}
 
-WITH shares AS (
+WITH country_exports AS (
     SELECT
         country_id,
         country_iso3_code,
-        partner_country_id,
-        partner_iso3_code,
+        product_id,
+        product_hs92_code,
+        sum(export_value) AS export_value
+    FROM
+        {{ ref('taoec_hs92_ccp_trade_3y_latest') }}
+    GROUP BY
+        country_id,
+        country_iso3_code,
+        product_id,
+        product_hs92_code
+),
+shares AS (
+    SELECT
+        country_id,
+        country_iso3_code,
         product_id,
         product_hs92_code,
         export_value / sum(export_value) OVER (PARTITION BY country_id) AS share
-    FROM {{ ref('taoec_hs92_ccp_trade_3y_latest') }}
+    FROM country_exports
 )
 SELECT
     a.country_id AS country_id_1,
@@ -20,7 +33,6 @@ SELECT
 FROM shares a
 JOIN shares b
 ON a.product_id = b.product_id
-    AND a.partner_country_id = b.partner_country_id
 WHERE a.country_id <> b.country_id
 GROUP BY
     a.country_id,
