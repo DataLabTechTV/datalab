@@ -46,7 +46,7 @@ class DBTHandler:
     def deps(self):
         self.dbt.invoke(["deps"] + self.PROJECT_ARGS)
 
-    def run(self, models: Optional[tuple[str]] = None):
+    def run(self, models: Optional[tuple[str, ...]] = None):
         args = ["run"]
         args += self.PROJECT_ARGS
 
@@ -71,8 +71,20 @@ class DBTHandler:
             else:
                 log.warning("{}: {}", r.node.name, r.status)
 
-    def test(self):
-        self.dbt.invoke(["test"] + self.PROJECT_ARGS)
+    def test(self, models: Optional[tuple[str, ...]] = None):
+        args = ["test"]
+        args += self.PROJECT_ARGS
+
+        if self.debug:
+            args += ["--debug"]
+
+        if models is not None and len(models) > 0:
+            args += [
+                "--select",
+                ",".join(f"{model}" for model in models),
+            ]
+
+        self.dbt.invoke(args)
 
     def docs_generate(self):
         self.dbt.invoke(["docs", "generate"] + self.PROJECT_ARGS)
