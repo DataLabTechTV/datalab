@@ -1,8 +1,10 @@
 version: 2
 
 models:
-  - name: taoec_hs92_ccp_trade_2020_2023
-    description: Country Trade by Partner and Product (HS92), aggregated for 2020-2023.
+  - name: taoec_hs92_ccp_trade_3y_latest
+    description: >-
+      Country Trade by Partner and Product (HS92), aggregated for the most recent
+      3 years.
     columns:
       - name: country_id
         description: >-
@@ -36,6 +38,14 @@ models:
           classification system used in international trade to categorize goods.
         data_tests:
           - not_null
+      - name: since_year
+        description: Calendar year for the start of the period (inclusive).
+        data_tests:
+          - not_null
+      - name: until_year
+        description: Calendar year for the end of the period (inclusive).
+        data_tests:
+          - not_null
       - name: export_value
         description: Export value in dollars (USD).
         data_tests:
@@ -44,3 +54,31 @@ models:
         description: Import value in dollars (USD).
         data_tests:
           - not_null
+
+  - name: taoec_cc_metrics
+    description: Country to Country metrics and statistics (e.g., ESI).
+    columns:
+      - name: country_id_1
+        description: >-
+          Numerical country ID (internal to Growth Labs) for one of the countries (1).
+          This matches the IDs in the countries classification table.
+        data_tests:
+          - not_null
+      - name: country_iso3_code_1
+        description: >-
+          Three digit country code (e.g., USA, PRT) for one of the countries (1).
+        data_tests:
+          - not_null
+      - name: country_id_2
+        description: >-
+          Numerical country ID (internal to Growth Labs) for one of the countries (2).
+          This matches the IDs in the countries classification table.
+        data_tests:
+          - not_null
+      - name: country_iso3_code_2
+        description: >-
+          Three digit country code (e.g., USA, PRT) for one of the countries (2).
+        data_tests:
+          - not_null
+      - name: esi
+        description: Export Similarity Index accounting for destination.
