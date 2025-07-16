@@ -23,9 +23,17 @@ models:
         +schema: dsn
       million_song_dataset_spotify_lastfm:
         +schema: msdsl
+      the_atlas_of_economic_complexity:
+        +schema: taoec
     marts:
       +materialized: table
       graphs:
         +database: graphs
         music_taste:
           +schema: music_taste
+        econ_comp:
+          +schema: econ_comp
+      analytics:
+        +database: analytics
+        the_atlas_of_economic_complexity:
+          +schema: taoec

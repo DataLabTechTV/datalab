@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: edges_competes_with
+    description: >-
+      Countries that export similar products and are significantly dependent on those
+      products as a part of their exports share.
+    columns:
+      - name: source_id
+        description: Node ID for a country.
+        data_tests:
+          - not_null
+      - name: target_id
+        description: Node ID for another country.
+        data_tests:
+          - not_null
+      - name: esi
+        description: >-
+          Export Similarity Index for the two linked countries. Only the top 5% pairs
+          with highest ESI are considered.
+  - name: edges_exports
+    description: Exported products by countries.
+    columns:
+      - name: source_id
+        description: Node ID for a country.
+        data_tests:
+          - not_null
+      - name: target_id
+        description: Node ID for a product.
+        data_tests:
+          - not_null
+      - name: amount_usd
+        description: Exported amount in US dollars.
+        data_tests:
+          - not_null
+          - positive_integer
+
+  - name: edges_imports
+    description: Imported products by countries.
+    columns:
+      - name: source_id
+        description: Node ID for a product.
+        data_tests:
+          - not_null
+      - name: target_id
+        description: Node ID for a country.
+        data_tests:
+          - not_null
+      - name: amount_usd
+        description: Imported amount in US dollars.
+        data_tests:
+          - not_null
+          - positive_integer

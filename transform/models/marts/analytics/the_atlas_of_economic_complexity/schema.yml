@@ -1,0 +1,108 @@
+version: 2
+
+models:
+  - name: taoec_hs92_ccp_trade_3y_latest
+    description: >-
+      Country Trade by Partner and Product (HS92), aggregated for the most recent
+      3 years.
+    columns:
+      - name: country_id
+        description: >-
+          Numerical country ID (internal to Growth Labs) for the reporting country.
+          This matches the IDs in the countries classification table.
+        data_tests:
+          - not_null
+      - name: country_iso3_code
+        description: >-
+          Three digit country code (e.g., USA, PRT) for the reporting country.
+        data_tests:
+          - not_null
+      - name: partner_country_id
+        description: >-
+          Numerical country ID (internal to Growth Labs) for the partner country.
+          This matches the IDs in the countries classification table.
+        data_tests:
+          - not_null
+      - name: partner_iso3_code
+        description: >-
+          Three digit country code (e.g., USA, PRT) for the partner country.
+        data_tests:
+          - not_null
+      - name: product_id
+        description: >-
+          Numerical product ID (internal to Growth Labs). This matches the IDs in
+          the HS92 products classification table.
+        data_tests:
+          - not_null
+      - name: product_hs92_code
+        description: >-
+          HS92 6-digit product code. HS stands for Harmonized System, and it's a
+          classification system used in international trade to categorize goods.
+      - name: since_year
+        description: Calendar year for the start of the period (inclusive).
+        data_tests:
+          - not_null
+      - name: until_year
+        description: Calendar year for the end of the period (inclusive).
+        data_tests:
+          - not_null
+      - name: export_value
+        description: Export value in dollars (USD).
+        data_tests:
+          - not_null
+      - name: import_value
+        description: Import value in dollars (USD).
+        data_tests:
+          - not_null
+
+  - name: taoec_cc_metrics
+    description: Country to Country metrics and statistics (e.g., ESI).
+    columns:
+      - name: country_id_1
+        description: >-
+          Numerical country ID (internal to Growth Labs) for one of the countries (1).
+          This matches the IDs in the countries classification table.
+        data_tests:
+          - not_null
+      - name: country_iso3_code_1
+        description: >-
+          Three digit country code (e.g., USA, PRT) for one of the countries (1).
+        data_tests:
+          - not_null
+      - name: country_id_2
+        description: >-
+          Numerical country ID (internal to Growth Labs) for one of the countries (2).
+          This matches the IDs in the countries classification table.
+        data_tests:
+          - not_null
+      - name: country_iso3_code_2
+        description: >-
+          Three digit country code (e.g., USA, PRT) for one of the countries (2).
+        data_tests:
+          - not_null
+      - name: esi
+        description: Export Similarity Index accounting for destination.
+
+  - name: taoec_competing_countries
+    description: Competing countries according to the top 5% pairs with highest ESI.
+    columns:
+      - name: country_id
+        description: >-
+          Numerical country ID (internal to Growth Labs) for a country that appears in
+          the top 5% pairs with highest ESI. This matches the IDs in the countries classification table.
+        data_tests:
+          - not_null
+          - unique
+
+  - name: taoec_competing_countries_products
+    description: >-
+      Products traded by countries appearing the top 5% pairs with highest ESI.
+    columns:
+      - name: product_id
+        description: >-
+          Numerical product ID (internal to Growth Labs) for a product that is traded
+          by countries in the top 5% pairs with highest ESI. This matches the IDs in
+          the HS92 products classification table.
+        data_tests:
+          - not_null
+          - unique

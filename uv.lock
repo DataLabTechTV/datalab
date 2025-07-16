@@ -165,6 +165,19 @@ wheels = [
 ]
 
 [[package]]
+name = "cattrs"
+version = "25.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "attrs" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/57/2b/561d78f488dcc303da4639e02021311728fb7fda8006dd2835550cddd9ed/cattrs-25.1.1.tar.gz", hash = "sha256:c914b734e0f2d59e5b720d145ee010f1fd9a13ee93900922a2f3f9d593b8382c", size = 435016, upload-time = "2025-06-04T20:27:15.44Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/18/b0/215274ef0d835bbc1056392a367646648b6084e39d489099959aefcca2af/cattrs-25.1.1-py3-none-any.whl", hash = "sha256:1b40b2d3402af7be79a7e7e097a9b4cd16d4c06e6d526644b0b26a063a1cc064", size = 69386, upload-time = "2025-06-04T20:27:13.969Z" },
+]
+
+[[package]]
 name = "certifi"
 version = "2025.4.26"
 source = { registry = "https://pypi.org/simple" }
@@ -273,6 +286,7 @@ dependencies = [
     { name = "dbt-duckdb" },
     { name = "environs" },
     { name = "gitpython" },
+    { name = "humanize" },
     { name = "kagglehub" },
     { name = "kuzu" },
     { name = "langchain" },
@@ -286,7 +300,9 @@ dependencies = [
     { name = "platformdirs" },
     { name = "prompt-toolkit" },
     { name = "python-slugify" },
+    { name = "requests-cache" },
     { name = "torch" },
+    { name = "tqdm" },
 ]
 
 [package.dev-dependencies]
@@ -306,8 +322,9 @@ requires-dist = [
     { name = "dbt-duckdb", git = "https://github.com/duckdb/dbt-duckdb.git?rev=afc39991158c0f719e5e57469ab466cfb63fbb8c" },
     { name = "environs", specifier = ">=14.2.0" },
     { name = "gitpython", specifier = ">=3.1.44" },
+    { name = "humanize", specifier = ">=4.12.3" },
     { name = "kagglehub", specifier = ">=0.3.12" },
-    { name = "kuzu", specifier = ">=0.10.0" },
+    { name = "kuzu", specifier = "==0.11.0" },
     { name = "langchain", specifier = ">=0.3.26" },
     { name = "langchain-kuzu", specifier = ">=0.4.2" },
     { name = "langchain-ollama", specifier = ">=0.3.3" },
@@ -319,7 +336,9 @@ requires-dist = [
     { name = "platformdirs", specifier = ">=4.3.8" },
     { name = "prompt-toolkit", specifier = ">=3.0.51" },
     { name = "python-slugify", specifier = ">=8.0.4" },
+    { name = "requests-cache", specifier = ">=1.2.1" },
     { name = "torch", specifier = ">=2.7.1" },
+    { name = "tqdm", specifier = ">=4.67.1" },
 ]
 
 [package.metadata.requires-dev]
@@ -631,6 +650,15 @@ wheels = [
 ]
 
 [[package]]
+name = "humanize"
+version = "4.12.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/22/d1/bbc4d251187a43f69844f7fd8941426549bbe4723e8ff0a7441796b0789f/humanize-4.12.3.tar.gz", hash = "sha256:8430be3a615106fdfceb0b2c1b41c4c98c6b0fc5cc59663a5539b111dd325fb0", size = 80514, upload-time = "2025-04-30T11:51:07.98Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a0/1e/62a2ec3104394a2975a2629eec89276ede9dbe717092f6966fcf963e1bf0/humanize-4.12.3-py3-none-any.whl", hash = "sha256:2cbf6370af06568fa6d2da77c86edb7886f3160ecd19ee1ffef07979efc597f6", size = 128487, upload-time = "2025-04-30T11:51:06.468Z" },
+]
+
+[[package]]
 name = "idna"
 version = "3.10"
 source = { registry = "https://pypi.org/simple" }
@@ -767,17 +795,19 @@ wheels = [
 
 [[package]]
 name = "kuzu"
-version = "0.10.0"
+version = "0.11.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/3c/48/ebd5b564df0474ec7df294a6209d2453086f2ef0cef930608b176c73a40a/kuzu-0.10.0.tar.gz", hash = "sha256:7c7f975d053749295eaacf7acaccbd345bf852264f5ed25323001bbd9d408f48", size = 4854770, upload-time = "2025-05-08T18:23:11.497Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/7c/d2c9355054a67a79ec0cc516b3fad68d970245a1a6f5173eaa2bf94d1782/kuzu-0.11.0.tar.gz", hash = "sha256:34b9fe2d9f94421585f921cb0513bd584842a5705ae757c09fd075e23acb42d7", size = 4897335, upload-time = "2025-07-13T18:37:37.009Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/21/7c/767460c87e4ec70d6ca630172336677fe23698b99afd52178961a5901dee/kuzu-0.10.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:8146efda377a1661368b607d23aaee4e46a624f764f79a2ee98540fe6c325cc9", size = 3687910, upload-time = "2025-05-08T18:22:32.837Z" },
-    { url = "https://files.pythonhosted.org/packages/47/70/6b5a6329183446761527df23977133aef26370dd1f8d511652af1d989275/kuzu-0.10.0-cp313-cp313-macosx_11_0_x86_64.whl", hash = "sha256:06a4bf8d9057100a2df576adbe1d50d683cd799d8a97f7fe2cbdd013bf6e439b", size = 4151510, upload-time = "2025-05-08T18:22:34.796Z" },
-    { url = "https://files.pythonhosted.org/packages/65/26/5478eeefe08e04f7087be4659f2b513faa1fad5d0a362abdd86b2e133d90/kuzu-0.10.0-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:85fa3af5283632dbc8b98b2146f3fd7fbcdf93ce3430b74fe22df48a09e88540", size = 6097521, upload-time = "2025-05-08T18:22:36.471Z" },
-    { url = "https://files.pythonhosted.org/packages/99/47/f7e9fd9d31823453d4857e589b9cbf58907c7ee5443e61c4ad80011a8f34/kuzu-0.10.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4f01f7f3be037b6800dd9cdbbc682ba8449a1fb230769341004e890a87541e48", size = 6892802, upload-time = "2025-05-08T18:22:38.668Z" },
-    { url = "https://files.pythonhosted.org/packages/09/1b/a061123be5919088b88603e5ec07243ea8b680c3c05aee5ab563c1ba9d8b/kuzu-0.10.0-cp313-cp313-win_amd64.whl", hash = "sha256:7a92b0c3047e4e77a227a2e2126864c002e9789d8e3aa8b96d8f61df6a35d09d", size = 4189828, upload-time = "2025-05-08T18:22:40.542Z" },
-    { url = "https://files.pythonhosted.org/packages/30/e7/3a25f52c1a6c5ffb2aa90e81f4d0a0f9cf84897fc024ddb07242bf578887/kuzu-0.10.0-cp313-cp313t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:57ed7e0054ac3f2fef4a9c5875f77c15b32ef16ea40d8cc129c492edcce21900", size = 6101063, upload-time = "2025-05-08T18:22:42.159Z" },
-    { url = "https://files.pythonhosted.org/packages/cb/de/469d26653805a47b7fa67b77741e7a2271d1316c531463640cd39d063db0/kuzu-0.10.0-cp313-cp313t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:964ff28e3540a55e1c865eb8748de6a9385d391b07358ff069c257df3fe76dd0", size = 6897320, upload-time = "2025-05-08T18:22:44.048Z" },
+    { url = "https://files.pythonhosted.org/packages/e7/22/b1577470c1e142272cc3646cd68ec13dc06b68bfe26869c1339e3ba8a1b0/kuzu-0.11.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:d3b928a6646aad0a4284a07918140761f70626e936976c7bc9a1504395029353", size = 3693508, upload-time = "2025-07-13T18:37:02.4Z" },
+    { url = "https://files.pythonhosted.org/packages/af/7c/c97de999c782860bff2a223d07afaa71c9ae4e0a214a1d7c3db866cf9157/kuzu-0.11.0-cp313-cp313-macosx_11_0_x86_64.whl", hash = "sha256:5a995172d99e961fe2ff073722a447d335dca608d566fc924520f1bfea4f97cf", size = 4095016, upload-time = "2025-07-13T18:37:03.742Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/df/c9d63b4a3835b944d042add771bdfbaca5bd61a1490b78492e4e299c948f/kuzu-0.11.0-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:836af97ba5159a59e55cb336869f45987d74d9875bd97caae31af5244f8b99e8", size = 6201752, upload-time = "2025-07-13T18:37:05.756Z" },
+    { url = "https://files.pythonhosted.org/packages/e6/8d/55226444b7607d81299e3ff1d47ae4ad76149c0fd266ae7fe04eab52060e/kuzu-0.11.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7ee8559686eac9f874d125708f9a83f1dca09bb165e5b838c6c0ad521cce68ee", size = 6979587, upload-time = "2025-07-13T18:37:07.468Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/19/1e19851f7229953cd696df9983b953dcc2c0cc1f0ae81e02be9eddd2b379/kuzu-0.11.0-cp313-cp313-win_amd64.whl", hash = "sha256:7ae94e8add6b5cc25f3cf2a38a07f3c4a4acb9b636078be8a53ac3e8f736d6ba", size = 4289847, upload-time = "2025-07-13T18:37:09.08Z" },
+    { url = "https://files.pythonhosted.org/packages/9f/2a/f4579d9b7a8dd205bfc1af89596ed3cbcfea3c0bdf14206083fea509c545/kuzu-0.11.0-cp313-cp313t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:3667b430de2efbc96e45878e460851d1aa8aa94be96fa5d4d82186f19a95889a", size = 6204963, upload-time = "2025-07-13T18:37:10.637Z" },
+    { url = "https://files.pythonhosted.org/packages/ff/bd/a827d5eff7a7abd577841bbe71f8df485501ca8f0250ddbe29c7edf67e6e/kuzu-0.11.0-cp313-cp313t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4162d80861e606f4d82d6e559fc11c0d7efa7725a6dc811c61bcd266a2963705", size = 6982953, upload-time = "2025-07-13T18:37:12.429Z" },
+    { url = "https://files.pythonhosted.org/packages/03/19/6d41056e2d429ddb19396d992dee5f7804cdb3bee160d53c3cbf97c0f251/kuzu-0.11.0-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:7da89fb506be064ebb7d3954f9ffb6e9c0f9ef9c10f37be59a347a0bc48efd28", size = 6202100, upload-time = "2025-07-13T18:37:14.156Z" },
+    { url = "https://files.pythonhosted.org/packages/ea/a7/13585d872b65263da8e83c77100914fbaafe91fea11160151a61cf111e03/kuzu-0.11.0-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b17cc92a925073a3bbd65e05af59a9c0c931e1573755d7ad340705059d849af7", size = 6205072, upload-time = "2025-07-13T18:37:15.907Z" },
 ]
 
 [[package]]
@@ -1591,6 +1621,23 @@ wheels = [
 ]
 
 [[package]]
+name = "requests-cache"
+version = "1.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "attrs" },
+    { name = "cattrs" },
+    { name = "platformdirs" },
+    { name = "requests" },
+    { name = "url-normalize" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1a/be/7b2a95a9e7a7c3e774e43d067c51244e61dea8b120ae2deff7089a93fb2b/requests_cache-1.2.1.tar.gz", hash = "sha256:68abc986fdc5b8d0911318fbb5f7c80eebcd4d01bfacc6685ecf8876052511d1", size = 3018209, upload-time = "2024-06-18T17:18:03.774Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4e/2e/8f4051119f460cfc786aa91f212165bb6e643283b533db572d7b33952bd2/requests_cache-1.2.1-py3-none-any.whl", hash = "sha256:1285151cddf5331067baa82598afe2d47c7495a1334bfe7a7d329b43e9fd3603", size = 61425, upload-time = "2024-06-18T17:17:45Z" },
+]
+
+[[package]]
 name = "requests-toolbelt"
 version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1898,6 +1945,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/95/32/1a225d6164441be760d75c2c42e2780dc0873fe382da3e98a2e1e48361e5/tzdata-2025.2.tar.gz", hash = "sha256:b60a638fcc0daffadf82fe0f57e53d06bdec2f36c4df66280ae79bce6bd6f2b9", size = 196380, upload-time = "2025-03-23T13:54:43.652Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5c/23/c7abc0ca0a1526a0774eca151daeb8de62ec457e77262b66b359c3c7679e/tzdata-2025.2-py2.py3-none-any.whl", hash = "sha256:1a403fada01ff9221ca8044d701868fa132215d84beb92242d9acd2147f667a8", size = 347839, upload-time = "2025-03-23T13:54:41.845Z" },
+]
+
+[[package]]
+name = "url-normalize"
+version = "2.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "idna" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/80/31/febb777441e5fcdaacb4522316bf2a527c44551430a4873b052d545e3279/url_normalize-2.2.1.tar.gz", hash = "sha256:74a540a3b6eba1d95bdc610c24f2c0141639f3ba903501e61a52a8730247ff37", size = 18846, upload-time = "2025-04-26T20:37:58.553Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bc/d9/5ec15501b675f7bc07c5d16aa70d8d778b12375686b6efd47656efdc67cd/url_normalize-2.2.1-py3-none-any.whl", hash = "sha256:3deb687587dc91f7b25c9ae5162ffc0f057ae85d22b1e15cf5698311247f567b", size = 14728, upload-time = "2025-04-26T20:37:57.217Z" },
 ]
 
 [[package]]

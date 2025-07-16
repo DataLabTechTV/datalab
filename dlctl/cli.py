@@ -13,6 +13,7 @@ from dlctl.dbt_handler import DBTHandler
 from export.cli import export
 from graph.cli import graph
 from ingest.cli import ingest
+from shared.cache import cache_usage, expunge_cache
 from shared.settings import LOCAL_DIR, MART_DB_VARS, env
 from shared.storage import Storage, StoragePrefix
 
@@ -185,7 +186,7 @@ def backup_ls(include_all: bool):
     help="Model name to transform (can be used multiple times)",
 )
 @click.option("--debug", is_flag=True, help="Run dbt with the debug flag")
-def transform(models: tuple[str], debug: bool):
+def transform(models: Optional[tuple[str, ...]], debug: bool):
     dbt_handler = DBTHandler(debug=debug)
     dbt_handler.run(models)
 
@@ -195,9 +196,18 @@ def transform(models: tuple[str], debug: bool):
 
 
 @dlctl.command(name="test", help="Run data tests")
-def test():
-    dbt_handler = DBTHandler()
-    dbt_handler.test()
+@click.option(
+    "--model",
+    "-m",
+    "models",
+    multiple=True,
+    type=click.STRING,
+    help="Model name to transform (can be used multiple times)",
+)
+@click.option("--debug", is_flag=True, help="Run dbt with the debug flag")
+def test(models: Optional[tuple[str, ...]], debug: bool):
+    dbt_handler = DBTHandler(debug=debug)
+    dbt_handler.test(models)
 
 
 # Documentation
@@ -241,6 +251,40 @@ def tools():
 )
 def generate_init_sql(path: str):
     T.generate_init_sql(path)
+
+
+# Cache
+# =====
+
+
+@dlctl.group(help="Manage cache (requests, etc.)")
+def cache():
+    pass
+
+
+@cache.command(name="clean", help="Expunge cache")
+@click.option(
+    "-ns",
+    "--namespace",
+    type=click.Choice(["requests", "huggingface"]),
+    help="Limit cache cleaning to a namespace",
+)
+@click.option(
+    "-n",
+    "--name",
+    type=click.STRING,
+    help="Limit cache cleaning to a specific name (namespace required as well)",
+)
+def cache_clean(namespace: Optional[str], name: Optional[str]):
+    if namespace is None and name is not None:
+        raise click.UsageError("name requires that namespace is set")
+
+    expunge_cache(namespace, name)
+
+
+@cache.command(name="df", help="Calculate cache usage statistics")
+def cache_df():
+    cache_usage()
 
 
 if __name__ == "__main__":

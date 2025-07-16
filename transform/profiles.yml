@@ -27,4 +27,10 @@ transform:
           options:
             data_path: >
               s3://{{ env_var('S3_BUCKET') }}/{{ env_var('S3_GRAPHS_MART_PREFIX') }}
+        - path: >
+            ducklake:sqlite:{{ env_var('LOCAL_DIR') }}/{{ env_var('ANALYTICS_MART_DB') }}
+          alias: analytics
+          options:
+            data_path: >
+              s3://{{ env_var('S3_BUCKET') }}/{{ env_var('S3_ANALYTICS_MART_PREFIX') }}
   target: lakehouse

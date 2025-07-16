@@ -28,17 +28,30 @@ class KuzuOps:
         if os.path.exists(db_path):
             if overwrite:
                 log.warning(f"Overwriting database: {db_path}")
-                shutil.rmtree(db_path)
+                if os.path.isdir(db_path):
+                    shutil.rmtree(db_path)
+                elif os.path.isfile(db_path):
+                    os.unlink(db_path)
 
         db = kuzu.Database(db_path)
         self.conn = kuzu.Connection(db)
         self.storage = Storage(prefix=StoragePrefix.EXPORTS)
 
-    def _create_music_graph_schema(self):
+    def _copy_from_s3(self, s3_path: str, query: str, path_var="path"):
+        with tempfile.NamedTemporaryFile(suffix=".parquet") as tmp:
+            self.storage.download_file(s3_path, tmp.name)
+            query = Template(query).substitute({path_var: tmp.name})
+            log.debug("Running query: {}", query)
+            self.conn.execute(query)
+
+    # Graph: music_taste
+    # ==================
+
+    def _create_music_taste_schema(self):
         # Nodes
         # =====
 
-        log.info("Creating music_graph schema for User nodes")
+        log.info("Creating music_taste graph schema for User nodes")
 
         self.conn.execute(
             """
@@ -52,7 +65,7 @@ class KuzuOps:
             """
         )
 
-        log.info("Creating music_graph schema for Genre nodes")
+        log.info("Creating music_taste graph schema for Genre nodes")
 
         self.conn.execute(
             """
@@ -64,7 +77,7 @@ class KuzuOps:
             """
         )
 
-        log.info("Creating music_graph schema for Track nodes")
+        log.info("Creating music_taste graph schema for Track nodes")
 
         self.conn.execute(
             """
@@ -82,13 +95,13 @@ class KuzuOps:
         # Edges
         # =====
 
-        log.info("Creating music_graph schema for Friend edges")
+        log.info("Creating music_taste graph schema for Friend edges")
         self.conn.execute("CREATE REL TABLE Friend(FROM User TO User, MANY_MANY)")
 
-        log.info("Creating music_graph schema for Likes edges")
+        log.info("Creating music_taste graph schema for Likes edges")
         self.conn.execute("CREATE REL TABLE Likes(FROM User TO Genre, MANY_MANY)")
 
-        log.info("Creating music_graph schema for ListenedTo edges")
+        log.info("Creating music_taste graph schema for ListenedTo edges")
         self.conn.execute(
             """
             CREATE REL TABLE ListenedTo(
@@ -99,42 +112,35 @@ class KuzuOps:
             """
         )
 
-        log.info("Creating music_graph schema for Tagged edges")
+        log.info("Creating music_taste graph schema for Tagged edges")
         self.conn.execute("CREATE REL TABLE Tagged(FROM Track TO Genre, MANY_MANY)")
 
-    def _copy_from_s3(self, s3_path: str, query: str, path_var="path"):
-        with tempfile.NamedTemporaryFile(suffix=".parquet") as tmp:
-            self.storage.download_file(s3_path, tmp.name)
-            query = Template(query).substitute({path_var: tmp.name})
-            log.debug("Running query: {}", query)
-            self.conn.execute(query)
-
-    def _import_music_graph(self, s3_path: str):
+    def _import_music_taste(self, s3_path: str):
         # Nodes
         # =====
 
-        log.info("Importing music_graph DSN User nodes")
+        log.info("Importing music_taste DSN User nodes")
 
         self._copy_from_s3(
             f"{s3_path}/nodes/dsn_nodes_users.parquet",
             "COPY User(node_id, user_id, country, source) FROM '$path'",
         )
 
-        log.info("Importing music_graph MSDSL User nodes")
+        log.info("Importing music_taste MSDSL User nodes")
 
         self._copy_from_s3(
             f"{s3_path}/nodes/msdsl_nodes_users.parquet",
             "COPY User(node_id, user_id, source) FROM '$path'",
         )
 
-        log.info("Importing music_graph MSDSL Track nodes")
+        log.info("Importing music_taste MSDSL Track nodes")
 
         self._copy_from_s3(
             f"{s3_path}/nodes/msdsl_nodes_tracks.parquet",
             "COPY Track(node_id, track_id, name, artist, year) FROM '$path'",
         )
 
-        log.info("Importing music_graph Genre nodes")
+        log.info("Importing music_taste Genre nodes")
 
         self._copy_from_s3(
             f"{s3_path}/nodes/nodes_genres.parquet",
@@ -144,45 +150,203 @@ class KuzuOps:
         # Edges
         # =====
 
-        log.info("Importing music_graph DSN user-user friend edges")
+        log.info("Importing music_taste DSN user-user friend edges")
 
         self._copy_from_s3(
             f"{s3_path}/edges/dsn_edges_friendships.parquet",
             "COPY Friend FROM '$path'",
         )
 
-        log.info("Importing music_graph DSN user-genre edges")
+        log.info("Importing music_taste DSN user-genre edges")
 
         self._copy_from_s3(
             f"{s3_path}/edges/dsn_edges_user_genres.parquet",
             "COPY Likes FROM '$path'",
         )
 
-        log.info("Importing music_graph MSDSL user-tracks edges")
+        log.info("Importing music_taste MSDSL user-tracks edges")
 
         self._copy_from_s3(
             f"{s3_path}/edges/msdsl_edges_user_tracks.parquet",
             "COPY ListenedTo FROM '$path'",
         )
 
-        log.info("Importing music_graph MSDSL track-genres edges")
+        log.info("Importing music_taste MSDSL track-genres edges")
 
         self._copy_from_s3(
             f"{s3_path}/edges/msdsl_edges_track_tags.parquet",
             "COPY Tagged FROM '$path'",
         )
 
-    def load_music_graph(self, path: str):
+    def load_music_taste(self, path: str):
         try:
-            self._create_music_graph_schema()
+            self._create_music_taste_schema()
         except Exception as e:
-            log.error("Failed to create schema for music_graph: {}", e)
+            log.error("Failed to create schema for music_taste: {}", e)
             return
 
         try:
-            self._import_music_graph(path)
+            self._import_music_taste(path)
         except Exception as e:
-            log.error("Failed to import nodes/edges for music_graph: {}", e)
+            log.error("Failed to import nodes/edges for music_taste: {}", e)
+            return
+
+    # Graph: econ_comp
+    # ================
+
+    def _create_econ_comp_schema(self):
+        # Nodes
+        # =====
+
+        log.info("Creating econ_comp graph schema for Country nodes")
+
+        self.conn.execute(
+            """
+            CREATE NODE TABLE Country (
+                node_id INT64,
+                country_id UINT16,
+                country_iso3_code STRING,
+                country_name STRING,
+                country_name_short STRING,
+                in_rankings BOOLEAN,
+                former_country BOOLEAN,
+                PRIMARY KEY (node_id)
+            )
+            """
+        )
+
+        log.info("Creating econ_comp graph schema for Product nodes")
+
+        self.conn.execute(
+            """
+            CREATE NODE TABLE Product (
+                node_id INT64,
+                product_id UINT16,
+                product_hs92_code UINT32,
+                product_level UINT8,
+                product_name STRING,
+                product_name_short STRING,
+                product_id_hierarchy STRING,
+                show_feasibility BOOLEAN,
+                natural_resource BOOLEAN,
+                green_product BOOLEAN,
+                PRIMARY KEY (node_id)
+            )
+            """
+        )
+
+        # Edges
+        # =====
+
+        log.info("Creating econ_comp graph schema for CompetesWith edges")
+        self.conn.execute(
+            """
+            CREATE REL TABLE CompetesWith(
+                FROM Country TO Country,
+                esi DOUBLE,
+                MANY_MANY
+            )
+            """
+        )
+
+        log.info("Creating econ_comp graph schema for Exports edges")
+        self.conn.execute(
+            """
+            CREATE REL TABLE Exports(
+                FROM Country TO Product,
+                amount_usd INT128,
+                MANY_MANY
+            )
+            """
+        )
+
+        log.info("Creating econ_comp graph schema for Imports edges")
+        self.conn.execute(
+            """
+            CREATE REL TABLE Imports(
+                FROM Product TO Country,
+                amount_usd INT128,
+                MANY_MANY
+            )
+            """
+        )
+
+    def _import_econ_comp(self, s3_path: str):
+        # Nodes
+        # =====
+
+        log.info("Importing econ_comp Country nodes")
+
+        self._copy_from_s3(
+            f"{s3_path}/nodes/nodes_countries.parquet",
+            """
+            COPY Country(
+                node_id,
+                country_id,
+                country_iso3_code,
+                country_name,
+                country_name_short,
+                in_rankings,
+                former_country
+            ) FROM '$path'
+            """,
+        )
+
+        log.info("Importing econ_comp Product nodes")
+
+        self._copy_from_s3(
+            f"{s3_path}/nodes/nodes_products.parquet",
+            """
+            COPY Product(
+                node_id,
+                product_id,
+                product_hs92_code,
+                product_level,
+                product_name,
+                product_name_short,
+                product_id_hierarchy,
+                show_feasibility,
+                natural_resource,
+                green_product
+            ) FROM '$path'
+            """,
+        )
+
+        # Edges
+        # =====
+
+        log.info("Importing econ_comp country-country CompetesWith edges")
+
+        self._copy_from_s3(
+            f"{s3_path}/edges/edges_competes_with.parquet",
+            "COPY CompetesWith FROM '$path'",
+        )
+
+        log.info("Importing econ_comp country->product Exports edges")
+
+        self._copy_from_s3(
+            f"{s3_path}/edges/edges_exports.parquet",
+            "COPY Exports FROM '$path'",
+        )
+
+        log.info("Importing econ_comp product->country Imports edges")
+
+        self._copy_from_s3(
+            f"{s3_path}/edges/edges_imports.parquet",
+            "COPY Imports FROM '$path'",
+        )
+
+    def load_econ_comp(self, path: str):
+        try:
+            self._create_econ_comp_schema()
+        except Exception as e:
+            log.error("Failed to create schema for econ_comp graph: {}", e)
+            return
+
+        try:
+            self._import_econ_comp(path)
+        except Exception as e:
+            log.error("Failed to import nodes/edges for econ_comp graph: {}", e)
             return
 
     @property
