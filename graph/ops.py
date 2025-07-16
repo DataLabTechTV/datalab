@@ -276,7 +276,6 @@ class KuzuOps:
             """
             CREATE REL TABLE Parent(
                 FROM Product TO Product,
-                amount_usd INT128,
                 MANY_ONE
             )
             """
