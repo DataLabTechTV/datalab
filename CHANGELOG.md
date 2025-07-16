@@ -1,6 +1,149 @@
 # CHANGELOG
 
 
+## v0.4.0 (2025-07-16)
+
+### Bug Fixes
+
+- Add missing schema configs for new econ comp models
+  ([`c4daafb`](https://github.com/DataLabTechTV/datalab/commit/c4daafbd574b0435041878fd210ae3951d94e1bc))
+
+- Edges needed to be defined based on node_id, which required these changes
+  ([`398ba70`](https://github.com/DataLabTechTV/datalab/commit/398ba70234661c77d32886269abd81cffc6366b6))
+
+- Remove inexistent property
+  ([`918f23a`](https://github.com/DataLabTechTV/datalab/commit/918f23ac5e2d901e448b51bc2d37456091eba3b2))
+
+- Remove not null tests where they were not required
+  ([`43efc61`](https://github.com/DataLabTechTV/datalab/commit/43efc6158b4c3789d00a409a690f9f1ce5b71d7c))
+
+- Remove product parent relationship, as there is no multi-level data here
+  ([`2d26651`](https://github.com/DataLabTechTV/datalab/commit/2d26651d7ccfca977887ca040ecf2c6d8d5dc30d))
+
+- Remove repeated country pairs in reverse order
+  ([`1f2f867`](https://github.com/DataLabTechTV/datalab/commit/1f2f8676223ac381204f58e65aa37457a0bc4eed))
+
+- Required aggregation per country and product, disregarding partner
+  ([`635dc72`](https://github.com/DataLabTechTV/datalab/commit/635dc729b0a38e345d34250decce67da378393c0))
+
+- Types and missing null strings
+  ([`40a79d7`](https://github.com/DataLabTechTV/datalab/commit/40a79d7bc851a17f06329c06a63220ce27059e19))
+
+### Chores
+
+- Add cypher script to compute music_taste graph stats
+  ([`7a0a48d`](https://github.com/DataLabTechTV/datalab/commit/7a0a48de97fadc5a3963ec608005f55c785e9545))
+
+- Add env var for econ comp graph db
+  ([`3e34e80`](https://github.com/DataLabTechTV/datalab/commit/3e34e8023a15969250faae133805f02112e0b681))
+
+- Configs for analytics mart
+  ([`40dee56`](https://github.com/DataLabTechTV/datalab/commit/40dee562661fcdbdaaa7223e9dcfca4524b761a3))
+
+- Re-enable requests-cache with streaming
+  ([`62c7dff`](https://github.com/DataLabTechTV/datalab/commit/62c7dffe4aaa1d8c0d761bff3272fff98c5943c1))
+
+- Rename KuzuDBs to match new single-file format
+  ([`0e797ae`](https://github.com/DataLabTechTV/datalab/commit/0e797aeb5cc37b77421a0d1924cfec6b12e5a245))
+
+- Simplify music taste graph stats script
+  ([`5b964fb`](https://github.com/DataLabTechTV/datalab/commit/5b964fb926a5ef56aba139bb9649c1c8f7710442))
+
+- Upgrade explorer script to work with kuzu 0.11.0
+  ([`36f6cf7`](https://github.com/DataLabTechTV/datalab/commit/36f6cf77e5a24098058185dc194a60a363f00b51))
+
+- **deps**: Add humanize to print byte sizes in human-readable format
+  ([`6238484`](https://github.com/DataLabTechTV/datalab/commit/62384843681b5cf1a104a97c9e6acfc2d03a3343))
+
+- **deps**: Add requests cache dep
+  ([`b7c5fd5`](https://github.com/DataLabTechTV/datalab/commit/b7c5fd5f89e3c80ea4e46aeed3909721f787291d))
+
+- **deps**: Add tqdm dep for tracking download progress
+  ([`5e2ba51`](https://github.com/DataLabTechTV/datalab/commit/5e2ba51b9b37658f33f2ced693359cca5cb765f3))
+
+- **deps**: Bump up kuzu to 0.11.0
+  ([`74f2f4f`](https://github.com/DataLabTechTV/datalab/commit/74f2f4f171d45653138a666137e1a34487efef65))
+
+- **deps**: Bump up version inside uv.lock
+  ([`7124ff4`](https://github.com/DataLabTechTV/datalab/commit/7124ff4b0087f8cc49dfa47833e344b8e37ce4d9))
+
+### Documentation
+
+- Fill-in the missing schema models for analytics, and econ_comp nodes and edges
+  ([`aa65fcd`](https://github.com/DataLabTechTV/datalab/commit/aa65fcda2420ef7e4c35e08f9ad4a049d411003c))
+
+### Features
+
+- Add model selection CLI option to test cmd
+  ([`499bac0`](https://github.com/DataLabTechTV/datalab/commit/499bac02bcd0f1eb6e405ae1ffe0ba0f884b390c))
+
+- Aggregated view for 2020-2023 trade covering recent years
+  ([`c579742`](https://github.com/DataLabTechTV/datalab/commit/c579742c9d9fe6d2c22f1c74b12239f763bfd411))
+
+- Cli command to expunge/clean cache
+  ([`f412b51`](https://github.com/DataLabTechTV/datalab/commit/f412b5161ee405217722290b334f7817625127ec))
+
+- Complete dataset template for The Atlas of Economic Complexity
+  ([`6e2cb9c`](https://github.com/DataLabTechTV/datalab/commit/6e2cb9ca6643512b09a8b3c8c5c82af566900851))
+
+- Country and product nodes, product-country export and import edges, and product parent edges
+  ([`cca6d5c`](https://github.com/DataLabTechTV/datalab/commit/cca6d5c1b631bfd57a684d0dfdc73a4874bef1aa))
+
+- Country-country ESI calculation
+  ([`0ca0346`](https://github.com/DataLabTechTV/datalab/commit/0ca03462e6c1396bc207caec28bddb0584c6a225))
+
+- Datacite working downloader
+  ([`bf09fb1`](https://github.com/DataLabTechTV/datalab/commit/bf09fb16a6ca7b980fe2b5f806e4216e690fbda4))
+
+- Ingest country classification data
+  ([`09c3ac7`](https://github.com/DataLabTechTV/datalab/commit/09c3ac7c5fa28acf994fe7712c78af41acdf6be6))
+
+- Logic changed to account for the last 3 years in data instead of a fixed range
+  ([`8599498`](https://github.com/DataLabTechTV/datalab/commit/85994988af3ae3c3283b3cba2e9247b83d020bf4))
+
+- Move cache to shared level and add expunge function and requests cache
+  ([`805511f`](https://github.com/DataLabTechTV/datalab/commit/805511f336bb7230ec7d7472e5949c337cdebcc0))
+
+- Rename 2020-2023 to latest 3y and add schema for country-country metrics
+  ([`af044f8`](https://github.com/DataLabTechTV/datalab/commit/af044f875b1509c2aea9e8f5d344ae9b691aca70))
+
+- Select top 5% ESI country-country relations for edges
+  ([`3356e4f`](https://github.com/DataLabTechTV/datalab/commit/3356e4f0095f90e5a92141fbc67428b27c16fc7f))
+
+- Skip cache for downloads and display progress bar
+  ([`039e08a`](https://github.com/DataLabTechTV/datalab/commit/039e08abc2658784e18bd5a6d54d53bd921bbeaf))
+
+- Split ingestion into multiple modules and add dataset templates
+  ([`8e3c6b8`](https://github.com/DataLabTechTV/datalab/commit/8e3c6b8be6708b03448f394b457294f550e39fa5))
+
+- Stage transformations for TAoEC
+  ([`6e082e3`](https://github.com/DataLabTechTV/datalab/commit/6e082e3bcb71fb68f5ef7ce329b9fd7b88182c65))
+
+- Support for cache usage statistic printing
+  ([`436391b`](https://github.com/DataLabTechTV/datalab/commit/436391b6dacc32bc6a4abcb5dc8f435b7b767645))
+
+- Support for loading econ_comp graph
+  ([`93396df`](https://github.com/DataLabTechTV/datalab/commit/93396dfd465d52e3efd879442c2bc74e2ac0fb3b))
+
+### Performance Improvements
+
+- Increase chunk size and make sure temp files are cleaned even when the script is stopped
+  ([`39943df`](https://github.com/DataLabTechTV/datalab/commit/39943dfdbe596640b639250daf3dad674de01030))
+
+### Refactoring
+
+- Log debug message containing produced context
+  ([`5917a15`](https://github.com/DataLabTechTV/datalab/commit/5917a150cb831aa485e495fb131232f7f5598c94))
+
+- Rename context to entities when referring to entity nodes
+  ([`ff6e0df`](https://github.com/DataLabTechTV/datalab/commit/ff6e0df4fdea9eb37f004a8dbab5ff890bb2f56e))
+
+### Testing
+
+- Ensure ESI is within a 0..1 range
+  ([`d1ef5ce`](https://github.com/DataLabTechTV/datalab/commit/d1ef5ceeaac7e38b1a4d5b1b3283b07ee267a134))
+
+
 ## v0.3.0 (2025-07-08)
 
 ### Bug Fixes
