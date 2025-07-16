@@ -29,7 +29,9 @@ models:
         data_tests:
           - not_null
       - name: product_id
-        description: Numerical product ID (internal to Growth Labs).
+        description: >-
+          Numerical product ID (internal to Growth Labs). This matches the IDs in
+          the HS92 products classification table.
         data_tests:
           - not_null
       - name: product_hs92_code
@@ -80,3 +82,27 @@ models:
           - not_null
       - name: esi
         description: Export Similarity Index accounting for destination.
+
+  - name: taoec_competing_countries
+    description: Competing countries according to the top 5% pairs with highest ESI.
+    columns:
+      - name: country_id
+        description: >-
+          Numerical country ID (internal to Growth Labs) for a country that appears in
+          the top 5% pairs with highest ESI. This matches the IDs in the countries classification table.
+        data_tests:
+          - not_null
+          - unique
+
+  - name: taoec_competing_countries_products
+    description: >-
+      Products traded by countries appearing the top 5% pairs with highest ESI.
+    columns:
+      - name: product_id
+        description: >-
+          Numerical product ID (internal to Growth Labs) for a product that is traded
+          by countries in the top 5% pairs with highest ESI. This matches the IDs in
+          the HS92 products classification table.
+        data_tests:
+          - not_null
+          - unique

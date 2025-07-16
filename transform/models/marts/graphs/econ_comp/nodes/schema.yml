@@ -1,0 +1,95 @@
+version: 2
+
+models:
+  - name: nodes_countries
+    description: Nodes for countries in the Economic Competition Network.
+    columns:
+      - name: node_id
+        description: Unique node ID for this node in the whole graph.
+        data_tests:
+          - not_null
+          - unique
+      - name: country_id
+        description: >-
+          Numerical country ID (internal to Growth Labs) for a country that appears in
+          the top 5% pairs with highest ESI. This matches the IDs in the countries classification table.
+        data_tests:
+          - not_null
+          - unique
+      - name: country_iso3_code
+        description: >-
+          Three digit country code (e.g., USA, PRT) for a country that appears in
+          the top 5% pairs with highest ESI.
+        data_tests:
+          - not_null
+          - unique
+      - name: country_name
+        description: >-
+          Complete official country name (e.g., United Kingdom of Great Britain and
+          Northern Ireland).
+        data_tests:
+          - not_null
+      - name: country_name_short
+        description: Short country name (e.g., United Kingdom).
+        data_tests:
+          - not_null
+      - name: in_rankings
+        description: >-
+          Flag indicating whether the country is fit to appear in Growth Labs rankings.
+        data_tests:
+          - not_null
+      - name: former_country
+        description: Flag indicating a country that no longer exists.
+        data_tests:
+          - not_null
+
+  - name: nodes_products
+    description: >-
+      Nodes for products traded by countries in the Economic Competition Network.
+    columns:
+      - name: node_id
+        description: Unique node ID for this node in the whole graph.
+        data_tests:
+          - not_null
+          - unique
+      - name: product_id
+        description: >-
+          Numerical product ID (internal to Growth Labs) for a product that is traded
+          by countries that appear in the top 5% pairs with highest ESI.
+        data_tests:
+          - not_null
+      - name: product_hs92_code
+        description: >-
+          HS92 product code for a product that is traded by countries that appear in
+          the top 5% pairs with highest ESI. HS stands for Harmonized System, and it's
+          a classification system used in international trade to categorize goods.
+      - name: product_level
+        description: Granularity of 1, 2, 4 or 6 digits for HS92.
+        data_tests:
+          - not_null
+      - name: product_name
+        description: >-
+          Categorical product name (e.g., Musical instruments; parts and accessories of
+          such articles).
+        data_tests:
+          - not_null
+      - name: product_name_short
+        description: Readable product name.
+        data_tests:
+          - not_null
+      - name: product_id_hierarchy
+        description: Dot-separated product ID hierarchy (e.g., 5.180.1593).
+        data_tests:
+          - not_null
+      - name: show_feasibility
+        description: >-
+          Reliability regarding analysis feasibility due to trade discrepancies,
+          natural resource requirements, etc.
+        data_tests:
+          - not_null
+      - name: natural_resource
+        description: Flags product as a natural resource.
+        data_tests:
+          - not_null
+      - name: green_product
+        description: Products associated with green energy, or environmentally friendly.
