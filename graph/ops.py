@@ -271,16 +271,6 @@ class KuzuOps:
             """
         )
 
-        log.info("Creating econ_comp graph schema for Parent edges")
-        self.conn.execute(
-            """
-            CREATE REL TABLE Parent(
-                FROM Product TO Product,
-                MANY_ONE
-            )
-            """
-        )
-
     def _import_econ_comp(self, s3_path: str):
         # Nodes
         # =====
@@ -344,13 +334,6 @@ class KuzuOps:
         self._copy_from_s3(
             f"{s3_path}/edges/edges_imports.parquet",
             "COPY Imports FROM '$path'",
-        )
-
-        log.info("Importing econ_comp product->product Parent edges")
-
-        self._copy_from_s3(
-            f"{s3_path}/edges/edges_parent.parquet",
-            "COPY Parent FROM '$path'",
         )
 
     def load_econ_comp(self, path: str):
