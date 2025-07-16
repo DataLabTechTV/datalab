@@ -17,6 +17,7 @@ FROM read_csv(
     quote = '"',
     escape = '"',
     header = true,
+    nullstr = ['XXXX', 'XXXXXX', '', '9999AA'],
     columns = {
         product_id: USMALLINT,
         product_hs92_code: UINTEGER,

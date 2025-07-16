@@ -16,6 +16,7 @@ FROM read_csv(
     quote = '"',
     escape = '"',
     header = true,
+    nullstr = ['XXXXXX'],
     columns = {
         country_id: USMALLINT,
         country_iso3_code: VARCHAR,
@@ -23,8 +24,8 @@ FROM read_csv(
         partner_iso3_code: VARCHAR,
         product_id: USMALLINT,
         product_hs92_code: UINTEGER,
-        year: UTINYINT,
-        export_value: UBIGINT,
-        import_value: UBIGINT
+        year: USMALLINT,
+        export_value: BIGINT,
+        import_value: BIGINT
     }
 )
