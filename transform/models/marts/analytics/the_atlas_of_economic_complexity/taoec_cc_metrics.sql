@@ -33,7 +33,7 @@ SELECT
 FROM shares a
 JOIN shares b
 ON a.product_id = b.product_id
-WHERE a.country_id <> b.country_id
+WHERE a.country_id < b.country_id
 GROUP BY
     a.country_id,
     a.country_iso3_code,
