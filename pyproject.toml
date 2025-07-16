@@ -19,7 +19,7 @@ dependencies = [
   "gitpython>=3.1.44",
   "humanize>=4.12.3",
   "kagglehub>=0.3.12",
-  "kuzu>=0.10.0",
+  "kuzu==0.11.0",
   "langchain>=0.3.26",
   "langchain-kuzu>=0.4.2",
   "langchain-ollama>=0.3.3",
