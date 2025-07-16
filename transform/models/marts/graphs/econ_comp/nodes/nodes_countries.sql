@@ -1,15 +1,3 @@
-WITH countries AS (
-    SELECT DISTINCT country_id
-    FROM (
-        SELECT country_id_1 AS country_id
-        FROM {{ ref('edges_competes_with') }}
-
-        UNION
-
-        SELECT country_id_2 AS country_id
-        FROM {{ ref('edges_competes_with') }}
-    )
-)
 SELECT
     row_number() OVER () AS node_id,
     country_id,
@@ -21,4 +9,7 @@ SELECT
 FROM
     {{ ref('taoec_countries') }}
 WHERE
-    country_id IN (SELECT country_id FROM countries)
+    country_id IN (
+        SELECT country_id
+        FROM {{ ref('taoec_competing_countries') }}
+    )
