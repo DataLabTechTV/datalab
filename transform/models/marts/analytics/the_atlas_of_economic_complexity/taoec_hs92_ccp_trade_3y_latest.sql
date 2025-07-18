@@ -14,7 +14,7 @@ SELECT
 FROM {{ ref('taoec_hs92_ccp_trade') }}
 WHERE year >= (
     SELECT max(year) - 3
-    FROM stage.taoec.hs92_ccp_trade
+    FROM {{ ref('taoec_hs92_ccp_trade') }}
 )
 GROUP BY
     country_id,

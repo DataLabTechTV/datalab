@@ -1,7 +1,7 @@
-import os
 import shutil
 import tempfile
 from enum import Enum
+from pathlib import Path
 from string import Template
 from typing import Any, Optional
 
@@ -23,15 +23,15 @@ class KuzuTableType(Enum):
 class KuzuOps:
     def __init__(self, schema: str, overwrite: bool = False):
         dbname = env.str(f"{schema.upper()}_GRAPH_DB")
-        db_path = os.path.join(LOCAL_DIR, dbname)
+        db_path = Path(LOCAL_DIR) / dbname
 
-        if os.path.exists(db_path):
+        if db_path.exists():
             if overwrite:
                 log.warning(f"Overwriting database: {db_path}")
-                if os.path.isdir(db_path):
+                if db_path.is_dir():
                     shutil.rmtree(db_path)
-                elif os.path.isfile(db_path):
-                    os.unlink(db_path)
+                elif db_path.is_file():
+                    db_path.unlink()
 
         db = kuzu.Database(db_path)
         self.conn = kuzu.Connection(db)

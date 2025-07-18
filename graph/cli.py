@@ -4,6 +4,7 @@ from typing import Optional
 import click
 from loguru import logger as log
 
+from graph.analytics import GraphAnalytics
 from graph.embedding import NodeEmbedding, NodeEmbeddingAlgo
 from graph.ops import KuzuOps
 from graph.rag import ContextAssemblerException, GraphRAG, GraphRetrievalException
@@ -102,6 +103,15 @@ def embeddings(schema: str, dimension: int, batch_size: int, epochs: int, algo: 
         e.train()
     except Exception as e:
         log.exception(e)
+
+
+@compute.command(help="Compute common out-neighbors (CON) score")
+@click.argument("schema", type=click.STRING)
+@click.argument("node_label", type=click.STRING)
+@click.argument("rel_label", type=click.STRING)
+def con_score(schema: str, node_label: str, rel_label: str):
+    ga = GraphAnalytics(schema)
+    ga.compute_con_scores(node_label, rel_label)
 
 
 @graph.command(help="Reindex embedding property")
