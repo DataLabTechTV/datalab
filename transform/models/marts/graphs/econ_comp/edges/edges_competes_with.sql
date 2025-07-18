@@ -11,5 +11,6 @@ ON m.country_id_1 = sn.country_id
 JOIN {{ ref('nodes_countries') }} AS tn
 ON m.country_id_2 = tn.country_id
 
+WHERE m.esi > 0
+
 ORDER BY m.esi DESC
-LIMIT 5%
