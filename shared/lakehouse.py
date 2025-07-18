@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Optional
 
 import duckdb
@@ -124,3 +125,20 @@ class Lakehouse:
             return
 
         return manifest["latest"]
+
+    def load_into(self, catalog: str, schema: str, table_name: str, from_path: str):
+        log.info("Loading into {}.{}.{}: {}", catalog, schema, table_name, from_path)
+
+        suffix = Path(from_path).suffix.lstrip(".")
+
+        if suffix not in ("parquet", "csv"):
+            raise ValueError(f"file type not supported: {suffix}")
+
+        self.conn.execute(f"CREATE SCHEMA IF NOT EXISTS {catalog}.{schema}")
+
+        self.conn.execute(
+            f"""
+            CREATE OR REPLACE TABLE {catalog}.{schema}.{table_name} AS
+            SELECT * FROM '{from_path}'
+            """
+        )
