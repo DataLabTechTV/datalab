@@ -34,12 +34,25 @@ class GraphAnalytics:
             column_name,
         )
 
+        log.debug("Adding {} to {}, if not exists", column_name, node_label)
+
         self.conn.execute(
             f"""
             ALTER TABLE {node_label}
-            ADD IF NOT EXISTS {column_name} DOUBLE DEFAULT 0.0
+            ADD IF NOT EXISTS {column_name} DOUBLE
             """
         )
+
+        log.debug("Resetting {} on {}", column_name, node_label)
+
+        self.conn.execute(
+            f"""
+            MATCH (c:{node_label})
+            SET c.`{column_name}` = 0.0
+            """
+        )
+
+        log.debug("Computing CON scores")
 
         self.conn.execute(
             f"""
@@ -54,6 +67,6 @@ class GraphAnalytics:
                 END AS min_esi
             WITH a, b, sum(min_esi) AS con_pair
             WITH a, sum(con_pair) AS con_score
-            SET a["{column_name}"] = con_score
+            SET a.`{column_name}` = con_score
             """
         )
