@@ -26,8 +26,13 @@ def plot(
     figsize: tuple[int, int] = (8, 5),
     margin: float = 0.2,
     font_family: Optional[str] = None,
+    transparent: bool = True,
 ):
-    _, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize)
+
+    if transparent:
+        fig.patch.set_alpha(0.0)
+        ax.set_facecolor("none")
 
     node_names = {n: d[name_prop] for n, d in G.nodes(data=True)}
 
@@ -56,7 +61,7 @@ def plot(
         ax=ax,
         node_color=node_colors,
         node_size=1000,
-        alpha=0.85,
+        alpha=1,
     )
 
     nx.draw_networkx_edges(
@@ -76,13 +81,14 @@ def plot(
         ax=ax,
         labels=node_names,
         font_family=font_family,
-        font_color=COLOR_PALETTE[1],
+        font_color="#222222",
         font_size=10,
         bbox=dict(
-            facecolor="white",
-            edgecolor=COLOR_PALETTE[1],
-            boxstyle="round,pad=0.4",
-            alpha=0.85,
+            facecolor="#dadada",
+            edgecolor="#666666",
+            boxstyle="round4,pad=0.5",
+            alpha=1,
+            linewidth=1.5,
         ),
     )
 
