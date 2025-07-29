@@ -1,8 +1,10 @@
 from typing import Optional
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+from adjustText import adjust_text
 from matplotlib.colors import LinearSegmentedColormap, to_hex
 
 COLOR_PALETTE = [
@@ -10,6 +12,17 @@ COLOR_PALETTE = [
     "#ff5c92",
     "#ffcc00",
 ]
+
+
+def set_labels(G: nx.Graph, label_props: dict[str, str]):
+    """
+    Set the display node "label" property to a specified property, based on the node
+    type given by "_label".
+    """
+
+    for node, data in G.nodes(data=True):
+        prop = label_props.get(data["_label"], node)
+        data["label"] = data[prop]
 
 
 def get_palette(n_colors: int = 3):
@@ -20,15 +33,25 @@ def get_palette(n_colors: int = 3):
     return [to_hex(cmap(i)) for i in np.linspace(0, 1, n_colors)]
 
 
+def darken_color(color, amount=0.5) -> tuple[float, float, float]:
+    c = mpl.colors.to_rgb(color)
+    return tuple(max(0, min(1, channel * (1 - amount))) for channel in c)
+
+
 def plot(
     G: nx.Graph,
     name_prop: str = "label",
-    figsize: tuple[int, int] = (8, 5),
-    margin: float = 0.2,
+    scale: float = 1.0,
+    margin: float = 0.1,
+    font_size: float = 8,
     font_family: Optional[str] = None,
+    figsize: tuple[int, int] = (15, 10),
+    dpi: int = 300,
     transparent: bool = True,
+    text_no_overlap: bool = False,
+    seed: int = 1337,
 ):
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
 
     if transparent:
         fig.patch.set_alpha(0.0)
@@ -41,26 +64,24 @@ def plot(
     n_node_labels = len(node_labels)
     node_palette = get_palette(n_node_labels)
 
-    node_label_color_map = {
-        label: node_palette[i] for i, label in enumerate(node_labels)
-    }
+    node_color_map = {label: node_palette[i] for i, label in enumerate(node_labels)}
 
     node_colors = [
-        node_label_color_map.get(d["_label"], "gray") for _, d in G.nodes(data=True)
+        node_color_map.get(d["_label"], "gray") for _, d in G.nodes(data=True)
     ]
 
     ax.set_axis_off()
-    ax.margins(margin)
+    ax.margins(margin / scale)
     plt.tight_layout()
 
-    pos = nx.circular_layout(G)
+    pos = nx.spring_layout(G, method="energy", seed=seed)
 
     nx.draw_networkx_nodes(
         G,
         pos=pos,
         ax=ax,
         node_color=node_colors,
-        node_size=1000,
+        node_size=500 * scale,
         alpha=1,
     )
 
@@ -75,21 +96,50 @@ def plot(
         edge_color=COLOR_PALETTE[1],
     )
 
-    nx.draw_networkx_labels(
-        G,
-        pos=pos,
-        ax=ax,
-        labels=node_names,
-        font_family=font_family,
-        font_color="#222222",
-        font_size=10,
-        bbox=dict(
-            facecolor="#dadada",
-            edgecolor="#666666",
-            boxstyle="round4,pad=0.5",
-            alpha=1,
-            linewidth=1.5,
-        ),
-    )
+    if text_no_overlap:
+        labels = []
+
+        for n, (x, y) in pos.items():
+            label = plt.text(
+                x,
+                y,
+                node_names[n],
+                fontsize=10,
+                ha="center",
+                va="center",
+                bbox=dict(
+                    facecolor="#dadada",
+                    edgecolor="#666666",
+                    boxstyle="round4,pad=0.5",
+                    alpha=1,
+                    linewidth=1.5,
+                ),
+            )
+
+            labels.append(label)
+
+        adjust_text(labels)
+
+    else:
+        node_label_color_map = {
+            n: node_color_map[d["_label"]] for n, d in G.nodes(data=True)
+        }
+
+        nx.draw_networkx_labels(
+            G,
+            pos=pos,
+            ax=ax,
+            labels=node_names,
+            font_family=font_family,
+            font_color=node_label_color_map,
+            font_size=font_size * np.sqrt(scale),
+            bbox=dict(
+                facecolor="black",
+                edgecolor="#333333",
+                boxstyle="round4,pad=0.5",
+                alpha=0.75,
+                linewidth=1.5,
+            ),
+        )
 
     plt.show()
