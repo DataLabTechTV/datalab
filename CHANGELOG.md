@@ -1,6 +1,114 @@
 # CHANGELOG
 
 
+## v0.5.0 (2025-08-05)
+
+### Bug Fixes
+
+- Any positive ESI is now considered competition, and is separate from intensity
+  ([`25844f1`](https://github.com/DataLabTechTV/datalab/commit/25844f1433dc64148ebad3a6002968741175987e))
+
+- Log file relative path to cwd failed when not directly contained using Path
+  ([`e4f5b62`](https://github.com/DataLabTechTV/datalab/commit/e4f5b62468d240731e52f4066113eb55d96f321a))
+
+### Chores
+
+- Commit notebook generated during video recording
+  ([`454d0dd`](https://github.com/DataLabTechTV/datalab/commit/454d0dd0b2eccf1bf2c1cbea43996a3c925d45a3))
+
+- **deps**: Add adjustText to optionally fix rendering of overlapping node labels
+  ([`36cbc33`](https://github.com/DataLabTechTV/datalab/commit/36cbc33dbbae6c8c73f29ff0f69ad3bd0de8ae72))
+
+- **deps**: Add geopandas to plot maps
+  ([`62d5ef1`](https://github.com/DataLabTechTV/datalab/commit/62d5ef1f54e970da0fa614a06f24e6363dc30d35))
+
+- **deps**: Add jupyterlab, matplotlib, and networkx for graph data science
+  ([`e29c08f`](https://github.com/DataLabTechTV/datalab/commit/e29c08fcf80f8ea6cb1a2b08732a1e1d8ca28d99))
+
+- **deps**: Remove unneeded adjustText and add scipy back as a requirement for networkx layout
+  computation
+  ([`76ef5d4`](https://github.com/DataLabTechTV/datalab/commit/76ef5d40e64250da468c49327e90a5d67b96ec5c))
+
+### Features
+
+- Add CLI support for computing the CON score
+  ([`8c94f6e`](https://github.com/DataLabTechTV/datalab/commit/8c94f6eebdda87a6233c467127ce72812eaffefc))
+
+- Add edge arrows and node colors per label
+  ([`ed56184`](https://github.com/DataLabTechTV/datalab/commit/ed561842696538ee51cc590b250dbee07f0588e6))
+
+- Add graph analytics module, starting with a CON score
+  ([`ff1f926`](https://github.com/DataLabTechTV/datalab/commit/ff1f92632e8f9073d29f1e51b89a93b797dd4bdc))
+
+- Add graph transparency and improve labels
+  ([`02dc859`](https://github.com/DataLabTechTV/datalab/commit/02dc859889c94beb7e810d953f7c083f3836f275))
+
+- Add scale to arrow placement, add optional visualization weight
+  ([`9190d2c`](https://github.com/DataLabTechTV/datalab/commit/9190d2ca25e86e19ace553f496d26fca0a53ee6d))
+
+- Compare communities and components, study economical pressure
+  ([`afceea8`](https://github.com/DataLabTechTV/datalab/commit/afceea8378a8d72bd62016b982f23ff293edba96))
+
+- Competiton network analysis, including community and weak component analysis
+  ([`62e54fd`](https://github.com/DataLabTechTV/datalab/commit/62e54fd56fa17cd3ada215401135456f9a106c9c))
+
+- Create a basic graph theme matching DLT
+  ([`3210fa5`](https://github.com/DataLabTechTV/datalab/commit/3210fa585450707b323dcf5ce9d69a44cfe9c2f7))
+
+- Dominating and weaker economy individual analysis
+  ([`986a2d6`](https://github.com/DataLabTechTV/datalab/commit/986a2d6a7c877468ce9ab7e38de54e68d9514e7b))
+
+- Edge direction now based on common exports, from highest to lowest total amound
+  ([`77325bd`](https://github.com/DataLabTechTV/datalab/commit/77325bdfa781f5a79fa122cc5d441cbb920cf09d))
+
+- Improve graph plotting and add map plotting
+  ([`266dfca`](https://github.com/DataLabTechTV/datalab/commit/266dfcaf682188ff16b8da01391c2dbcc245c893))
+
+- Networkx graph plot helper to use with notebooks
+  ([`a36b6c9`](https://github.com/DataLabTechTV/datalab/commit/a36b6c9eb482b095b62e91c162ee51ec25fb38b9))
+
+- Revisted the whole notebook, restructuring and adding depth where needed
+  ([`6a3dcb1`](https://github.com/DataLabTechTV/datalab/commit/6a3dcb1c05b3219645136bf8e654b44116fd133c))
+
+- Script to easily convert Jupyter Notebooks to markdown
+  ([`4b0c792`](https://github.com/DataLabTechTV/datalab/commit/4b0c792ae6ae56d030e814bf05bd3f08159a53e8))
+
+- Set label w/ prop per node type and render label wo/ overlapping
+  ([`8c0b6fb`](https://github.com/DataLabTechTV/datalab/commit/8c0b6fba1d2700a65346b878b1610ffa4e89d4a9))
+
+- Setup notebook for graph data science
+  ([`1d96e63`](https://github.com/DataLabTechTV/datalab/commit/1d96e63f79f68889701dbc4efefd08649f31d28b))
+
+- Support for loading Parquet into DuckLake from Python
+  ([`4035f63`](https://github.com/DataLabTechTV/datalab/commit/4035f6335698b3aef193c7b72275e9d58d9f9e4e))
+
+- Trade alignment analysis
+  ([`80d5ef1`](https://github.com/DataLabTechTV/datalab/commit/80d5ef1f702119f6d0e298d662c41bde4832172c))
+
+- Trade alignment analysis (cont)
+  ([`da6e848`](https://github.com/DataLabTechTV/datalab/commit/da6e848dff30ed7ef706fcaabbe951eb5dc09da4))
+
+### Refactoring
+
+- Different score reset strategy
+  ([`d4d7d9d`](https://github.com/DataLabTechTV/datalab/commit/d4d7d9da4675ac86c47bb253764fef0840429683))
+
+- No longer setting flags for dominating and weaker
+  ([`d8013c4`](https://github.com/DataLabTechTV/datalab/commit/d8013c41c48645e1748649277a8b77a774641845))
+
+- Remove unused import
+  ([`65defb1`](https://github.com/DataLabTechTV/datalab/commit/65defb1d203a3a5e557a891c31ccc2dad8b826c6))
+
+- Replace os.path ops with Path ops
+  ([`84c73a9`](https://github.com/DataLabTechTV/datalab/commit/84c73a9de6fea587c95558aa84414d0c913d9c8a))
+
+- Use kuzu extension instead of kz
+  ([`d815cef`](https://github.com/DataLabTechTV/datalab/commit/d815cefe683c93636ddb4f931fefcc30c84b7b48))
+
+- Use ref instead of hardcoded FQN
+  ([`ba6de1a`](https://github.com/DataLabTechTV/datalab/commit/ba6de1afb81c635c0ca6d99edddde588588a373b))
+
+
 ## v0.4.0 (2025-07-16)
 
 ### Bug Fixes

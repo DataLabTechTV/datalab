@@ -3,7 +3,7 @@
 
 [project]
 name = "datalab"
-version = "0.4.0"
+version = "0.5.0"
 description = "Tooling for a minimalist data lab running on top of DuckLake."
 readme = "README.md"
 requires-python = ">=3.13"
