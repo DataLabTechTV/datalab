@@ -127,7 +127,7 @@ def plot(
     ax.margins(margin / scale)
     plt.tight_layout()
 
-    pos = nx.spring_layout(G, method="energy", seed=seed)
+    pos = nx.spring_layout(G, method="energy", weight="vis_weight", seed=seed)
 
     nx.draw_networkx_nodes(
         G,
@@ -175,7 +175,7 @@ def plot(
             arrows=True,
             arrowsize=20,
             arrowstyle="->",
-            min_target_margin=15,
+            min_target_margin=15 * scale,
             edge_color=COLOR_PALETTE[1],
         )
 
