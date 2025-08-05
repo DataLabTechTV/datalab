@@ -18,6 +18,7 @@ from shared.settings import LOCAL_DIR, MART_DB_VARS, env
 from shared.storage import Storage, StoragePrefix
 
 LOG_FILE = Path(__file__).resolve().parents[1] / "logs/datalab.log"
+LOG_FILE_RELATIVE = os.path.relpath(LOG_FILE.resolve(), start=Path.cwd())
 
 
 @click.group(
@@ -34,7 +35,7 @@ LOG_FILE = Path(__file__).resolve().parents[1] / "logs/datalab.log"
     "logfile_enabled",
     is_flag=True,
     default=True,
-    help=f"Disable file logging ({LOG_FILE.relative_to(Path.cwd())})",
+    help=f"Disable file logging ({LOG_FILE_RELATIVE})",
 )
 @click.option(
     "--version",
