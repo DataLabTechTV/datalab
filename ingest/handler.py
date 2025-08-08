@@ -3,17 +3,17 @@ import shutil
 import git
 import kagglehub as kh
 from loguru import logger as log
-from slugify import slugify
 
 from ingest.fetcher import DataCiteFetcher
 from ingest.parser import DatasetURL
 from ingest.template.base import DataCiteTemplate, DatasetTemplate, DatasetTemplateID
 from shared.cache import get_cache_dir
 from shared.storage import Storage, StoragePrefix
+from shared.utils import fn_sanitize
 
 
 def handle_standalone(dataset: str):
-    ds_name = slugify(dataset, separator="_")
+    ds_name = fn_sanitize(dataset)
     log.info("Standalone detected, creating dataset: {}", ds_name)
 
     try:
@@ -25,7 +25,7 @@ def handle_standalone(dataset: str):
 
 
 def handle_template(dataset: str, template_id: DatasetTemplateID):
-    ds_name = slugify(dataset, separator="_")
+    ds_name = fn_sanitize(dataset)
     template = DatasetTemplate.from_id(template_id)
 
     log.info(
