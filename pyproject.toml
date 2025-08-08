@@ -8,6 +8,7 @@ description = "Tooling for a minimalist data lab running on top of DuckLake."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+  "anyascii>=0.3.3",
   "bidict>=0.23.1",
   "boto3>=1.38.29",
   "boto3-stubs[s3]>=1.38.29",
@@ -19,6 +20,7 @@ dependencies = [
   "geopandas>=1.1.1",
   "gitpython>=3.1.44",
   "humanize>=4.12.3",
+  "inflection>=0.5.1",
   "jupyterlab>=4.4.5",
   "kagglehub>=0.3.12",
   "kuzu==0.11.0",
@@ -36,9 +38,11 @@ dependencies = [
   "prompt-toolkit>=3.0.51",
   "python-slugify>=8.0.4",
   "requests-cache>=1.2.1",
+  "rust-just>=1.42.4",
   "scipy>=1.16.1",
   "torch>=2.7.1",
   "tqdm>=4.67.1",
+  "xgboost>=3.0.3",
 ]
 
 [dependency-groups]
@@ -60,7 +64,7 @@ dbt-duckdb = { git = "https://github.com/duckdb/dbt-duckdb.git", rev = "afc39991
 addopts = "--capture=no --maxfail=1 --disable-warnings"
 
 [tool.setuptools.packages.find]
-include = ["dlctl", "shared", "ingest", "transform", "export", "graph"]
+include = ["dlctl", "shared", "ingest", "transform", "export", "graph", "ml"]
 
 [tool.semantic_release]
 commit_parser = "conventional"
