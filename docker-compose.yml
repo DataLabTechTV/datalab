@@ -9,6 +9,8 @@ services:
       - MINIO_ROOT_PASSWORD=${S3_SECRET_ACCESS_KEY}
     volumes:
       - minio:/data
+    networks:
+      - minio
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 10s
@@ -18,6 +20,8 @@ services:
 
   minio-mc:
     image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    networks:
+      - minio
     depends_on:
       minio:
         condition: service_healthy
@@ -34,6 +38,8 @@ services:
       - "11434:11434"
     volumes:
       - ollama:/root/.ollama
+    networks:
+      - ollama
     deploy:
       resources:
         reservations:
@@ -48,6 +54,8 @@ services:
 
   ollama-models:
     image: alpine/curl:latest
+    networks:
+      - ollama
     depends_on:
       ollama:
         condition: service_healthy
@@ -64,6 +72,44 @@ services:
       done
       '
     restart: no
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.2.0
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow:/mlflow
+    networks:
+      - mlflow
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      AWS_DEFAULT_REGION: ${S3_REGION}
+      MLFLOW_S3_ENDPOINT_URL: ${S3_ENDPOINT}
+      AWS_S3_ADDRESSING_STYLE: ${S3_URL_STYLE}
+    command: >
+      mlflow server
+        --backend-store-uri sqlite:///mlflow/db/mlflow.db
+        --default-artifact-root s3://${S3_MLFLOW_BUCKET}/${S3_MLFLOW_ARTIFACTS_PREFIX}
+        --host 0.0.0.0
+        --port 5000
+    healthcheck:
+      test: [
+        "CMD",
+        "curl",
+        "-f",
+        "http://localhost:5000/api/2.0/mlflow/experiments/list"
+      ]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
 volumes:
   minio:
   ollama:
+  mlflow:
+
+networks:
+  ollama:
+  minio:
+  mlflow:
