@@ -81,5 +81,28 @@ econ-compnet-all: econ-compnet-etl econ-compnet-scoring
 
 ml-ab-testing-etl:
     {{dlctl}} ingest dataset {{ds_depression_detection_url}}
+    {{dlctl}} transform -m "+stage.depression_detection"
 
-ml-ab-testing-all: ml-ab-testing-etl
+ml-ab-testing-train-logreg:
+    {{dlctl}} ml train "depression_detection" \
+        --text "clean_text" \
+        --label "is_depression" \
+        --method "logreg"
+
+ml-ab-testing-train-xgboost:
+    {{dlctl}} ml train "depression_detection" \
+        --text "clean_text" \
+        --label "is_depression" \
+        --method "xgboost"
+
+ml-ab-testing-train: ml-ab-testing-train-logreg ml-ab-testing-train-xgboost
+
+ml-ab-testing-test-logreg:
+    {{dlctl}} ml test "depression_detection" --method "logreg"
+
+ml-ab-testing-test-xgboost:
+    {{dlctl}} ml test "depression_detection" --method "xgboost"
+
+ml-ab-testing-test: ml-ab-testing-test-logreg ml-ab-testing-test-xgboost
+
+ml-ab-testing-all: ml-ab-testing-etl ml-ab-testing-train ml-ab-testing-test
