@@ -39,6 +39,7 @@ dependencies = [
   "python-slugify>=8.0.4",
   "requests-cache>=1.2.1",
   "rust-just>=1.42.4",
+  "scikit-learn>=1.7.1",
   "scipy>=1.16.1",
   "torch>=2.7.1",
   "tqdm>=4.67.1",
