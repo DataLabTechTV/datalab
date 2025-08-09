@@ -89,7 +89,7 @@ services:
       AWS_S3_ADDRESSING_STYLE: ${S3_URL_STYLE}
     command: >
       mlflow server
-        --backend-store-uri sqlite:///mlflow/db/mlflow.db
+        --backend-store-uri sqlite:///mlflow/mlflow.db
         --default-artifact-root s3://${S3_MLFLOW_BUCKET}/${S3_MLFLOW_ARTIFACTS_PREFIX}
         --host 0.0.0.0
         --port 5000
