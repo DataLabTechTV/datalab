@@ -58,7 +58,7 @@ def make_xgboost() -> tuple[Pipeline, dict[str, Any]]:
 
 def load_dataset(
     schema: str,
-    k_folds: Literal[5, 10],
+    k_folds: Literal[3, 5, 10],
 ) -> tuple[pd.DataFrame, pd.DataFrame, Folds]:
     lh = Lakehouse()
 
@@ -80,7 +80,7 @@ def train_text_classifier(
     schema: str,
     method: Method,
     features: Features,
-    k_folds: Literal[5, 10] = 5,
+    k_folds: Literal[3, 5, 10] = 3,
 ):
     train, test, folds = load_dataset(schema, k_folds)
 
