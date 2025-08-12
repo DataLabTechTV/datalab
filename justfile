@@ -66,11 +66,19 @@ graphrag-all: graphrag-etl graphrag-embeddings graphrag
 # Economic Competition Networks
 # =============================
 
-econ-compnet-etl:
+econ-compnet-ingest:
     {{dlctl}} ingest dataset -t "atlas" "The Atlas of Economic Complexity"
+
+econ-compnet-transform:
     {{dlctl}} transform -m "+marts.graphs.econ_comp"
+
+econ-compnet-export:
     {{dlctl}} export dataset graphs "econ_comp"
+
+econ-compnet-load:
     {{dlctl}} graph load "econ_comp"
+
+econ-compnet-etl: econ-compnet-ingest econ-compnet-transform econ-compnet-export econ-compnet-load
 
 econ-compnet-scoring:
     {{dlctl}} graph compute con-score "econ_comp" "Country" "CompetesWith"
@@ -81,15 +89,29 @@ econ-compnet-all: econ-compnet-etl econ-compnet-scoring
 # MLOps: A/B Testing with MLflow, Kafka, and DuckLake
 # ===================================================
 
-mlops-etl:
+mlops-ingest:
     {{dlctl}} ingest dataset {{ds_dd_url}}
+
+mlops-transform:
     {{dlctl}} transform -m "+stage.depression_detection"
 
-mlops-train-logreg:
-    {{dlctl}} ml train "dd" --method "logreg"
+mlops-etl: mlops-ingest mlops-transform
 
-mlops-train-xgboost:
-    {{dlctl}} ml train "dd" --method "xgboost"
+mlops-train-logreg-tfidf:
+    {{dlctl}} ml train "dd" --method "logreg" --features "tfidf"
+
+mlops-train-logreg-embeddings:
+    {{dlctl}} ml train "dd" --method "logreg" --features "embeddings"
+
+mlops-train-logreg: mlops-train-logreg-tfidf mlops-train-logreg-embeddings
+
+mlops-train-xgboost-tfidf:
+    {{dlctl}} ml train "dd" --method "xgboost" --features "tfidf"
+
+mlops-train-xgboost-embeddings:
+    {{dlctl}} ml train "dd" --method "xgboost" --features "embeddings"
+
+mlops-train-xgboost: mlops-train-xgboost-tfidf mlops-train-xgboost-embeddings
 
 mlops-train: mlops-train-logreg mlops-train-xgboost
 
