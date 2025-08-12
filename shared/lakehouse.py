@@ -149,21 +149,21 @@ class Lakehouse:
         catalog: str,
         schema: str,
         table_name: str,
-        n_folds: Literal[5, 10] = 5,
+        k_folds: Literal[5, 10] = 5,
     ) -> pd.DataFrame:
         log.info(
-            "Loading train set from {}.{}.{} (n_folds={})",
+            "Loading train set from {}.{}.{} (k_folds={})",
             catalog,
             schema,
             table_name,
-            n_folds,
+            k_folds,
         )
 
-        match n_folds:
+        match k_folds:
             case 5 | 10:
-                folds_col = f"folds_{n_folds}_id"
+                folds_col = f"folds_{k_folds}_id"
             case _:
-                raise ValueError(f"Unsupported number of folds: {n_folds}")
+                raise ValueError(f"Unsupported number of folds: {k_folds}")
 
         rel = self.conn.sql(
             f"""--sql
