@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 
 import duckdb
+import pandas as pd
 from loguru import logger as log
 
 from shared.settings import LOCAL_DIR, env
@@ -142,3 +143,52 @@ class Lakehouse:
             SELECT * FROM '{from_path}'
             """
         )
+
+    def load_docs_train_set(
+        self,
+        catalog: str,
+        schema: str,
+        table_name: str,
+        n_folds: Literal[5, 10] = 5,
+    ) -> pd.DataFrame:
+        log.info(
+            "Loading train set from {}.{}.{} (n_folds={})",
+            catalog,
+            schema,
+            table_name,
+            n_folds,
+        )
+
+        match n_folds:
+            case 5 | 10:
+                folds_col = f"folds_{n_folds}_id"
+            case _:
+                raise ValueError(f"Unsupported number of folds: {n_folds}")
+
+        rel = self.conn.sql(
+            f"""--sql
+            SELECT doc_id, text, label, {folds_col} AS fold_id
+            FROM "{catalog}"."{schema}"."{table_name}"
+            WHERE NOT is_test
+            """
+        )
+
+        return rel.to_df()
+
+    def load_docs_test_set(
+        self,
+        catalog: str,
+        schema: str,
+        table_name: str,
+    ) -> pd.DataFrame:
+        log.info("Loading test set from {}.{}.{}", catalog, schema, table_name)
+
+        rel = self.conn.sql(
+            f"""--sql
+            SELECT doc_id, text, label
+            FROM "{catalog}"."{schema}"."{table_name}"
+            WHERE is_test
+            """
+        )
+
+        return rel.to_df()
