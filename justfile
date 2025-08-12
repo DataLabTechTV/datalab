@@ -18,7 +18,7 @@ engine_db_path := join(local_dir, env_var("ENGINE_DB"))
 
 ds_dsn_url := "https://www.kaggle.com/datasets/andreagarritano/deezer-social-networks"
 ds_msdsl_url := "https://www.kaggle.com/datasets/undefinenull/million-song-dataset-spotify-lastfm"
-ds_depression_detection_url := "https://huggingface.co/datasets/ShreyaR/DepressionDetection"
+ds_dd_url := "https://huggingface.co/datasets/ShreyaR/DepressionDetection"
 
 
 # Common
@@ -82,29 +82,15 @@ econ-compnet-all: econ-compnet-etl econ-compnet-scoring
 # ===================================================
 
 mlops-etl:
-    {{dlctl}} ingest dataset {{ds_depression_detection_url}}
+    {{dlctl}} ingest dataset {{ds_dd_url}}
     {{dlctl}} transform -m "+stage.depression_detection"
 
 mlops-train-logreg:
-    {{dlctl}} ml train "depression_detection" \
-        --text "clean_text" \
-        --label "is_depression" \
-        --method "logreg"
+    {{dlctl}} ml train "dd" --method "logreg"
 
 mlops-train-xgboost:
-    {{dlctl}} ml train "depression_detection" \
-        --text "clean_text" \
-        --label "is_depression" \
-        --method "xgboost"
+    {{dlctl}} ml train "dd" --method "xgboost"
 
 mlops-train: mlops-train-logreg mlops-train-xgboost
 
-mlops-test-logreg:
-    {{dlctl}} ml test "depression_detection" --method "logreg"
-
-mlops-test-xgboost:
-    {{dlctl}} ml test "depression_detection" --method "xgboost"
-
-mlops-test: mlops-test-logreg mlops-test-xgboost
-
-mlops-all: mlops-etl mlops-train mlops-test
+mlops-all: mlops-etl mlops-train
