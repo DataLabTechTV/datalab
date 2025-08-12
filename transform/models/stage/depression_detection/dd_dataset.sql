@@ -40,6 +40,11 @@ SELECT
     label,
     is_test,
     CASE
+        WHEN rn < cnt * 1/3 THEN 0
+        WHEN rn >= cnt * 1/3 AND rn < cnt * 2/3 THEN 1
+        ELSE 2
+    END AS folds_3_id,
+    CASE
         WHEN rn < cnt * 0.2 THEN 0
         WHEN rn >= cnt * 0.2 AND rn < cnt * 0.4 THEN 1
         WHEN rn >= cnt * 0.4 AND rn < cnt * 0.6 THEN 2
@@ -62,7 +67,14 @@ FROM train_set
 
 UNION
 
-SELECT doc_id, text, label, is_test, NULL AS folds_5_id, NULL AS folds_10_id
+SELECT
+    doc_id,
+    text,
+    label,
+    is_test,
+    NULL AS folds_3_id,
+    NULL AS folds_5_id,
+    NULL AS folds_10_id
 FROM train_test_split
 WHERE is_test
 
