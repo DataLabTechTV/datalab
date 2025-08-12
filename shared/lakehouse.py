@@ -192,3 +192,17 @@ class Lakehouse:
         )
 
         return rel.to_df()
+
+    def snapshot_id(self, catalog: str) -> int:
+        log.info("Querying snapshot_id (version) for {} catalog", catalog)
+
+        rel = self.conn.sql(
+            f"""
+            SELECT max(snapshot_id) AS snapshot_id
+            FROM {catalog}.snapshots()
+            """
+        )
+
+        snapshot_id = rel.to_df()["snapshot_id"].item()
+
+        return snapshot_id
