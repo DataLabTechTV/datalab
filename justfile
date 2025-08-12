@@ -9,7 +9,9 @@ dlctl := "dlctl"
 # ------
 
 local_dir := "local/"
-init_sql_path := local_dir + "/init.sql"
+init_sql_path := join(local_dir, "init.sql")
+
+engine_db_path := join(local_dir, env_var("ENGINE_DB"))
 
 # Datasets
 # --------
@@ -36,10 +38,10 @@ check-init-sql:
     test -r {{init_sql_path}}
 
 check-engine-db:
-    test -r {{local_dir}}/${ENGINE_DB}
+    test -r {{engine_db_path}}
 
 lakehouse: check-duckdb check-init-sql check-engine-db
-    duckdb -init {{init_sql_path}} {{local_dir}}/${ENGINE_DB}
+    duckdb -init {{init_sql_path}} {{engine_db_path}}
 
 
 # GraphRAG with KùzuDB
