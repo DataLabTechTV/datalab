@@ -45,7 +45,7 @@ dependencies = [
   "sentence-transformers>=5.1.0",
   "torch>=2.7.1",
   "tqdm>=4.67.1",
-  "xgboost>=3.0.3",
+  "xgboost==3.0.2",
 ]
 
 [dependency-groups]
