@@ -78,33 +78,33 @@ econ-compnet-scoring:
 econ-compnet-all: econ-compnet-etl econ-compnet-scoring
 
 
-# Operational A/B Testing with MLflow and DuckLake
-# ================================================
+# MLOps: A/B Testing with MLflow, Kafka, and DuckLake
+# ===================================================
 
-ml-ab-testing-etl:
+mlops-etl:
     {{dlctl}} ingest dataset {{ds_depression_detection_url}}
     {{dlctl}} transform -m "+stage.depression_detection"
 
-ml-ab-testing-train-logreg:
+mlops-train-logreg:
     {{dlctl}} ml train "depression_detection" \
         --text "clean_text" \
         --label "is_depression" \
         --method "logreg"
 
-ml-ab-testing-train-xgboost:
+mlops-train-xgboost:
     {{dlctl}} ml train "depression_detection" \
         --text "clean_text" \
         --label "is_depression" \
         --method "xgboost"
 
-ml-ab-testing-train: ml-ab-testing-train-logreg ml-ab-testing-train-xgboost
+mlops-train: mlops-train-logreg mlops-train-xgboost
 
-ml-ab-testing-test-logreg:
+mlops-test-logreg:
     {{dlctl}} ml test "depression_detection" --method "logreg"
 
-ml-ab-testing-test-xgboost:
+mlops-test-xgboost:
     {{dlctl}} ml test "depression_detection" --method "xgboost"
 
-ml-ab-testing-test: ml-ab-testing-test-logreg ml-ab-testing-test-xgboost
+mlops-test: mlops-test-logreg mlops-test-xgboost
 
-ml-ab-testing-all: ml-ab-testing-etl ml-ab-testing-train ml-ab-testing-test
+mlops-all: mlops-etl mlops-train mlops-test
