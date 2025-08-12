@@ -24,12 +24,11 @@ class SentenceTransformerVectorizer(BaseEstimator, TransformerMixin):
         self.model = None
 
     def fit(self, X: str | list[str], y: Optional[list[int] | list[float]] = None):
-        if self.model is None:
-            try:
-                self.model = SentenceTransformer(self.model_name, local_files_only=True)
-            except:
-                hf.snapshot_download(f"sentence-transformers/{self.model_name}")
-                self.model = SentenceTransformer(self.model_name, local_files_only=True)
+        try:
+            self.model = SentenceTransformer(self.model_name, local_files_only=True)
+        except:
+            hf.snapshot_download(f"sentence-transformers/{self.model_name}")
+            self.model = SentenceTransformer(self.model_name, local_files_only=True)
 
         return self
 
