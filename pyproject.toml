@@ -41,6 +41,7 @@ dependencies = [
   "rust-just>=1.42.4",
   "scikit-learn>=1.7.1",
   "scipy>=1.16.1",
+  "sentence-transformers>=5.1.0",
   "torch>=2.7.1",
   "tqdm>=4.67.1",
   "xgboost>=3.0.3",
