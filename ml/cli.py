@@ -1,5 +1,3 @@
-from typing import Optional
-
 import click
 from loguru import logger as log
 
@@ -28,7 +26,7 @@ def ml():
     default=Features.TF_IDF.value,
     help="Features to compute for the training set",
 )
-@click.option("--k-folds", "-k", type=click.INT, default=5)
+@click.option("--k-folds", "-k", type=click.INT, default=3)
 def ml_train(schema: str, method: str, features: str, k_folds: int):
     try:
         train_text_classifier(
