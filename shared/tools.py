@@ -19,10 +19,7 @@ def generate_init_sql(path: Optional[str] = None) -> Optional[str]:
     attachments_sql = []
 
     for varname in ["STAGE_DB"] + MART_DB_VARS:
-        if varname == "STAGE_DB":
-            s3_prefix = env.str("S3_STAGE_PREFIX")
-        else:
-            s3_prefix = env.str(f"S3_{varname.strip('_DB')}_PREFIX")
+        s3_prefix = env.str(f"S3_{varname.removesuffix('_DB')}_PREFIX")
 
         attachment_sql = reformat_render(
             INIT_SQL_ATTACHED_DB_TPL.substitute(
