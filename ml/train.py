@@ -1,10 +1,11 @@
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import mlflow
+import pandas as pd
 from loguru import logger as log
-from mlflow.data.dataset_source import DatasetSource
-from mlflow.data.pandas_dataset import PandasDataset
+from mlflow.data.dataset import Dataset
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import GridSearchCV
@@ -12,8 +13,8 @@ from sklearn.pipeline import Pipeline
 from xgboost import XGBClassifier
 
 from ml.features import Features, make_text_pipeline
+from ml.mlflow import mlflow_end_run, mlflow_start_run
 from shared.lakehouse import Lakehouse
-from shared.settings import env
 from shared.utils import timed
 
 Folds = list[tuple[list[int], list[int]]]
@@ -22,6 +23,16 @@ Folds = list[tuple[list[int], list[int]]]
 class Method(Enum):
     XGBOOST = "xgboost"
     LOGREG = "logreg"
+
+
+@dataclass
+class MLDataset:
+    train: pd.DataFrame
+    test: pd.DataFrame
+    folds: Folds
+    mlflow_train: Dataset
+    mlflow_test: Dataset
+    mlflow_tags: dict[str, Any]
 
 
 def make_logreg() -> tuple[Pipeline, dict[str, Any]]:
@@ -56,40 +67,8 @@ def make_xgboost() -> tuple[Pipeline, dict[str, Any]]:
     return pipe, param_grid
 
 
-class DuckLakeTableDatasetSource(DatasetSource):
-    def __init__(
-        self,
-        catalog: str,
-        schema: str,
-        table_name: str,
-        snapshot_id: str,
-        where: Optional[str],
-        k_folds: Optional[str] = None,
-    ):
-        self.catalog = catalog
-        self.schema = schema
-        self.table_name = table_name
-        self.snapshot_id = snapshot_id
-        self.where = where
-        self.k_folds = k_folds
-
-    def to_dict(self):
-        return {attr: getattr(self, attr) for attr in vars(self)}
-
-    @classmethod
-    def from_dict(cls, source_dict):
-        return cls(**source_dict)
-
-    def __repr__(self):
-        attrs = ", ".join(f"{k}='{v}'" for k, v in vars(self).items())
-        return f"DuckLakeTableDatasetSource({attrs})"
-
-
-def load_dataset(
-    schema: str,
-    k_folds: Literal[3, 5, 10],
-) -> tuple[PandasDataset, PandasDataset, Folds]:
-    lh = Lakehouse()
+def load_dataset(schema: str, k_folds: Literal[3, 5, 10]) -> MLDataset:
+    lh = Lakehouse(read_only=True)
 
     train = lh.load_docs_train_set("stage", schema, "dataset", k_folds=k_folds)
     test = lh.load_docs_test_set("stage", schema, "dataset")
@@ -103,33 +82,31 @@ def load_dataset(
         folds.append((train_idx, test_idx))
 
     train_dataset = mlflow.data.from_pandas(
-        df=train,
-        source=DuckLakeTableDatasetSource(
-            catalog="stage",
-            schema=schema,
-            table_name="dataset",
-            snapshot_id=snapshot_id,
-            where="NOT is_test",
-            k_folds=k_folds,
-        ),
+        train,
         targets="label",
         name="train",
     )
 
     test_dataset = mlflow.data.from_pandas(
-        df=test,
-        source=DuckLakeTableDatasetSource(
-            catalog="stage",
-            schema=schema,
-            table_name="dataset",
-            snapshot_id=snapshot_id,
-            where="is_test",
-        ),
+        test,
         targets="label",
         name="test",
     )
 
-    return train_dataset, test_dataset, folds
+    return MLDataset(
+        train=train,
+        test=test,
+        folds=folds,
+        mlflow_train=train_dataset,
+        mlflow_test=test_dataset,
+        mlflow_tags={
+            "lakehouse.catalog": "stage",
+            "lakehouse.schema": schema,
+            "lakehouse.table_name": "dataset",
+            "lakehouse.snapshot_id": str(snapshot_id),
+            "lakehouse.train.k_folds": str(k_folds),
+        },
+    )
 
 
 @timed
@@ -140,27 +117,7 @@ def train_text_classifier(
     k_folds: Literal[3, 5, 10] = 3,
     scoring: str = "f1",
 ):
-    tracking_uri = env.str("MLFLOW_TRACKING_URI")
-    mlflow.set_tracking_uri(tracking_uri)
-    log.info("MLflow tracking URI: {}", tracking_uri)
-
-    mlflow.set_experiment(schema)
-    log.info("MLflow experiment: {}", schema)
-
-    run_name = f"{method.value}_{features.value}"
-    mlflow.start_run(run_name=run_name)
-
-    mlflow.set_tag("method", method.value)
-    mlflow.set_tag("features", features.value)
-    mlflow.set_tag("k_folds", k_folds)
-    mlflow.set_tag("scoring", scoring)
-
-    train_dataset, test_dataset, folds = load_dataset(schema, k_folds)
-    train, test = train_dataset.df, test_dataset.df
-
-    # !model param needs to be added
-    mlflow.log_input(train_dataset, context="training", model=...)
-    mlflow.log_input(test_dataset, context="testing", model=...)
+    ds = load_dataset(schema, k_folds)
 
     features_pipe = make_text_pipeline(features)
 
@@ -172,9 +129,21 @@ def train_text_classifier(
         case _:
             raise ValueError(f"Method unsupported: {method}")
 
-    mlflow.set_tag("param_grid", param_grid)
-
     pipe = Pipeline(features_pipe.steps + classifier_pipe.steps)
+
+    mlflow_start_run(
+        experiment_name=schema,
+        run_name=f"{method.value}_{features.value}",
+        tags=dict(
+            method=method.value,
+            features=features.value,
+            k_folds=k_folds,
+            scoring=scoring,
+            param_grid=param_grid,
+        ),
+        datasets=[ds.mlflow_train, ds.mlflow_test],
+        dataset_tags=ds.mlflow_tags,
+    )
 
     log.info(
         "Training model using {} and {} with {}-fold CV, optimizing {} "
@@ -189,31 +158,32 @@ def train_text_classifier(
     search = GridSearchCV(
         estimator=pipe,
         param_grid=param_grid,
-        cv=folds,
+        cv=ds.folds,
         scoring=scoring,
         n_jobs=1,
         verbose=3,
     )
 
-    search.fit(train.text.to_list(), train.label)
-
-    mlflow.log_params(search.best_params_)
-    mlflow.log_metric(scoring, search.best_score_)
+    search.fit(ds.train.text.to_list(), ds.train.label)
 
     log.info("Best params: {}", search.best_params_)
     log.info("Best F1 score: {}", search.best_score_)
 
     log.info("Evaluating model on the test set")
 
-    y_pred = search.predict(test.text)
+    y_pred = search.predict(ds.test.text)
 
-    acc = accuracy_score(test.label, y_pred)
-    f1 = f1_score(test.label, y_pred)
-
-    mlflow.log_metric("test_accuracy", acc)
-    mlflow.log_metric("test_f1", f1)
+    acc = accuracy_score(ds.test.label, y_pred)
+    f1 = f1_score(ds.test.label, y_pred)
 
     log.info("Accuracy: {}", acc)
     log.info("F1 score: {}", f1)
 
-    mlflow.end_run()
+    mlflow_end_run(
+        params=search.best_params_,
+        metrics={
+            scoring: search.best_score_,
+            "test_accuracy": acc,
+            "test_f1": f1,
+        },
+    )
