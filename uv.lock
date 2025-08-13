@@ -492,6 +492,7 @@ dependencies = [
     { name = "dbt-core" },
     { name = "dbt-duckdb" },
     { name = "environs" },
+    { name = "fastapi" },
     { name = "geopandas" },
     { name = "gitpython" },
     { name = "humanize" },
@@ -521,6 +522,7 @@ dependencies = [
     { name = "sentence-transformers" },
     { name = "torch" },
     { name = "tqdm" },
+    { name = "uvicorn" },
     { name = "xgboost" },
 ]
 
@@ -541,6 +543,7 @@ requires-dist = [
     { name = "dbt-core", specifier = ">=1.9.6" },
     { name = "dbt-duckdb", git = "https://github.com/duckdb/dbt-duckdb.git?rev=afc39991158c0f719e5e57469ab466cfb63fbb8c" },
     { name = "environs", specifier = ">=14.2.0" },
+    { name = "fastapi", specifier = ">=0.116.1" },
     { name = "geopandas", specifier = ">=1.1.1" },
     { name = "gitpython", specifier = ">=3.1.44" },
     { name = "humanize", specifier = ">=4.12.3" },
@@ -570,6 +573,7 @@ requires-dist = [
     { name = "sentence-transformers", specifier = ">=5.1.0" },
     { name = "torch", specifier = ">=2.7.1" },
     { name = "tqdm", specifier = ">=4.67.1" },
+    { name = "uvicorn", specifier = ">=0.35.0" },
     { name = "xgboost", specifier = "==3.0.2" },
 ]
 

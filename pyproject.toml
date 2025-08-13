@@ -17,6 +17,7 @@ dependencies = [
   "dbt-core>=1.9.6",
   "dbt-duckdb",
   "environs>=14.2.0",
+  "fastapi>=0.116.1",
   "geopandas>=1.1.1",
   "gitpython>=3.1.44",
   "humanize>=4.12.3",
@@ -46,6 +47,7 @@ dependencies = [
   "sentence-transformers>=5.1.0",
   "torch>=2.7.1",
   "tqdm>=4.67.1",
+  "uvicorn>=0.35.0",
   "xgboost==3.0.2",
 ]
 
