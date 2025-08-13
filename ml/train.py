@@ -180,10 +180,13 @@ def train_text_classifier(
     log.info("F1 score: {}", f1)
 
     mlflow_end_run(
+        model_name=f"{schema}_{method.value}_{features.value}",
+        model=search.best_estimator_,
         params=search.best_params_,
         metrics={
             scoring: search.best_score_,
             "test_accuracy": acc,
             "test_f1": f1,
         },
+        train=ds.train,
     )
