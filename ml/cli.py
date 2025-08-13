@@ -1,7 +1,9 @@
 import click
+import uvicorn
 from loguru import logger as log
 
 from ml.features import Features
+from ml.server import app
 from ml.train import Method, train_text_classifier
 
 
@@ -37,3 +39,14 @@ def ml_train(schema: str, method: str, features: str, k_folds: int):
         )
     except Exception as ex:
         log.exception(ex)
+
+
+@ml.command("server", help="Serve the selected models")
+@click.option("--host", "-h", type=click.STRING, default="0.0.0.0", help="Server host")
+@click.option("--port", "-p", type=click.INT, default=8000, help="Server port")
+def ml_server(host: str, port: int):
+    uvicorn.run(
+        "ml.server:app",
+        host=host,
+        port=port,
+    )
