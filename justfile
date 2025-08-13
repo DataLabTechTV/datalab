@@ -117,7 +117,7 @@ mlops-train: mlops-train-logreg mlops-train-xgboost
 
 mlops-mlflow-model-build-docker:
     mlflow models build-docker \
-        -m "models:/dd_logreg_tfidf/9" \
+        -m "models:/dd_logreg_tfidf/latest" \
         -n "mlflow_model_dd_logreg_tfidf"
 
 mlops-start-model-server:
