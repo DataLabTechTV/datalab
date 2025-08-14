@@ -44,9 +44,11 @@ def ml_train(schema: str, method: str, features: str, k_folds: int):
 @ml.command("server", help="Serve the selected models")
 @click.option("--host", "-h", type=click.STRING, default="0.0.0.0", help="Server host")
 @click.option("--port", "-p", type=click.INT, default=8000, help="Server port")
-def ml_server(host: str, port: int):
+@click.option("--reload", "-r", is_flag=True, help="Enable reload mode for debugging")
+def ml_server(host: str, port: int, reload: bool):
     uvicorn.run(
         "ml.server:app",
         host=host,
         port=port,
+        reload=reload,
     )
