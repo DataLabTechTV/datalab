@@ -1,10 +1,14 @@
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from threading import Thread
 
 import mlflow
 import pandas as pd
 from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 from mlflow.exceptions import RestException
+
+from ml.events import consumer_loop
 
 app = FastAPI()
 models = {}
@@ -15,6 +19,16 @@ class Dataset:
     columns: list[str]
     data: list[list]
     log_to_lakehouse: bool = False
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    thread = Thread(target=consumer_loop, daemon=True)
+    thread.start()
+
+    yield
+
+    thread.join()
 
 
 @app.post("/inference/{model_name}/{model_version}")
@@ -38,3 +52,6 @@ async def predict(model_name: str, model_version: str, dataset: Dataset):
         "model_version": model_version,
         "predictions": pred.tolist(),
     }
+
+
+# TODO: A/B testing request
