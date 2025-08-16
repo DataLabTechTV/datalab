@@ -1,10 +1,14 @@
+import json
 import os
+from dataclasses import asdict
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 
 import duckdb
+import pandas as pd
 from loguru import logger as log
 
+from ml.payloads import InferenceResultPayload
 from shared.settings import LOCAL_DIR, env
 from shared.storage import Storage, StoragePrefix
 from shared.tools import generate_init_sql
@@ -28,37 +32,6 @@ class Lakehouse:
             self.conn.execute(init_sql)
         except Exception as e:
             raise LakehouseException(f"Error executing init SQL: {e}")
-
-        self.stage_catalog = os.path.splitext(os.path.split(env.str("STAGE_DB"))[-1])[0]
-
-        log.info("Attaching {} DuckLake catalog", self.stage_catalog)
-
-        self.conn.execute(
-            f"""
-            ATTACH IF NOT EXISTS 'ducklake:sqlite:{LOCAL_DIR}/{env.str('STAGE_DB')}'
-            (DATA_PATH 's3://{env.str('S3_BUCKET') }/{env.str('S3_STAGE_PREFIX')}')
-            """
-        )
-
-        self.marts_catalogs = []
-
-        for name, value in os.environ.items():
-            if not name.endswith("_MART_DB"):
-                continue
-
-            mart_catalog = os.path.splitext(os.path.split(value)[-1])[0]
-            self.marts_catalogs.append(mart_catalog)
-
-            mart_s3_prefix = env.str(f"S3_{name.replace('_MART_DB', '')}_MART_PREFIX")
-
-            log.info("Attaching {} DuckLake catalog", mart_catalog)
-
-            self.conn.execute(
-                f"""
-                ATTACH IF NOT EXISTS 'ducklake:sqlite:{LOCAL_DIR}/{value}'
-                (DATA_PATH 's3://{env.str('S3_BUCKET') }/{mart_s3_prefix}')
-                """
-            )
 
         self.storage = Storage(prefix=StoragePrefix.EXPORTS)
 
@@ -141,4 +114,157 @@ class Lakehouse:
             CREATE OR REPLACE TABLE {catalog}.{schema}.{table_name} AS
             SELECT * FROM '{from_path}'
             """
+        )
+
+    def load_docs_train_set(
+        self,
+        catalog: str,
+        schema: str,
+        table_name: str,
+        k_folds: Literal[3, 5, 10] = 3,
+    ) -> pd.DataFrame:
+        log.info(
+            "Loading train set from {}.{}.{} (k_folds={})",
+            catalog,
+            schema,
+            table_name,
+            k_folds,
+        )
+
+        match k_folds:
+            case 3 | 5 | 10:
+                folds_col = f"folds_{k_folds}_id"
+            case _:
+                raise ValueError(f"Unsupported number of folds: {k_folds}")
+
+        rel = self.conn.sql(
+            f"""--sql
+            SELECT doc_id, text, label, {folds_col} AS fold_id
+            FROM "{catalog}"."{schema}"."{table_name}"
+            WHERE NOT is_test
+            """
+        )
+
+        return rel.to_df()
+
+    def load_docs_test_set(
+        self,
+        catalog: str,
+        schema: str,
+        table_name: str,
+    ) -> pd.DataFrame:
+        log.info("Loading test set from {}.{}.{}", catalog, schema, table_name)
+
+        rel = self.conn.sql(
+            f"""--sql
+            SELECT doc_id, text, label
+            FROM "{catalog}"."{schema}"."{table_name}"
+            WHERE is_test
+            """
+        )
+
+        return rel.to_df()
+
+    def snapshot_id(self, catalog: str) -> int:
+        log.info("Querying snapshot_id (version) for {} catalog", catalog)
+
+        rel = self.conn.sql(
+            f"""--sql
+            SELECT max(snapshot_id) AS snapshot_id
+            FROM "{catalog}".snapshots()
+            """
+        )
+
+        snapshot_id = rel.to_df()["snapshot_id"].item()
+
+        return snapshot_id
+
+    def schema(
+        self,
+        catalog: str,
+        schema: str,
+        table_name: str,
+    ) -> list[dict[str, str]]:
+        log.info("Reading schema for {}.{}.{}", catalog, schema, table_name)
+
+        self.conn.execute(
+            f"""--sql
+            SELECT *
+            FROM "{catalog}"."{schema}"."{table_name}"
+            LIMIT 0
+            """
+        )
+
+        schema = [dict(name=desc[0], type=desc[1]) for desc in self.conn.description]
+
+        return schema
+
+    def count(
+        self,
+        catalog: str,
+        schema: str,
+        table_name: str,
+        where: str | None = None,
+    ) -> int:
+        log.info("Counting rows in for {}.{}.{}", catalog, schema, table_name)
+
+        query = f"""--sql
+            SELECT count(*)
+            FROM "{catalog}"."{schema}"."{table_name}"
+        """
+
+        if where is not None:
+            query += f"""--sql
+                WHERE {where}
+            """
+
+        self.conn.execute(query)
+
+        count = self.conn.fetchone()[0]
+
+        return count
+
+    def log_inference(self, schema: str, payloads: list[InferenceResultPayload]):
+        log.info("Logging inference result payload (len={})", len(payloads))
+
+        self.conn.execute("INSTALL json")
+        self.conn.execute("LOAD json")
+
+        self.conn.execute(
+            f"""--sql
+            CREATE TABLE IF NOT EXISTS secure_stage."{schema}".inference_results (
+                inference_uuid VARCHAR,
+                model_name VARCHAR,
+                model_version VARCHAR,
+                dataset JSON,
+                predictions UNION(
+                    pred_bool BOOLEAN[],
+                    pred_int INTEGER[],
+                    pred_float FLOAT[]
+                )
+            )
+            """
+        )
+
+        self.conn.execute(
+            f"""--sql
+            INSERT INTO secure_stage.{{schema}}.inference_results (
+                inference_uuid,
+                model_name,
+                model_version,
+                dataset,
+                predictions
+            )
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            [
+                [
+                    payload.inference_uuid,
+                    payload.model_name,
+                    payload.model_version,
+                    json.dumps(asdict(payload.dataset)),
+                    payload.predictions,
+                ]
+                for payload in payloads
+            ],
         )

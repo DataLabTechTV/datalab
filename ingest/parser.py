@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Self
 from urllib.parse import urlparse
 
-from slugify import slugify
+from shared.utils import fn_sanitize
 
 
 @dataclass
@@ -20,7 +20,7 @@ class DatasetURL:
         author = path[-2]
         slug = path[-1]
         handle = f"{author}/{slug}"
-        name = slugify(slug, separator="_")
+        name = fn_sanitize(slug)
 
         ds_url = cls(
             author=author,

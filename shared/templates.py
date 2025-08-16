@@ -3,8 +3,15 @@ from string import Template
 
 INIT_SQL_ATTACHED_DB_TPL = Template(
     """--sql
-    ATTACH 'ducklake:sqlite:$db_path'
+    ATTACH IF NOT EXISTS 'ducklake:sqlite:$db_path'
     (DATA_PATH 's3://$s3_bucket/$s3_prefix');
+    """
+)
+
+INIT_SQL_ATTACHED_SECURE_DB_TPL = Template(
+    """--sql
+    ATTACH IF NOT EXISTS 'ducklake:sqlite:$db_path'
+    (DATA_PATH 's3://$s3_bucket/$s3_prefix', ENCRYPTED 1);
     """
 )
 
