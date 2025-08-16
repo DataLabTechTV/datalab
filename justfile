@@ -35,10 +35,13 @@ check-duckdb:
 # ========
 
 check-init-sql:
-    test -r {{init_sql_path}}
+    test -r {{init_sql_path}} || just generate-init-sql
 
 check-engine-db:
     test -r {{engine_db_path}}
+
+generate-init-sql:
+    {{dlctl}} tools generate-init-sql --path {{init_sql_path}}
 
 lakehouse: check-duckdb check-init-sql check-engine-db
     duckdb -init {{init_sql_path}} {{engine_db_path}}
@@ -120,15 +123,18 @@ mlops-mlflow-model-build-docker:
         -m "models:/dd_logreg_tfidf/latest" \
         -n "mlflow_model_dd_logreg_tfidf"
 
-mlops-start-model-server:
+mlops-mlflow-model-start-server:
     docker run -d \
         -p 5001:8080 \
         -e MLFLOW_MODELS_WORKERS=4 \
         "mlflow_model_dd_logreg_tfidf"
 
-mlops-test-model-server:
+mlops-mlflow-model-test-server:
     curl -X POST "http://localhost:5001/invocations" \
         -H "Content-Type: application/json" \
         -d '{"dataframe_split": {"columns": ["doc_id", "text"], "data": [[1, "hello twitter i m on a one week leave from school bc i have depression how are you all d"],[2, "ellievolia if oooonly we were really so lucky eh and awh definitely too early for work"]]}}'
+
+mlops-serve:
+    {{dlctl}} ml server
 
 mlops-all: mlops-etl mlops-train
