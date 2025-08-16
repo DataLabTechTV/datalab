@@ -8,6 +8,13 @@ INIT_SQL_ATTACHED_DB_TPL = Template(
     """
 )
 
+INIT_SQL_ATTACHED_SECURE_DB_TPL = Template(
+    """--sql
+    ATTACH IF NOT EXISTS 'ducklake:sqlite:$db_path'
+    (DATA_PATH 's3://$s3_bucket/$s3_prefix', ENCRYPTED 1);
+    """
+)
+
 INIT_SQL_TPL = Template(
     """--sql
     -- Your .env config should be reproduced below.

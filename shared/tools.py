@@ -4,7 +4,12 @@ from typing import Optional
 from loguru import logger as log
 
 from shared.settings import LOCAL_DIR, MART_DB_VARS, env
-from shared.templates import INIT_SQL_ATTACHED_DB_TPL, INIT_SQL_TPL, reformat_render
+from shared.templates import (
+    INIT_SQL_ATTACHED_DB_TPL,
+    INIT_SQL_ATTACHED_SECURE_DB_TPL,
+    INIT_SQL_TPL,
+    reformat_render,
+)
 
 
 def generate_init_sql(path: Optional[str] = None) -> Optional[str]:
@@ -18,11 +23,17 @@ def generate_init_sql(path: Optional[str] = None) -> Optional[str]:
 
     attachments_sql = []
 
-    for varname in ["STAGE_DB"] + MART_DB_VARS:
+    for varname in ["STAGE_DB", "SECURE_STAGE_DB"] + MART_DB_VARS:
         s3_prefix = env.str(f"S3_{varname.removesuffix('_DB')}_PREFIX")
 
+        match varname:
+            case "SECURE_STAGE_DB":
+                tpl = INIT_SQL_ATTACHED_SECURE_DB_TPL
+            case _:
+                tpl = INIT_SQL_ATTACHED_DB_TPL
+
         attachment_sql = reformat_render(
-            INIT_SQL_ATTACHED_DB_TPL.substitute(
+            tpl.substitute(
                 db_path=os.path.join(LOCAL_DIR, env.str(varname)),
                 s3_bucket=env.str("S3_BUCKET"),
                 s3_prefix=s3_prefix,
