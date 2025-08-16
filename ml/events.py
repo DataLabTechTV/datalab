@@ -1,11 +1,12 @@
+import asyncio
 import json
-import random
 import time
+from dataclasses import asdict
 
-import duckdb
-from confluent_kafka import Consumer, Producer
+from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from loguru import logger as log
 
+from ml.payloads import InferenceResultPayload
 from shared.lakehouse import Lakehouse
 from shared.settings import env
 
@@ -14,116 +15,75 @@ from shared.settings import env
 # -----------------------
 KAFKA_BROKER_ENDPOINT = env.str("KAFKA_BROKER_ENDPOINT")
 TOPIC = "ml_inference_results"
+BATCH_SIZE = 100
+FLUSH_INTERVAL_SEC = 5
+
 
 # -----------------------
 # Producer
 # -----------------------
-producer_conf = {
-    "bootstrap.servers": KAFKA_BROKER_ENDPOINT,
-    "client.id": "ml-inference-producer",
-}
-producer = Producer(producer_conf)
-MODELS = ["model_A", "model_B"]
 
 
-def delivery_report(err, msg):
-    if err:
-        log.error("Delivery failed: {}", err)
-    else:
-        log.info(
-            "Delivered message to {} [{}] offset {}",
-            msg.topic(),
-            msg.partition(),
-            msg.offset(),
-        )
-
-
-def send_inference_result(user_id, features):
-    model_used = random.choice(MODELS)
-    prediction = random.random()
-    payload = {
-        "user_id": user_id,
-        "features": features,
-        "model": model_used,
-        "prediction": prediction,
-    }
-    producer.produce(
-        topic=TOPIC,
-        key=str(user_id),
-        value=json.dumps(payload),
-        callback=delivery_report,
+async def make_inference_producer() -> AIOKafkaProducer:
+    inference_producer = AIOKafkaProducer(
+        bootstrap_servers=KAFKA_BROKER_ENDPOINT,
+        client_id="ml-inference-producer",
     )
-    producer.poll(0)
+
+    return inference_producer
 
 
-def producer_loop():
-    """Simulate sending inference results continuously"""
-    user_id = 1
-    while True:
-        features = {"feature1": random.randint(0, 10), "feature2": random.randint(0, 5)}
-        send_inference_result(user_id, features)
-        user_id += 1
-        time.sleep(1)  # simulate incoming requests
+async def send_inference(producer: AIOKafkaProducer, payload: InferenceResultPayload):
+    try:
+        await producer.send_and_wait(
+            TOPIC,
+            key=payload.inference_uuid.encode("utf-8"),
+            value=json.dumps(asdict(payload)).encode("utf-8"),
+        )
+        log.info("Kafka: Successfully delivered inference result")
+    except Exception as e:
+        log.error(f"Kafka: Delivery failed for inference result: {e}")
 
 
 # -----------------------
 # Consumer
 # -----------------------
-consumer_conf = {
-    "bootstrap.servers": KAFKA_BROKER_ENDPOINT,
-    "group.id": "ducklake-consumer",
-    "auto.offset.reset": "earliest",
-}
-consumer = Consumer(consumer_conf)
-consumer.subscribe([TOPIC])
 
-# Connect to DuckLake / DuckDB
-con = duckdb.connect(DB_PATH)
-
-# Create table if it doesn't exist
-con.execute(
-    f"""
-CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
-    user_id INTEGER,
-    features JSON,
-    model VARCHAR,
-    prediction DOUBLE
-)
-"""
-)
-
-buffer = []
-last_flush = time.time()
+lh = Lakehouse()
 
 
-def flush_buffer():
-    global buffer, last_flush
-    if not buffer:
-        return
-    json_lines = "\n".join(json.dumps(msg) for msg in buffer)
-    con.execute(
-        f"""
-        INSERT INTO {TABLE_NAME}
-        SELECT * FROM read_json_auto(?)
-    """,
-        [json_lines],
+async def flush_inference_buffer(schema: str, queue: asyncio.Queue):
+    log.info(f"Kafka: Flushing {len(queue)} messages")
+
+    inference_results = []
+
+    while not queue.empty():
+        inference_results.append(queue.get_nowait())
+
+    lh.log_inference(schema, inference_results)
+
+
+async def inference_consumer_loop(schema: str):
+    consumer = AIOKafkaConsumer(
+        TOPIC,
+        bootstrap_servers=KAFKA_BROKER_ENDPOINT,
+        group_id="lakehouse-inference-consumer",
+        auto_offset_reset="earliest",
     )
-    print(f"Flushed {len(buffer)} records to DuckLake")
-    buffer.clear()
-    last_flush = time.time()
 
+    await consumer.start()
 
-def consumer_loop():
-    global buffer, last_flush
-    while True:
-        msg = consumer.poll(1.0)
-        if msg is None:
-            pass
-        elif msg.error():
-            print(f"Consumer error: {msg.error()}")
-        else:
-            buffer.append(json.loads(msg.value().decode("utf-8")))
+    queue = asyncio.Queue()
+    last_flush = asyncio.get_event_loop().time()
 
-        # Flush on batch size or time interval
-        if len(buffer) >= BATCH_SIZE or (time.time() - last_flush) >= FLUSH_INTERVAL:
-            flush_buffer()
+    try:
+        async for msg in consumer:
+            payload = InferenceResultPayload(**json.loads(msg.value.decode("utf-8")))
+            queue.put(payload)
+
+            now = asyncio.get_event_loop().time()
+            if len(queue) >= BATCH_SIZE or (now - last_flush) >= FLUSH_INTERVAL_SEC:
+                await flush_inference_buffer(schema, queue)
+                last_flush = now
+    finally:
+        await consumer.stop()

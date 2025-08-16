@@ -1,4 +1,6 @@
+import json
 import os
+from dataclasses import asdict
 from pathlib import Path
 from typing import Literal, Optional
 
@@ -6,6 +8,7 @@ import duckdb
 import pandas as pd
 from loguru import logger as log
 
+from ml.payloads import InferenceResultPayload
 from shared.settings import LOCAL_DIR, env
 from shared.storage import Storage, StoragePrefix
 from shared.tools import generate_init_sql
@@ -220,3 +223,48 @@ class Lakehouse:
         count = self.conn.fetchone()[0]
 
         return count
+
+    def log_inference(self, schema: str, payloads: list[InferenceResultPayload]):
+        log.info("Logging inference result payload (len={})", len(payloads))
+
+        self.conn.execute("INSTALL json")
+        self.conn.execute("LOAD json")
+
+        self.conn.execute(
+            f"""--sql
+            CREATE TABLE IF NOT EXISTS secure_stage."{schema}".inference_results (
+                inference_uuid VARCHAR,
+                model_name VARCHAR,
+                model_version VARCHAR,
+                dataset JSON,
+                predictions UNION(
+                    pred_bool BOOLEAN[],
+                    pred_int INTEGER[],
+                    pred_float FLOAT[]
+                )
+            )
+            """
+        )
+
+        self.conn.execute(
+            f"""--sql
+            INSERT INTO secure_stage.{{schema}}.inference_results (
+                inference_uuid,
+                model_name,
+                model_version,
+                dataset,
+                predictions
+            )
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            [
+                [
+                    payload.inference_uuid,
+                    payload.model_name,
+                    payload.model_version,
+                    json.dumps(asdict(payload.dataset)),
+                    payload.predictions,
+                ]
+                for payload in payloads
+            ],
+        )
