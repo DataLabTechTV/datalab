@@ -85,5 +85,7 @@ async def inference_consumer_loop(schema: str):
             if len(queue) >= BATCH_SIZE or (now - last_flush) >= FLUSH_INTERVAL_SEC:
                 await flush_inference_buffer(schema, queue)
                 last_flush = now
+    except asyncio.exceptions.CancelledError:
+        log.info("Inference consumer loop cancelled")
     finally:
         await consumer.stop()
