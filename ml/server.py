@@ -1,4 +1,5 @@
 import asyncio
+import random
 from contextlib import asynccontextmanager
 from uuid import uuid4
 
@@ -9,8 +10,13 @@ from fastapi.responses import JSONResponse
 from loguru import logger as log
 from mlflow.exceptions import RestException
 
-from ml.events import inference_consumer_loop, make_inference_producer, send_inference
-from ml.payloads import InferenceDataset, InferenceResultPayload
+from ml.events import (
+    flush_inference_buffer,
+    inference_consumer_loop,
+    make_inference_producer,
+    send_inference,
+)
+from ml.types import InferenceModel, InferenceRequest, InferenceResult
 
 SCHEMAS = ("dd",)
 models = {}
@@ -49,38 +55,49 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-@app.post("/inference/{model_name}/{model_version}")
-async def predict(
-    model_name: str,
-    model_version: str,
-    dataset: InferenceDataset,
-    request: Request,
-):
-    model_uri = f"models:/{model_name}/{model_version}"
+@app.get("/inference/logs/flush")
+async def inference_logs_flush():
+    log.info("Flushing inference logs for schemas: {}", ", ".join(SCHEMAS))
+    for schema in SCHEMAS:
+        flush_inference_buffer(schema)
+
+
+@app.post("/inference")
+async def inference(inference_request: InferenceRequest, request: Request):
+    if type(inference_request.models) is InferenceModel:
+        model = inference_request.models
+    else:
+        model = random.choice(inference_request.models)
+
+    model_uri = f"models:/{model.name}/{model.version}"
 
     if model_uri not in models:
         try:
             models[model_uri] = mlflow.pyfunc.load_model(model_uri)
-        except RestException as e:
+        except RestException:
             return JSONResponse(
                 {"error": "Model not found"},
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
-    data = pd.DataFrame(dataset.data, columns=dataset.columns)
-    predictions = models[model_uri].predict(data)
+    log.info("Running inference using {}", model_uri)
 
-    payload = InferenceResultPayload(
+    dataset = pd.DataFrame(
+        inference_request.dataset.data,
+        columns=inference_request.dataset.columns,
+    )
+    predictions = models[model_uri].predict(dataset)
+
+    inference_result = InferenceResult(
         inference_uuid=uuid4(),
-        model_name=model_name,
-        model_version=model_version,
-        dataset=dataset,
+        model_name=model.name,
+        model_version=model.version,
+        dataset=inference_request.dataset,
         predictions=predictions,
     )
 
-    send_inference(request.app.state.inference_producer, payload)
+    if inference_request.log_to_lakehouse:
+        log.info("Logging inference to data lakehouse")
+        send_inference(request.app.state.inference_producer, inference_result)
 
-    return payload
-
-
-# TODO: A/B testing request
+    return inference_result
