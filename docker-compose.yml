@@ -18,7 +18,7 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
 
-  minio-mc:
+  minio-init:
     image: minio/mc:RELEASE.2025-04-16T18-13-26Z
     networks:
       - minio
@@ -52,7 +52,7 @@ services:
       retries: 3
     restart: unless-stopped
 
-  ollama-models:
+  ollama-init:
     image: alpine/curl:latest
     networks:
       - ollama
