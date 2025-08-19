@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Optional
 
 import huggingface_hub as hf
+import pandas as pd
 from sentence_transformers import SentenceTransformer
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -23,7 +24,7 @@ class SentenceTransformerVectorizer(BaseEstimator, TransformerMixin):
         self.batch_size = batch_size
         self.model = None
 
-    def fit(self, X: str | list[str], y: Optional[list[int] | list[float]] = None):
+    def fit(self, X, y):
         try:
             self.model = SentenceTransformer(self.model_name, local_files_only=True)
         except:
@@ -32,9 +33,14 @@ class SentenceTransformerVectorizer(BaseEstimator, TransformerMixin):
 
         return self
 
-    def transform(self, X: str | list[str]):
+    def transform(self, X):
         if self.model is None:
             raise RuntimeError("You must fit the vectorizer before calling transform")
+
+        if isinstance(X, pd.DataFrame):
+            X = X.iloc[:, 0]
+        elif isinstance(X, pd.Series):
+            X = X.to_list()
 
         return self.model.encode(X, batch_size=self.batch_size)
 
