@@ -82,14 +82,14 @@ def load_dataset(schema: str, k_folds: Literal[3, 5, 10]) -> MLDataset:
         folds.append((train_idx, test_idx))
 
     train_dataset = mlflow.data.from_pandas(
-        train,
-        targets="label",
+        train.drop(columns=["example_id", "fold_id"]),
+        targets="target",
         name="train",
     )
 
     test_dataset = mlflow.data.from_pandas(
-        test,
-        targets="label",
+        test.drop(columns=["example_id"]),
+        targets="target",
         name="test",
     )
 
@@ -145,48 +145,52 @@ def train_text_classifier(
         dataset_tags=ds.mlflow_tags,
     )
 
-    log.info(
-        "Training model using {} and {} with {}-fold CV, optimizing {} "
-        "hyperparameters: {}",
-        features,
-        method,
-        k_folds,
-        len(param_grid),
-        ", ".join(p.split("__")[-1] for p in param_grid.keys()),
-    )
+    try:
+        log.info(
+            "Training model using {} and {} with {}-fold CV, optimizing {} "
+            "hyperparameters: {}",
+            features,
+            method,
+            k_folds,
+            len(param_grid),
+            ", ".join(p.split("__")[-1] for p in param_grid.keys()),
+        )
 
-    search = GridSearchCV(
-        estimator=pipe,
-        param_grid=param_grid,
-        cv=ds.folds,
-        scoring=scoring,
-        n_jobs=1,
-        verbose=3,
-    )
+        search = GridSearchCV(
+            estimator=pipe,
+            param_grid=param_grid,
+            cv=ds.folds,
+            scoring=scoring,
+            n_jobs=1,
+            verbose=3,
+        )
 
-    search.fit(ds.train.text.to_list(), ds.train.label)
+        search.fit(ds.train.input.to_list(), ds.train.target.astype(float))
 
-    log.info("Best params: {}", search.best_params_)
-    log.info("Best F1 score: {}", search.best_score_)
+        log.info("Best params: {}", search.best_params_)
+        log.info("Best F1 score: {}", search.best_score_)
 
-    log.info("Evaluating model on the test set")
+        log.info("Evaluating model on the test set")
 
-    y_pred = search.predict(ds.test.text)
+        y_pred = search.predict(ds.test.input)
 
-    acc = accuracy_score(ds.test.label, y_pred)
-    f1 = f1_score(ds.test.label, y_pred)
+        acc = accuracy_score(ds.test.target, y_pred)
+        f1 = f1_score(ds.test.target, y_pred)
 
-    log.info("Accuracy: {}", acc)
-    log.info("F1 score: {}", f1)
+        log.info("Accuracy: {}", acc)
+        log.info("F1 score: {}", f1)
 
-    mlflow_end_run(
-        model_name=f"{schema}_{method.value}_{features.value}",
-        model=search.best_estimator_,
-        params=search.best_params_,
-        metrics={
-            scoring: search.best_score_,
-            "test_accuracy": acc,
-            "test_f1": f1,
-        },
-        train=ds.train,
-    )
+        mlflow_end_run(
+            model_name=f"{schema}_{method.value}_{features.value}",
+            model=search.best_estimator_,
+            params=search.best_params_,
+            metrics={
+                scoring: search.best_score_,
+                "test_accuracy": acc,
+                "test_f1": f1,
+            },
+            train=ds.train,
+        )
+    except Exception as e:
+        log.exception(e)
+        mlflow.end_run(status="FAILED")
