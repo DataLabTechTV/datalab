@@ -118,22 +118,6 @@ mlops-train-xgboost: mlops-train-xgboost-tfidf mlops-train-xgboost-embeddings
 
 mlops-train: mlops-train-logreg mlops-train-xgboost
 
-mlops-mlflow-model-build-docker:
-    mlflow models build-docker \
-        -m "models:/dd_logreg_tfidf/latest" \
-        -n "mlflow_model_dd_logreg_tfidf"
-
-mlops-mlflow-model-start-server:
-    docker run -d \
-        -p 5001:8080 \
-        -e MLFLOW_MODELS_WORKERS=4 \
-        "mlflow_model_dd_logreg_tfidf"
-
-mlops-mlflow-model-test-server:
-    curl -X POST "http://localhost:5001/invocations" \
-        -H "Content-Type: application/json" \
-        -d '{"dataframe_split": {"columns": ["doc_id", "text"], "data": [[1, "hello twitter i m on a one week leave from school bc i have depression how are you all d"],[2, "ellievolia if oooonly we were really so lucky eh and awh definitely too early for work"]]}}'
-
 mlops-serve:
     {{dlctl}} ml server
 
