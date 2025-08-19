@@ -148,8 +148,7 @@ mlops-test-inference:
 mlops-test-feedback uuid feedback:
     curl -X PATCH "http://localhost:8000/inference" \
         -H "Content-Type: application/json" \
-        -d '{"inference_uuid": "5c11e0fa-27df-44ef-bac7-a8487b889791", "feedback": 1.0}'
-    @echo
+        -d '{"inference_uuid": "{{uuid}}", "feedback": {{feedback}}}'
     curl -X GET "http://localhost:8000/inference/logs/flush"
 
 mlops-all: mlops-etl mlops-train
