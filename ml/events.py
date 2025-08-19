@@ -1,11 +1,13 @@
 import asyncio
 import json
 from dataclasses import asdict
+from datetime import timedelta
+from enum import Enum
 
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from loguru import logger as log
 
-from ml.types import InferenceResult
+from ml.types import InferenceFeedback, InferenceProducerType, InferenceResult
 from shared.lakehouse import Lakehouse
 from shared.settings import env
 
@@ -13,64 +15,103 @@ from shared.settings import env
 # ===================
 
 KAFKA_BROKER_ENDPOINT = env.str("KAFKA_BROKER_ENDPOINT")
-TOPIC = "ml_inference_results"
-BATCH_SIZE = 100
-FLUSH_INTERVAL_SEC = 5
+INFERENCE_INSERT_TOPIC = "ml_inference_results"
+INFERENCE_UPDATE_TOPIC = "ml_inference_feedback"
+BATCH_SIZE = 1000
+FLUSH_INTERVAL = timedelta(minutes=15)
 
 
 # Producers
 # =========
 
 
-async def make_inference_producer() -> AIOKafkaProducer:
-    inference_producer = AIOKafkaProducer(
-        bootstrap_servers=KAFKA_BROKER_ENDPOINT,
-        client_id="ml-inference-producer",
-    )
+async def make_inference_producer(type_: InferenceProducerType) -> AIOKafkaProducer:
+    match type_:
+        case InferenceProducerType.INSERT:
+            producer = AIOKafkaProducer(
+                bootstrap_servers=KAFKA_BROKER_ENDPOINT,
+                client_id="ml-inference-result-producer",
+            )
+        case InferenceProducerType.UPDATE:
+            producer = AIOKafkaProducer(
+                bootstrap_servers=KAFKA_BROKER_ENDPOINT,
+                client_id="ml-inference-feedback-producer",
+            )
 
-    return inference_producer
+    return producer
 
 
-async def send_inference(producer: AIOKafkaProducer, inference_result: InferenceResult):
+async def queue_inference_insertion(
+    producer: AIOKafkaProducer,
+    inference_result: InferenceResult,
+):
     try:
         await producer.send_and_wait(
-            TOPIC,
+            INFERENCE_INSERT_TOPIC,
             key=inference_result.inference_uuid.encode("utf-8"),
             value=json.dumps(asdict(inference_result)).encode("utf-8"),
         )
-        log.info("Kafka: Successfully delivered inference result")
+        log.info("Successfully delivered inference result")
     except Exception as e:
-        log.error(f"Kafka: Delivery failed for inference result: {e}")
+        log.error(f"Delivery failed for inference result: {e}")
+
+
+async def queue_inference_update(
+    producer: AIOKafkaProducer,
+    inference_feedback: InferenceFeedback,
+):
+    try:
+        await producer.send_and_wait(
+            INFERENCE_UPDATE_TOPIC,
+            key=inference_feedback.inference_uuid.encode("utf-8"),
+            value=json.dumps(asdict(inference_feedback)).encode("utf-8"),
+        )
+        log.info("Successfully delivered inference feedback")
+    except Exception as e:
+        log.error(f"Delivery failed for inference feedback: {e}")
 
 
 # Consumers
 # =========
 
-lakehouse = None
-queue = asyncio.Queue(maxsize=BATCH_SIZE)
-last_flush = asyncio.get_event_loop().time()
+lakehouse = Lakehouse(in_memory=True)
+inference_insert_queue = asyncio.Queue(maxsize=BATCH_SIZE)
+inference_update_queue = asyncio.Queue(maxsize=BATCH_SIZE)
+inference_insert_last_flush = asyncio.get_event_loop().time()
+inference_update_last_flush = asyncio.get_event_loop().time()
 
 
-async def flush_inference_buffer(schema: str):
-    log.info(f"Kafka: Flushing {queue.qsize()} messages")
-
-    if lakehouse is None:
-        lakehouse = Lakehouse()
+async def flush_inference_insert_queue(schema: str):
+    global lakehouse
 
     inference_results = []
 
-    while not queue.empty():
-        inference_results.append(queue.get_nowait())
+    while not inference_insert_queue.empty():
+        inference_results.append(inference_insert_queue.get_nowait())
 
     if len(inference_results) > 0:
-        lakehouse.log_inferences(schema, inference_results)
+        lakehouse.insert_inferences(schema, inference_results)
 
 
-async def inference_consumer_loop(schema: str):
+async def flush_inference_update_queue(schema: str):
+    global lakehouse, inference_insert_last_flush
+
+    inference_feedback = []
+
+    while not inference_update_queue.empty():
+        inference_feedback.append(inference_update_queue.get_nowait())
+
+    if len(inference_feedback) > 0:
+        lakehouse.update_inferences(schema, inference_feedback)
+
+
+async def inference_insert_consumer_loop(schema: str):
+    global inference_insert_last_flush
+
     consumer = AIOKafkaConsumer(
-        TOPIC,
+        INFERENCE_INSERT_TOPIC,
         bootstrap_servers=KAFKA_BROKER_ENDPOINT,
-        group_id="lakehouse-inference-consumer",
+        group_id="lakehouse-inference-insertion-consumer",
         auto_offset_reset="earliest",
     )
 
@@ -78,15 +119,49 @@ async def inference_consumer_loop(schema: str):
 
     try:
         async for msg in consumer:
-            inference_result = InferenceResult(**json.loads(msg.value.decode("utf-8")))
-            queue.put(inference_result)
+            payload = json.loads(msg.value.decode("utf-8"))
+            await inference_insert_queue.put(InferenceResult.from_dict(payload))
 
             now = asyncio.get_event_loop().time()
-            if queue.full() or (now - last_flush) >= FLUSH_INTERVAL_SEC:
-                await flush_inference_buffer(schema)
-                last_flush = now
+            if (
+                inference_insert_queue.full()
+                or (now - inference_insert_last_flush) >= FLUSH_INTERVAL.total_seconds()
+            ):
+                await flush_inference_insert_queue(schema)
+                inference_insert_last_flush = now
     except asyncio.exceptions.CancelledError:
         log.info("Inference consumer loop cancelled")
     finally:
-        await flush_inference_buffer(schema)
+        await flush_inference_insert_queue(schema)
+        await consumer.stop()
+
+
+async def inference_update_consumer_loop(schema: str):
+    global inference_update_last_flush
+
+    consumer = AIOKafkaConsumer(
+        INFERENCE_UPDATE_TOPIC,
+        bootstrap_servers=KAFKA_BROKER_ENDPOINT,
+        group_id="lakehouse-inference-update-consumer",
+        auto_offset_reset="earliest",
+    )
+
+    await consumer.start()
+
+    try:
+        async for msg in consumer:
+            payload = json.loads(msg.value.decode("utf-8"))
+            await inference_update_queue.put(InferenceFeedback(**payload))
+
+            now = asyncio.get_event_loop().time()
+            if (
+                inference_update_queue.full()
+                or (now - inference_update_last_flush) >= FLUSH_INTERVAL.total_seconds()
+            ):
+                await flush_inference_update_queue(schema)
+                inference_update_last_flush = now
+    except asyncio.exceptions.CancelledError:
+        log.info("Inference consumer loop cancelled")
+    finally:
+        await flush_inference_update_queue(schema)
         await consumer.stop()

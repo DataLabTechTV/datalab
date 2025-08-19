@@ -8,7 +8,7 @@ import duckdb
 import pandas as pd
 from loguru import logger as log
 
-from ml.types import InferenceResult
+from ml.types import InferenceFeedback, InferenceResult
 from shared.settings import LOCAL_DIR, env
 from shared.storage import Storage, StoragePrefix
 from shared.tools import generate_init_sql
@@ -19,11 +19,15 @@ class LakehouseException(Exception):
 
 
 class Lakehouse:
-    def __init__(self, read_only: bool = True):
+    def __init__(self, in_memory: bool = False, read_only: bool = True):
         engine_db = os.path.join(LOCAL_DIR, env.str("ENGINE_DB"))
 
-        log.info("Connecting to DuckDB: {}", engine_db)
-        self.conn = duckdb.connect(engine_db, read_only=read_only)
+        if in_memory:
+            log.info("Connecting to DuckDB: in-memory")
+            self.conn = duckdb.connect()
+        else:
+            log.info("Connecting to DuckDB: {}", engine_db)
+            self.conn = duckdb.connect(engine_db, read_only=read_only)
 
         log.info("Initializing lakehouse with init SQL")
 
@@ -224,47 +228,83 @@ class Lakehouse:
 
         return count
 
-    def log_inferences(self, schema: str, inference_results: list[InferenceResult]):
-        log.info("Logging inference results (len={})", len(inference_results))
+    def insert_inferences(self, schema: str, inference_results: list[InferenceResult]):
+        log.info(
+            "Logging {} inference results for schema {}",
+            len(inference_results),
+            schema,
+        )
 
         self.conn.execute("INSTALL json")
         self.conn.execute("LOAD json")
 
         self.conn.execute(
             f"""--sql
-            CREATE TABLE IF NOT EXISTS secure_stage."{schema}".inference_results (
-                inference_uuid VARCHAR,
-                model_name VARCHAR,
-                model_version VARCHAR,
-                dataset JSON,
-                predictions UNION(
-                    pred_bool BOOLEAN[],
-                    pred_int INTEGER[],
-                    pred_float FLOAT[]
-                )
-            )
+            CREATE SCHEMA IF NOT EXISTS secure_stage."{schema}"
             """
         )
 
         self.conn.execute(
             f"""--sql
-            INSERT INTO secure_stage.{{schema}}.inference_results (
+            CREATE TABLE IF NOT EXISTS secure_stage."{schema}".inference_results (
+                inference_uuid VARCHAR,
+                model_name VARCHAR NOT NULL,
+                model_version VARCHAR NOT NULL,
+                data JSON,
+                prediction DOUBLE NOT NULL,
+                feedback DOUBLE
+            )
+            """
+        )
+
+        self.conn.executemany(
+            f"""--sql
+            INSERT INTO secure_stage."{schema}".inference_results (
                 inference_uuid,
                 model_name,
                 model_version,
-                dataset,
-                predictions
+                data,
+                prediction
             )
             VALUES (?, ?, ?, ?, ?)
             """,
             [
                 [
-                    payload.inference_uuid,
-                    payload.model_name,
-                    payload.model_version,
-                    json.dumps(asdict(payload.dataset)),
-                    payload.predictions,
+                    inference_result.inference_uuid,
+                    inference_result.model.name,
+                    inference_result.model.version,
+                    json.dumps(inference_result.data),
+                    inference_result.prediction,
                 ]
-                for payload in inference_results
+                for inference_result in inference_results
             ],
         )
+
+    def update_inferences(
+        self,
+        schema: str,
+        inference_feedback: list[InferenceFeedback],
+    ):
+        log.info(
+            "Setting {} inference feedbacks for schema {}",
+            len(inference_feedback),
+            schema,
+        )
+
+        self.conn.execute("BEGIN TRANSACTION")
+
+        try:
+            for feedback in inference_feedback:
+                self.conn.execute(
+                    f"""
+                    UPDATE secure_stage."{schema}".inference_results AS old
+                    SET feedback = ?
+                    WHERE old.inference_uuid = ?
+                    """,
+                    [feedback.feedback, feedback.inference_uuid],
+                )
+            self.conn.execute("COMMIT")
+
+        except:
+            self.conn.execute("ROLLBACK")
+            raise
