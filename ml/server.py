@@ -25,8 +25,13 @@ async def lifespan(app: FastAPI):
 
     consumer_tasks = []
 
-    for schema in SCHEMAS:
-        consumer_tasks.append(asyncio.create_task(inference_consumer_loop(schema)))
+    for i, schema in enumerate(SCHEMAS):
+        consumer_tasks.append(
+            asyncio.create_task(
+                inference_consumer_loop(schema),
+                name=f"inference_consumer_loop_{i}",
+            )
+        )
 
     app.state.inference_producer = inference_producer
 
