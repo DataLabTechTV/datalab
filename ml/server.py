@@ -36,8 +36,8 @@ async def lifespan(app: FastAPI):
 
     for consumer_task in consumer_tasks:
         consumer_task.cancel()
+        await consumer_task
 
-    await consumer_task
     await inference_producer.stop()
 
 
