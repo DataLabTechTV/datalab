@@ -21,6 +21,11 @@ transform:
           alias: stage
           options:
             data_path: s3://{{ env_var('S3_BUCKET') }}/{{ env_var('S3_STAGE_PREFIX') }}
+        - path: ducklake:sqlite:{{ env_var('LOCAL_DIR') }}/{{ env_var('SECURE_STAGE_DB') }}
+          alias: secure_stage
+          options:
+            data_path: s3://{{ env_var('S3_BUCKET') }}/{{ env_var('S3_SECURE_STAGE_PREFIX') }}
+            encrypted: 1
         - path: >
             ducklake:sqlite:{{ env_var('LOCAL_DIR') }}/{{ env_var('GRAPHS_MART_DB') }}
           alias: graphs
