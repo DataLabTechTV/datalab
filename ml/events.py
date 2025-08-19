@@ -1,12 +1,11 @@
 import asyncio
 import json
-import time
 from dataclasses import asdict
 
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from loguru import logger as log
 
-from ml.payloads import InferenceResultPayload
+from ml.types import InferenceResult
 from shared.lakehouse import Lakehouse
 from shared.settings import env
 
@@ -32,12 +31,12 @@ async def make_inference_producer() -> AIOKafkaProducer:
     return inference_producer
 
 
-async def send_inference(producer: AIOKafkaProducer, payload: InferenceResultPayload):
+async def send_inference(producer: AIOKafkaProducer, inference_result: InferenceResult):
     try:
         await producer.send_and_wait(
             TOPIC,
-            key=payload.inference_uuid.encode("utf-8"),
-            value=json.dumps(asdict(payload)).encode("utf-8"),
+            key=inference_result.inference_uuid.encode("utf-8"),
+            value=json.dumps(asdict(inference_result)).encode("utf-8"),
         )
         log.info("Kafka: Successfully delivered inference result")
     except Exception as e:
@@ -47,11 +46,16 @@ async def send_inference(producer: AIOKafkaProducer, payload: InferenceResultPay
 # Consumers
 # =========
 
-lh = Lakehouse()
+lakehouse = None
+queue = asyncio.Queue(maxsize=BATCH_SIZE)
+last_flush = asyncio.get_event_loop().time()
 
 
-async def flush_inference_buffer(schema: str, queue: asyncio.Queue):
+async def flush_inference_buffer(schema: str):
     log.info(f"Kafka: Flushing {queue.qsize()} messages")
+
+    if lakehouse is None:
+        lakehouse = Lakehouse()
 
     inference_results = []
 
@@ -59,7 +63,7 @@ async def flush_inference_buffer(schema: str, queue: asyncio.Queue):
         inference_results.append(queue.get_nowait())
 
     if len(inference_results) > 0:
-        lh.log_inference(schema, inference_results)
+        lakehouse.log_inferences(schema, inference_results)
 
 
 async def inference_consumer_loop(schema: str):
@@ -72,20 +76,17 @@ async def inference_consumer_loop(schema: str):
 
     await consumer.start()
 
-    queue = asyncio.Queue(maxsize=BATCH_SIZE)
-    last_flush = asyncio.get_event_loop().time()
-
     try:
         async for msg in consumer:
-            payload = InferenceResultPayload(**json.loads(msg.value.decode("utf-8")))
-            queue.put(payload)
+            inference_result = InferenceResult(**json.loads(msg.value.decode("utf-8")))
+            queue.put(inference_result)
 
             now = asyncio.get_event_loop().time()
             if queue.full() or (now - last_flush) >= FLUSH_INTERVAL_SEC:
-                await flush_inference_buffer(schema, queue)
+                await flush_inference_buffer(schema)
                 last_flush = now
     except asyncio.exceptions.CancelledError:
         log.info("Inference consumer loop cancelled")
     finally:
-        await flush_inference_buffer(schema, queue)
+        await flush_inference_buffer(schema)
         await consumer.stop()
