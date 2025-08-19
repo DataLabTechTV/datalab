@@ -8,7 +8,7 @@ import duckdb
 import pandas as pd
 from loguru import logger as log
 
-from ml.payloads import InferenceResultPayload
+from ml.types import InferenceResult
 from shared.settings import LOCAL_DIR, env
 from shared.storage import Storage, StoragePrefix
 from shared.tools import generate_init_sql
@@ -139,7 +139,7 @@ class Lakehouse:
 
         rel = self.conn.sql(
             f"""--sql
-            SELECT doc_id, text, label, {folds_col} AS fold_id
+            SELECT example_id, input, target, {folds_col} AS fold_id
             FROM "{catalog}"."{schema}"."{table_name}"
             WHERE NOT is_test
             """
@@ -157,7 +157,7 @@ class Lakehouse:
 
         rel = self.conn.sql(
             f"""--sql
-            SELECT doc_id, text, label
+            SELECT example_id, input, target
             FROM "{catalog}"."{schema}"."{table_name}"
             WHERE is_test
             """
@@ -224,8 +224,8 @@ class Lakehouse:
 
         return count
 
-    def log_inference(self, schema: str, payloads: list[InferenceResultPayload]):
-        log.info("Logging inference result payload (len={})", len(payloads))
+    def log_inferences(self, schema: str, inference_results: list[InferenceResult]):
+        log.info("Logging inference results (len={})", len(inference_results))
 
         self.conn.execute("INSTALL json")
         self.conn.execute("LOAD json")
@@ -265,6 +265,6 @@ class Lakehouse:
                     json.dumps(asdict(payload.dataset)),
                     payload.predictions,
                 ]
-                for payload in payloads
+                for payload in inference_results
             ],
         )
