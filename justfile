@@ -121,4 +121,35 @@ mlops-train: mlops-train-logreg mlops-train-xgboost
 mlops-serve:
     {{dlctl}} ml server
 
+mlops_test_inference_payload := '''
+{
+    "models": [
+        {
+            "name": "dd_logreg_tfidf",
+            "version": "latest"
+        },
+        {
+            "name": "dd_xgboost_embeddings",
+            "version": "latest"
+        }
+    ],
+    "data": "hello twitter i m on a one week leave from school bc i have depression how are you all d",
+    "log_to_lakehouse": true
+}
+'''
+
+mlops-test-inference:
+    curl -X POST "http://localhost:8000/inference" \
+        -H "Content-Type: application/json" \
+        -d '{{mlops_test_inference_payload}}'
+    @echo
+    curl -X GET "http://localhost:8000/inference/logs/flush"
+
+mlops-test-feedback uuid feedback:
+    curl -X PATCH "http://localhost:8000/inference" \
+        -H "Content-Type: application/json" \
+        -d '{"inference_uuid": "5c11e0fa-27df-44ef-bac7-a8487b889791", "feedback": 1.0}'
+    @echo
+    curl -X GET "http://localhost:8000/inference/logs/flush"
+
 mlops-all: mlops-etl mlops-train
