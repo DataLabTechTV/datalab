@@ -10,18 +10,17 @@ from ml.payloads import InferenceResultPayload
 from shared.lakehouse import Lakehouse
 from shared.settings import env
 
-# -----------------------
 # Kafka configuration
-# -----------------------
+# ===================
+
 KAFKA_BROKER_ENDPOINT = env.str("KAFKA_BROKER_ENDPOINT")
 TOPIC = "ml_inference_results"
 BATCH_SIZE = 100
 FLUSH_INTERVAL_SEC = 5
 
 
-# -----------------------
-# Producer
-# -----------------------
+# Producers
+# =========
 
 
 async def make_inference_producer() -> AIOKafkaProducer:
@@ -45,22 +44,22 @@ async def send_inference(producer: AIOKafkaProducer, payload: InferenceResultPay
         log.error(f"Kafka: Delivery failed for inference result: {e}")
 
 
-# -----------------------
-# Consumer
-# -----------------------
+# Consumers
+# =========
 
 lh = Lakehouse()
 
 
 async def flush_inference_buffer(schema: str, queue: asyncio.Queue):
-    log.info(f"Kafka: Flushing {len(queue)} messages")
+    log.info(f"Kafka: Flushing {queue.qsize()} messages")
 
     inference_results = []
 
     while not queue.empty():
         inference_results.append(queue.get_nowait())
 
-    lh.log_inference(schema, inference_results)
+    if len(inference_results) > 0:
+        lh.log_inference(schema, inference_results)
 
 
 async def inference_consumer_loop(schema: str):
@@ -73,7 +72,7 @@ async def inference_consumer_loop(schema: str):
 
     await consumer.start()
 
-    queue = asyncio.Queue()
+    queue = asyncio.Queue(maxsize=BATCH_SIZE)
     last_flush = asyncio.get_event_loop().time()
 
     try:
@@ -82,10 +81,11 @@ async def inference_consumer_loop(schema: str):
             queue.put(payload)
 
             now = asyncio.get_event_loop().time()
-            if len(queue) >= BATCH_SIZE or (now - last_flush) >= FLUSH_INTERVAL_SEC:
+            if queue.full() or (now - last_flush) >= FLUSH_INTERVAL_SEC:
                 await flush_inference_buffer(schema, queue)
                 last_flush = now
     except asyncio.exceptions.CancelledError:
         log.info("Inference consumer loop cancelled")
     finally:
+        await flush_inference_buffer(schema, queue)
         await consumer.stop()
