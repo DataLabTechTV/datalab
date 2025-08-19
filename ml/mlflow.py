@@ -49,9 +49,8 @@ def mlflow_end_run(
 
     if train is not None:
         log.info("MLflow: inferring model signature")
-        model_input = train.drop(columns=["label", "fold_id"])
-        model_output = model.predict(model_input)
-        signature = infer_signature(model_input, model_output)
+        model_output = model.predict(train.input)
+        signature = infer_signature(train.input, model_output)
 
     log.info("Extracting pip requirements from uv")
     pyproject = tomllib.load(open("pyproject.toml", "rb"))
