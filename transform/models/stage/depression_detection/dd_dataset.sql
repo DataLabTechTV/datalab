@@ -2,9 +2,9 @@
 
 WITH dataset AS (
     SELECT
-        row_number() OVER () AS doc_id,
-        clean_text AS text,
-        (is_depression = 1) AS label,
+        row_number() OVER () AS example_id,
+        clean_text AS input,
+        CAST(is_depression AS DOUBLE) AS target,
         row_number() OVER (PARTITION BY is_depression ORDER BY clean_text) AS rn,
         count(*) OVER (PARTITION BY is_depression) AS cnt
     FROM read_csv(
@@ -20,24 +20,24 @@ WITH dataset AS (
     )
 ),
 train_test_split AS (
-    SELECT doc_id, text, label, (rn <= cnt * 0.2) AS is_test
+    SELECT example_id, input, target, (rn <= cnt * 0.2) AS is_test
     FROM dataset
 ),
 train_set AS (
     SELECT
-        doc_id,
-        text,
-        label,
+        example_id,
+        input,
+        target,
         is_test,
-        row_number() OVER (PARTITION BY label ORDER BY text) AS rn,
-        count(*) OVER (PARTITION BY label) AS cnt
+        row_number() OVER (PARTITION BY target ORDER BY input) AS rn,
+        count(*) OVER (PARTITION BY target) AS cnt
     FROM train_test_split
     WHERE NOT is_test
 )
 SELECT
-    doc_id,
-    text,
-    label,
+    example_id,
+    input,
+    target,
     is_test,
     CASE
         WHEN rn < cnt * 1/3 THEN 0
@@ -68,9 +68,9 @@ FROM train_set
 UNION
 
 SELECT
-    doc_id,
-    text,
-    label,
+    example_id,
+    input,
+    target,
     is_test,
     NULL AS folds_3_id,
     NULL AS folds_5_id,
@@ -78,4 +78,4 @@ SELECT
 FROM train_test_split
 WHERE is_test
 
-ORDER BY doc_id
+ORDER BY example_id
