@@ -5,11 +5,23 @@ from dataclasses import dataclass
 class InferenceDataset:
     columns: list[str]
     data: list[list]
+
+
+@dataclass
+class InferenceModel:
+    name: str
+    version: str
+
+
+@dataclass
+class InferenceRequest:
+    models: list[InferenceModel] | InferenceModel
+    dataset: InferenceDataset
     log_to_lakehouse: bool = False
 
 
 @dataclass
-class InferenceResultPayload:
+class InferenceResult:
     inference_uuid: str
     model_name: str
     model_version: str
