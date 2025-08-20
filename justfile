@@ -30,6 +30,9 @@ check-dlctl:
 check-duckdb:
     which duckdb
 
+check-curl:
+    which curl
+
 
 # DuckLake
 # ========
@@ -139,17 +142,17 @@ mlops_test_inference_payload := '''
 }
 '''
 
-mlops-test-inference:
-    curl -X POST "http://localhost:8000/inference" \
+mlops-test-inference: check-curl
+    curl -f -X POST "http://localhost:8000/inference" \
         -H "Content-Type: application/json" \
         -d '{{mlops_test_inference_payload}}'
     @echo
-    curl -X GET "http://localhost:8000/inference/logs/flush"
+    curl -f -X GET "http://localhost:8000/inference/logs/flush"
 
-mlops-test-feedback uuid feedback:
-    curl -X PATCH "http://localhost:8000/inference" \
+mlops-test-feedback uuid feedback: check-curl
+    curl -f -X PATCH "http://localhost:8000/inference" \
         -H "Content-Type: application/json" \
         -d '{"inference_uuid": "{{uuid}}", "feedback": {{feedback}}}'
-    curl -X GET "http://localhost:8000/inference/logs/flush"
+    curl -f -X GET "http://localhost:8000/inference/logs/flush"
 
 mlops-all: mlops-etl mlops-train
