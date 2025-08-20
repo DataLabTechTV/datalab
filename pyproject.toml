@@ -18,6 +18,7 @@ dependencies = [
   "dbt-core>=1.9.6",
   "dbt-duckdb",
   "environs>=14.2.0",
+  "faker>=37.5.3",
   "fastapi>=0.116.1",
   "geopandas>=1.1.1",
   "gitpython>=3.1.44",
