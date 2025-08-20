@@ -261,6 +261,43 @@ class Lakehouse:
 
         return rel.to_df()
 
+    def ml_load_inferences(
+        self,
+        catalog: str,
+        schema: str,
+        table_name: str,
+        since: datetime,
+        until: datetime,
+    ) -> pd.DataFrame:
+        log.info(
+            "Loading inference results from {}.{}.{}, since {}, until {}",
+            catalog,
+            schema,
+            table_name,
+            since,
+            until,
+        )
+
+        rel = self.conn.sql(
+            f"""--sql
+            SELECT
+                inference_uuid,
+                model_name,
+                model_version,
+                data,
+                prediction,
+                feedback,
+                created_at
+            FROM
+                "{catalog}"."{schema}"."{table_name}"
+            WHERE
+                created_at BETWEEN ? AND ?
+            """,
+            params=[since, until],
+        )
+
+        return rel.to_df()
+
     # Output Storing
     # --------------
 
