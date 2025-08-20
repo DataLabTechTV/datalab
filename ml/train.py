@@ -70,8 +70,8 @@ def make_xgboost() -> tuple[Pipeline, dict[str, Any]]:
 def load_dataset(schema: str, k_folds: Literal[3, 5, 10]) -> MLDataset:
     lh = Lakehouse()
 
-    train = lh.load_docs_train_set("stage", schema, "dataset", k_folds=k_folds)
-    test = lh.load_docs_test_set("stage", schema, "dataset")
+    train = lh.ml_load_train_set("stage", schema, "dataset", k_folds=k_folds)
+    test = lh.ml_load_test_set("stage", schema, "dataset")
     snapshot_id = lh.snapshot_id("stage")
 
     folds = []

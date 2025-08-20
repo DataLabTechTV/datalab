@@ -40,6 +40,9 @@ class Lakehouse:
 
         self.storage = Storage(prefix=StoragePrefix.EXPORTS)
 
+    # Exporting
+    # =========
+
     def export(self, catalog: str, schema: str) -> str:
         s3_export_path = self.storage.get_dir(f"{catalog}/{schema}", dated=True)
 
@@ -104,7 +107,10 @@ class Lakehouse:
 
         return manifest["latest"]
 
-    def load_into(self, catalog: str, schema: str, table_name: str, from_path: str):
+    # Ingestion
+    # =========
+
+    def copy_into(self, catalog: str, schema: str, table_name: str, from_path: str):
         log.info("Loading into {}.{}.{}: {}", catalog, schema, table_name, from_path)
 
         suffix = Path(from_path).suffix.lstrip(".")
@@ -121,54 +127,8 @@ class Lakehouse:
             """
         )
 
-    def load_docs_train_set(
-        self,
-        catalog: str,
-        schema: str,
-        table_name: str,
-        k_folds: Literal[3, 5, 10] = 3,
-    ) -> pd.DataFrame:
-        log.info(
-            "Loading train set from {}.{}.{} (k_folds={})",
-            catalog,
-            schema,
-            table_name,
-            k_folds,
-        )
-
-        match k_folds:
-            case 3 | 5 | 10:
-                folds_col = f"folds_{k_folds}_id"
-            case _:
-                raise ValueError(f"Unsupported number of folds: {k_folds}")
-
-        rel = self.conn.sql(
-            f"""--sql
-            SELECT example_id, input, target, {folds_col} AS fold_id
-            FROM "{catalog}"."{schema}"."{table_name}"
-            WHERE NOT is_test
-            """
-        )
-
-        return rel.to_df()
-
-    def load_docs_test_set(
-        self,
-        catalog: str,
-        schema: str,
-        table_name: str,
-    ) -> pd.DataFrame:
-        log.info("Loading test set from {}.{}.{}", catalog, schema, table_name)
-
-        rel = self.conn.sql(
-            f"""--sql
-            SELECT example_id, input, target
-            FROM "{catalog}"."{schema}"."{table_name}"
-            WHERE is_test
-            """
-        )
-
-        return rel.to_df()
+    # Information
+    # ===========
 
     def snapshot_id(self, catalog: str) -> int:
         log.info("Querying snapshot_id (version) for {} catalog", catalog)
@@ -229,7 +189,65 @@ class Lakehouse:
 
         return count
 
-    def inferences_insert_result(
+    # Machine Learning
+    # ================
+
+    # Dataset Loading
+    # ---------------
+
+    def ml_load_train_set(
+        self,
+        catalog: str,
+        schema: str,
+        table_name: str,
+        k_folds: Literal[3, 5, 10] = 3,
+    ) -> pd.DataFrame:
+        log.info(
+            "Loading train set from {}.{}.{} (k_folds={})",
+            catalog,
+            schema,
+            table_name,
+            k_folds,
+        )
+
+        match k_folds:
+            case 3 | 5 | 10:
+                folds_col = f"folds_{k_folds}_id"
+            case _:
+                raise ValueError(f"Unsupported number of folds: {k_folds}")
+
+        rel = self.conn.sql(
+            f"""--sql
+            SELECT example_id, input, target, {folds_col} AS fold_id
+            FROM "{catalog}"."{schema}"."{table_name}"
+            WHERE NOT is_test
+            """
+        )
+
+        return rel.to_df()
+
+    def ml_load_test_set(
+        self,
+        catalog: str,
+        schema: str,
+        table_name: str,
+    ) -> pd.DataFrame:
+        log.info("Loading test set from {}.{}.{}", catalog, schema, table_name)
+
+        rel = self.conn.sql(
+            f"""--sql
+            SELECT example_id, input, target
+            FROM "{catalog}"."{schema}"."{table_name}"
+            WHERE is_test
+            """
+        )
+
+        return rel.to_df()
+
+    # Output Storing
+    # --------------
+
+    def ml_inference_insert_results(
         self,
         schema: str,
         inference_results: list[InferenceResult],
@@ -288,7 +306,7 @@ class Lakehouse:
             ],
         )
 
-    def inferences_append_feedback(
+    def ml_inference_append_feedback(
         self,
         schema: str,
         inference_feedback: list[InferenceFeedback],

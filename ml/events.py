@@ -90,7 +90,7 @@ async def flush_inference_result_queue(schema: str):
         inference_results.append(inference_result_queue.get_nowait())
 
     if len(inference_results) > 0:
-        lakehouse.inferences_insert_result(schema, inference_results)
+        lakehouse.ml_inference_insert_results(schema, inference_results)
 
 
 async def flush_inference_feedback_queue(schema: str):
@@ -102,7 +102,7 @@ async def flush_inference_feedback_queue(schema: str):
         inference_feedback.append(inference_feedback_queue.get_nowait())
 
     if len(inference_feedback) > 0:
-        lakehouse.inferences_append_feedback(schema, inference_feedback)
+        lakehouse.ml_inference_append_feedback(schema, inference_feedback)
 
 
 async def inference_result_consumer_loop(schema: str):
