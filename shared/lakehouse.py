@@ -1,6 +1,7 @@
 import json
 import os
 from dataclasses import asdict
+from datetime import datetime
 from pathlib import Path
 from typing import Literal, Optional
 
@@ -228,7 +229,11 @@ class Lakehouse:
 
         return count
 
-    def insert_inferences(self, schema: str, inference_results: list[InferenceResult]):
+    def inferences_insert_result(
+        self,
+        schema: str,
+        inference_results: list[InferenceResult],
+    ):
         log.info(
             "Logging {} inference results for schema {}",
             len(inference_results),
@@ -252,7 +257,8 @@ class Lakehouse:
                 model_version VARCHAR NOT NULL,
                 data JSON,
                 prediction DOUBLE NOT NULL,
-                feedback DOUBLE
+                feedback DOUBLE[],
+                created_at TIMESTAMP
             )
             """
         )
@@ -264,9 +270,10 @@ class Lakehouse:
                 model_name,
                 model_version,
                 data,
-                prediction
+                prediction,
+                created_at
             )
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, make_timestamp(?))
             """,
             [
                 [
@@ -275,12 +282,13 @@ class Lakehouse:
                     inference_result.model.version,
                     json.dumps(inference_result.data),
                     inference_result.prediction,
+                    inference_result.created_at,
                 ]
                 for inference_result in inference_results
             ],
         )
 
-    def update_inferences(
+    def inferences_append_feedback(
         self,
         schema: str,
         inference_feedback: list[InferenceFeedback],
@@ -298,7 +306,7 @@ class Lakehouse:
                 self.conn.execute(
                     f"""
                     UPDATE secure_stage."{schema}".inference_results AS old
-                    SET feedback = ?
+                    SET feedback = list_append(old.feedback, ?)
                     WHERE old.inference_uuid = ?
                     """,
                     [feedback.feedback, feedback.inference_uuid],
