@@ -9,8 +9,8 @@ InferenceOutput = float
 
 
 class InferenceProducerType(Enum):
-    INSERT = 1
-    UPDATE = 2
+    RESULT = 1
+    FEEDBACK = 2
 
 
 @dataclass

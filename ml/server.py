@@ -1,5 +1,6 @@
 import asyncio
 import random
+import tomllib
 from contextlib import asynccontextmanager
 from uuid import uuid4
 
@@ -10,13 +11,13 @@ from loguru import logger as log
 from mlflow.exceptions import RestException
 
 from ml.events import (
-    flush_inference_insert_queue,
-    flush_inference_update_queue,
-    inference_insert_consumer_loop,
-    inference_update_consumer_loop,
+    flush_inference_feedback_queue,
+    flush_inference_result_queue,
+    inference_feedback_consumer_loop,
+    inference_result_consumer_loop,
     make_inference_producer,
-    queue_inference_insertion,
-    queue_inference_update,
+    queue_inference_feedback,
+    queue_inference_result,
 )
 from ml.types import (
     InferenceFeedback,
@@ -25,6 +26,10 @@ from ml.types import (
     InferenceRequest,
     InferenceResult,
 )
+
+SERVER_NAME = "datalab-mlserver"
+DEFAULT_HOST = "0.0.0.0"
+DEFAULT_PORT = 8000
 
 SCHEMAS = ("dd",)
 models = {}
@@ -35,31 +40,31 @@ async def lifespan(app: FastAPI):
     log.info("Starting Kafka producers and consumers")
 
     inference_result_producer = await make_inference_producer(
-        InferenceProducerType.INSERT
+        InferenceProducerType.RESULT
     )
 
     inference_feedback_producer = await make_inference_producer(
-        InferenceProducerType.UPDATE
+        InferenceProducerType.FEEDBACK
     )
 
     await inference_result_producer.start()
     await inference_feedback_producer.start()
 
-    inference_insert_consumer_tasks = []
-    inference_update_consumer_tasks = []
+    inference_result_consumer_tasks = []
+    inference_feedback_consumer_tasks = []
 
     for i, schema in enumerate(SCHEMAS):
-        inference_insert_consumer_tasks.append(
+        inference_result_consumer_tasks.append(
             asyncio.create_task(
-                inference_insert_consumer_loop(schema),
-                name=f"inference_insert_consumer_loop_{i}",
+                inference_result_consumer_loop(schema),
+                name=f"inference_result_consumer_loop_{i}",
             )
         )
 
-        inference_update_consumer_tasks.append(
+        inference_feedback_consumer_tasks.append(
             asyncio.create_task(
-                inference_update_consumer_loop(schema),
-                name=f"inference_update_consumer_loop_{i}",
+                inference_feedback_consumer_loop(schema),
+                name=f"inference_feedback_consumer_loop_{i}",
             )
         )
 
@@ -70,11 +75,11 @@ async def lifespan(app: FastAPI):
 
     log.info("Stopping Kafka producers and consumers")
 
-    for consumer_task in inference_insert_consumer_tasks:
+    for consumer_task in inference_result_consumer_tasks:
         consumer_task.cancel()
         await consumer_task
 
-    for consumer_task in inference_update_consumer_tasks:
+    for consumer_task in inference_feedback_consumer_tasks:
         consumer_task.cancel()
         await consumer_task
 
@@ -82,7 +87,23 @@ async def lifespan(app: FastAPI):
     await inference_feedback_producer.stop()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    swagger_ui_parameters=dict(tryItOutEnabled=True),
+)
+
+
+@app.get("/health")
+async def health_check():
+    payload = dict(name=SERVER_NAME)
+
+    pyproject = tomllib.load(open("pyproject.toml", "rb"))
+    version = pyproject.get("project", {}).get("version")
+
+    if version is not None:
+        payload["version"] = version
+
+    return JSONResponse(payload, status_code=status.HTTP_200_OK)
 
 
 @app.get("/inference/logs/flush")
@@ -90,8 +111,8 @@ async def inference_logs_flush():
     log.info("Flushing inference queues for schemas: {}", ", ".join(SCHEMAS))
 
     for schema in SCHEMAS:
-        await flush_inference_insert_queue(schema)
-        await flush_inference_update_queue(schema)
+        await flush_inference_result_queue(schema)
+        await flush_inference_feedback_queue(schema)
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -128,7 +149,7 @@ async def inference(inference_request: InferenceRequest, request: Request):
 
     if inference_request.log_to_lakehouse:
         log.info("Queuing inference result data lakehouse insertion")
-        await queue_inference_insertion(
+        await queue_inference_result(
             request.app.state.inference_result_producer,
             inference_result,
         )
@@ -140,7 +161,7 @@ async def inference(inference_request: InferenceRequest, request: Request):
 async def inference(inference_feedback: InferenceFeedback, request: Request):
     log.info("Queuing inference result data lakehouse insertion")
 
-    await queue_inference_update(
+    await queue_inference_feedback(
         request.app.state.inference_feedback_producer,
         inference_feedback,
     )
