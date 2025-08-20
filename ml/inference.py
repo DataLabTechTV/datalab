@@ -1,3 +1,4 @@
+import asyncio
 import random
 from uuid import uuid4
 
@@ -30,7 +31,7 @@ def predict(inference_request: InferenceRequest) -> InferenceResult:
     if type(inference_request.models) is InferenceModel:
         inference_model = inference_request.models
     else:
-        log.info("Randomly selecting a model")
+        log.debug("Randomly selecting a model")
         inference_model = random.choice(inference_request.models)
 
     model_uri = f"models:/{inference_model.name}/{inference_model.version}"
