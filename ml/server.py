@@ -107,7 +107,7 @@ async def inference(inference_request: InferenceRequest, request: Request):
 
     if model_uri not in models:
         try:
-            models[model_uri] = mlflow.pyfunc.load_model(model_uri)
+            models[model_uri] = mlflow.sklearn.load_model(model_uri)
         except RestException:
             return JSONResponse(
                 {"error": "Model not found"},
@@ -116,7 +116,8 @@ async def inference(inference_request: InferenceRequest, request: Request):
 
     log.info("Running inference using {}", model_uri)
 
-    prediction = models[model_uri].predict(inference_request.get_input()).item()
+    data = inference_request.get_input()
+    prediction = models[model_uri].predict_proba(data)[0, 0].item()
 
     inference_result = InferenceResult(
         inference_uuid=str(uuid4()),
