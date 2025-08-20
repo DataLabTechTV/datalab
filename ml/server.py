@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from uuid import uuid4
 
 import mlflow
+import requests
 from fastapi import FastAPI, Request, Response, status
 from fastapi.responses import JSONResponse
 from loguru import logger as log
@@ -34,6 +35,19 @@ DEFAULT_PORT = 8000
 
 SCHEMAS = ("dd",)
 models = {}
+
+
+def server_is_healthy(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> bool:
+    uri = f"http://{host}:{port}/health"
+    response = requests.get(uri, timeout=15)
+
+    try:
+        response.raise_for_status()
+        payload = response.json()
+        return payload.get("name") == SERVER_NAME
+    except:
+        log.error("Server is down: {}", uri)
+        return False
 
 
 @asynccontextmanager
