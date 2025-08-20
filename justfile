@@ -19,7 +19,7 @@ engine_db_path := join(local_dir, env_var("ENGINE_DB"))
 ds_dsn_url := "https://www.kaggle.com/datasets/andreagarritano/deezer-social-networks"
 ds_msdsl_url := "https://www.kaggle.com/datasets/undefinenull/million-song-dataset-spotify-lastfm"
 ds_dd_url := "https://huggingface.co/datasets/ShreyaR/DepressionDetection"
-
+ds_dd_monitor_url := "https://huggingface.co/datasets/joangaes/depression"
 
 # Common
 # ======
@@ -40,7 +40,7 @@ check-init-sql:
 check-engine-db:
     test -r {{engine_db_path}}
 
-generate-init-sql:
+generate-init-sql: check-dlctl
     {{dlctl}} tools generate-init-sql --path {{init_sql_path}}
 
 lakehouse: check-duckdb check-init-sql check-engine-db
@@ -69,21 +69,21 @@ graphrag-all: graphrag-etl graphrag-embeddings graphrag
 # Economic Competition Networks
 # =============================
 
-econ-compnet-ingest:
+econ-compnet-ingest: check-dlctl
     {{dlctl}} ingest dataset -t "atlas" "The Atlas of Economic Complexity"
 
-econ-compnet-transform:
+econ-compnet-transform: check-dlctl
     {{dlctl}} transform -m "+marts.graphs.econ_comp"
 
-econ-compnet-export:
+econ-compnet-export: check-dlctl
     {{dlctl}} export dataset graphs "econ_comp"
 
-econ-compnet-load:
+econ-compnet-load: check-dlctl
     {{dlctl}} graph load "econ_comp"
 
 econ-compnet-etl: econ-compnet-ingest econ-compnet-transform econ-compnet-export econ-compnet-load
 
-econ-compnet-scoring:
+econ-compnet-scoring: check-dlctl
     {{dlctl}} graph compute con-score "econ_comp" "Country" "CompetesWith"
 
 econ-compnet-all: econ-compnet-etl econ-compnet-scoring
@@ -92,33 +92,34 @@ econ-compnet-all: econ-compnet-etl econ-compnet-scoring
 # MLOps: A/B Testing with MLflow, Kafka, and DuckLake
 # ===================================================
 
-mlops-ingest:
+mlops-ingest: check-dlctl
     {{dlctl}} ingest dataset {{ds_dd_url}}
+    {{dlctl}} ingest dataset {{ds_dd_monitor_url}}
 
-mlops-transform:
+mlops-transform: check-dlctl
     {{dlctl}} transform -m "+stage.depression_detection"
 
 mlops-etl: mlops-ingest mlops-transform
 
-mlops-train-logreg-tfidf:
+mlops-train-logreg-tfidf: check-dlctl
     {{dlctl}} ml train "dd" --method "logreg" --features "tfidf"
 
-mlops-train-logreg-embeddings:
+mlops-train-logreg-embeddings: check-dlctl
     {{dlctl}} ml train "dd" --method "logreg" --features "embeddings"
 
 mlops-train-logreg: mlops-train-logreg-tfidf mlops-train-logreg-embeddings
 
-mlops-train-xgboost-tfidf:
+mlops-train-xgboost-tfidf: check-dlctl
     {{dlctl}} ml train "dd" --method "xgboost" --features "tfidf"
 
-mlops-train-xgboost-embeddings:
+mlops-train-xgboost-embeddings: check-dlctl
     {{dlctl}} ml train "dd" --method "xgboost" --features "embeddings"
 
 mlops-train-xgboost: mlops-train-xgboost-tfidf mlops-train-xgboost-embeddings
 
 mlops-train: mlops-train-logreg mlops-train-xgboost
 
-mlops-serve:
+mlops-serve: check-dlctl
     {{dlctl}} ml server
 
 mlops_test_inference_payload := '''
