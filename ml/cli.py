@@ -116,14 +116,14 @@ def ml_server(host: str, port: int, reload: bool):
     "--min-wrong-fraction",
     "-mw",
     type=click.FloatRange(0, 1),
-    default=0.01,
+    default=0.10,
     help="Minimum fraction of wrong feedback, out of the provided feedback",
 )
 @click.option(
     "--max-wrong-fraction",
     "-Mw",
     type=click.FloatRange(0, 1),
-    default=0.02,
+    default=0.25,
     help="Maximum fraction of wrong feedback, out of the provided feedback",
 )
 @click.option(
@@ -158,6 +158,13 @@ def ml_server(host: str, port: int, reload: bool):
         "(e.g., models:/dd_logreg_tfidf/latest)"
     ),
 )
+@click.option(
+    "--batch-size",
+    "-b",
+    type=click.IntRange(0, min_open=True),
+    default=100,
+    help="Batch size",
+)
 def ml_simulate(
     schema: str,
     passes: int,
@@ -170,6 +177,7 @@ def ml_simulate(
     max_date: datetime,
     decision_threshold: float,
     model_uris: list[str],
+    batch_size: int,
 ):
     inference_models = []
 
@@ -178,7 +186,7 @@ def ml_simulate(
         inference_model = InferenceModel(name=name, version=version)
         inference_models.append(inference_model)
 
-    task = simulate_inference(
+    simulate_inference(
         schema=schema,
         passes=passes,
         sample_fraction=sample_fraction,
@@ -190,9 +198,8 @@ def ml_simulate(
         max_date=max_date,
         decision_threshold=decision_threshold,
         inference_models=inference_models,
+        batch_size=batch_size,
     )
-
-    asyncio.run(task)
 
 
 @ml.command(
