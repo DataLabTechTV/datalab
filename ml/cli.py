@@ -6,7 +6,7 @@ import uvicorn
 from loguru import logger as log
 
 from ml.features import Features
-from ml.monitor import data_drift, data_quality, estimated_performance, prediction_drift
+from ml.monitor import Monitoring
 from ml.server import DEFAULT_HOST, DEFAULT_PORT
 from ml.synthetic import simulate_inference
 from ml.train import Method, train_text_classifier
@@ -211,21 +211,51 @@ def ml_simulate(
 )
 @click.argument("schema")
 @click.option(
+    "--model-uri",
+    "-m",
+    "model_uris",
+    multiple=True,
+    required=True,
+    help=(
+        "Model URI from the MLflow registry in the format models:/<name>/<version> "
+        "(e.g., models:/dd_logreg_tfidf/latest)"
+    ),
+)
+@click.option(
     "--since",
     "-s",
     type=click.DateTime(),
-    default=NOW - timedelta(weeks=4),
-    help="",
+    default=NOW - timedelta(weeks=8),
+    help="Inference results start date",
 )
 @click.option(
     "--until",
     "-u",
     type=click.DateTime(),
     default=NOW,
-    help="",
+    help="Inference results end date",
 )
-def ml_monitor(schema: str, since: datetime, until: datetime):
-    data_drift(schema)
-    prediction_drift(schema)
-    estimated_performance(schema)
-    data_quality(schema)
+@click.option(
+    "--window-size",
+    "-w",
+    type=click.IntRange(0, min_open=True),
+    default=7,
+    help="Window size in days",
+)
+def ml_monitor(
+    schema: str,
+    model_uris: list[str],
+    since: datetime,
+    until: datetime,
+    window_size: int,
+):
+    stats = Monitoring(
+        schema,
+        model_uris=model_uris,
+        since=since,
+        until=until,
+        window_size=window_size,
+    )
+
+    stats.compute()
+    stats.store()
