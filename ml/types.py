@@ -1,4 +1,5 @@
 from dataclasses import dataclass, fields
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Sequence
 
@@ -36,6 +37,7 @@ class InferenceResult:
     model: InferenceModel
     data: InferenceInput
     prediction: float
+    created_at: int = int(datetime.now(timezone.utc).timestamp()) * 1_000_000
 
     @classmethod
     def from_dict(cls, data: dict):
