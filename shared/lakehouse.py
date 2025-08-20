@@ -244,6 +244,23 @@ class Lakehouse:
 
         return rel.to_df()
 
+    def ml_load_dataset(
+        self,
+        catalog: str,
+        schema: str,
+        table_name: str,
+    ) -> pd.DataFrame:
+        log.info("Loading dataset from {}.{}.{}", catalog, schema, table_name)
+
+        rel = self.conn.sql(
+            f"""--sql
+            SELECT example_id, input, target
+            FROM "{catalog}"."{schema}"."{table_name}"
+            """
+        )
+
+        return rel.to_df()
+
     # Output Storing
     # --------------
 
