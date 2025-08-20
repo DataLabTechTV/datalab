@@ -1,9 +1,7 @@
-import asyncio
 import random
 from uuid import uuid4
 
 import mlflow
-import pandas as pd
 from joblib import Memory
 from loguru import logger as log
 from mlflow.exceptions import RestException
@@ -40,7 +38,8 @@ def predict(inference_request: InferenceRequest) -> InferenceResult:
     log.info("Running inference using {}", model_uri)
 
     data = inference_request.get_input()
-    prediction = model.predict_proba(data)[0, 0].item()
+    pos_class_idx = model.classes_.tolist().index(1)
+    prediction = model.predict_proba(data)[0, pos_class_idx].item()
 
     inference_result = InferenceResult(
         inference_uuid=str(uuid4()),
