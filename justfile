@@ -158,7 +158,7 @@ mlops-test-feedback uuid feedback: check-curl
 mlops-simulate-inference: check-dlctl
     {{dlctl}} ml simulate "dd" \
         --sample-fraction 0.01 \
-        --model-uri "model:/dd_xgboost_embeddings/latest" \
-        --model-uri "model:/dd_logreg_tfidf/latest"
+        --model-uri "models:/dd_xgboost_embeddings/latest" \
+        --model-uri "models:/dd_logreg_tfidf/latest"
 
 mlops-all: mlops-etl mlops-train
