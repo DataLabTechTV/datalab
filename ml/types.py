@@ -24,7 +24,7 @@ class InferenceModel:
 class InferenceRequest:
     models: list[InferenceModel] | InferenceModel
     data: InferenceInput
-    log_to_lakehouse: bool = False
+    log_to_lakehouse: bool = True
 
     def get_input(self) -> pd.DataFrame:
         data = [self.data] if type(self.data) is str else self.data
