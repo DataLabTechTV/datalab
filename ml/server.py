@@ -129,7 +129,7 @@ async def inference(inference_request: InferenceRequest, request: Request):
         )
 
     if inference_request.log_to_lakehouse:
-        log.info("Queuing inference result data lakehouse insertion")
+        log.info("Queuing lakehouse insertion for inference result")
         await queue_inference_result(
             request.app.state.inference_result_producer,
             inference_result,
@@ -140,7 +140,7 @@ async def inference(inference_request: InferenceRequest, request: Request):
 
 @app.patch("/inference")
 async def inference(inference_feedback: InferenceFeedback, request: Request):
-    log.info("Queuing inference result data lakehouse insertion")
+    log.info("Queuing lakehouse append for inference feedback")
 
     await queue_inference_feedback(
         request.app.state.inference_feedback_producer,
