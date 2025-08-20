@@ -19,6 +19,7 @@ from ml.events import (
     queue_inference_feedback,
     queue_inference_result,
 )
+from ml.inference import ModelNotFound, predict
 from ml.types import (
     InferenceFeedback,
     InferenceModel,
@@ -119,33 +120,13 @@ async def inference_logs_flush():
 
 @app.post("/inference")
 async def inference(inference_request: InferenceRequest, request: Request):
-    if type(inference_request.models) is InferenceModel:
-        inference_model = inference_request.models
-    else:
-        inference_model = random.choice(inference_request.models)
-
-    model_uri = f"models:/{inference_model.name}/{inference_model.version}"
-
-    if model_uri not in models:
-        try:
-            models[model_uri] = mlflow.sklearn.load_model(model_uri)
-        except RestException:
-            return JSONResponse(
-                {"error": "Model not found"},
-                status_code=status.HTTP_404_NOT_FOUND,
-            )
-
-    log.info("Running inference using {}", model_uri)
-
-    data = inference_request.get_input()
-    prediction = models[model_uri].predict_proba(data)[0, 0].item()
-
-    inference_result = InferenceResult(
-        inference_uuid=str(uuid4()),
-        model=inference_model,
-        data=inference_request.data,
-        prediction=prediction,
-    )
+    try:
+        inference_result = predict(inference_request)
+    except ModelNotFound:
+        return JSONResponse(
+            {"error": "Model not found"},
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
 
     if inference_request.log_to_lakehouse:
         log.info("Queuing inference result data lakehouse insertion")
