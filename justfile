@@ -155,4 +155,9 @@ mlops-test-feedback uuid feedback: check-curl
         -d '{"inference_uuid": "{{uuid}}", "feedback": {{feedback}}}'
     curl -f -X GET "http://localhost:8000/inference/logs/flush"
 
+mlops-simulate-inference: check-dlctl
+    {{dlctl}} ml simulate "dd" \
+        --model-uri "model:/dd_xgboost_embeddings/latest" \
+        --model-uri "model:/dd_logreg_tfidf/latest"
+
 mlops-all: mlops-etl mlops-train
