@@ -388,3 +388,28 @@ class Lakehouse:
         except:
             self.conn.execute("ROLLBACK")
             raise
+
+    def ml_monitoring_store(self, schema: str, stats: pd.DataFrame):
+        log.info("Storing model monitoring statistics for schema {}", schema)
+        data = stats.stack(level=0, future_stack=True).reset_index()
+
+        data["model_name"] = data.model_uri.apply(lambda d: d.split("/")[1])
+        data["model_version"] = data.model_uri.apply(lambda d: d.split("/")[2])
+
+        data = data.drop(columns="model_uri")
+
+        ord_cols = ["date", "model_name", "model_version"]
+        data = pd.concat(
+            (
+                data[ord_cols],
+                data.loc[:, ~data.columns.isin(ord_cols)],
+            ),
+            axis=1,
+        )
+
+        self.conn.execute(
+            f"""--sql
+            CREATE OR REPLACE TABLE stage."{schema}".stats AS
+            SELECT * FROM data
+            """
+        )

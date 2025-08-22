@@ -1,13 +1,19 @@
 import functools
+import json
 from datetime import datetime
 from enum import Flag, auto
 
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
+import scipy
 from loguru import logger as log
-from scipy.stats import entropy
+from scipy.stats import ks_2samp
+from sklearn.isotonic import IsotonicRegression
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import train_test_split
 from slugify import slugify
+from tqdm import tqdm
 
 from ml.inference import load_model
 from ml.types import InferenceModel
@@ -18,17 +24,15 @@ class MonitoringStats(Flag):
     COUNT = auto()
     PREDICTION_DRIFT = auto()
     FEATURE_DRIFT = auto()
-    DATA_DRIFT = auto()
     ESTIMATED_PERFORMANCE = auto()
-    DATA_QUALITY = auto()
+    USER_EVALUATION = auto()
 
     ALL = (
         COUNT
         | PREDICTION_DRIFT
         | FEATURE_DRIFT
-        | DATA_DRIFT
         | ESTIMATED_PERFORMANCE
-        | DATA_QUALITY
+        | USER_EVALUATION
     )
 
 
@@ -134,35 +138,35 @@ class Monitoring:
             right_index=True,
         )
 
-    def _compute_prediction_drift(self, bins: int = 20, epsilon: float = 1e-8):
-        model_hist = {}
+    def _compute_prediction_drift(self):
+        log.info("Computing prediction drift over time")
 
-        for model_uri in self.model_uris:
-            model_column = self._to_column_name(model_uri)
+        def prediction_drift(model_uri: str, current: pd.Series):
+            reference = self.dataset[self._to_column_name(model_uri)]
+            ks_result = ks_2samp(reference, current)
+            return ks_result.statistic
 
-            hist_ref, _ = np.histogram(
-                self.dataset[model_column],
-                bins=bins,
-                density=True,
+        def rolling_prediction_drift(predictions: pd.Series):
+            model_uri = predictions.name
+
+            rolling_predictions_drift_stats = predictions.rolling(
+                window=pd.Timedelta(days=self.window_size),
+                min_periods=1,
+            ).apply(
+                functools.partial(
+                    prediction_drift,
+                    model_uri,
+                )
             )
 
-            model_hist[model_uri] = hist_ref
-
-        def prediction_drift(model_uri: str, data: npt.NDArray):
-            hist_ref = model_hist[model_uri]
-            hist_curr, _ = np.histogram(data, bins=bins, density=True)
-
-            prediction_drift_kl = entropy(hist_ref + epsilon, hist_curr + epsilon)
-
-            return prediction_drift_kl
+            return rolling_predictions_drift_stats
 
         prediction_drift_stats = (
             self.inferences.set_index(self.inferences.created_at.dt.floor("D"))
             .rename_axis("date")
             .sort_index()
-            .groupby("model_uri")["prediction"]
-            .rolling(window=pd.Timedelta(days=self.window_size), min_periods=1)
-            .apply(functools.partial(prediction_drift, model_uri))
+            .groupby("model_uri", group_keys=True)["prediction"]
+            .apply(rolling_prediction_drift)
             .reset_index()
             .rename(columns={"prediction": "pred_drift"})
             .drop_duplicates(subset=["date", "model_uri"])
@@ -179,16 +183,206 @@ class Monitoring:
         )
 
     def _compute_feature_drift(self):
-        pass
+        log.info("Computing feature drift over time")
 
-    def _compute_data_drift(self):
-        pass
+        def features_drift(reference: pd.DataFrame, current: pd.DataFrame):
+            ref_dataset = pd.DataFrame(reference)
+            ref_dataset["target"] = 0
 
-    def _compute_estimated_performance(self):
-        pass
+            cur_dataset = pd.DataFrame(current)
+            cur_dataset["target"] = 1
 
-    def _compute_data_quality(self):
-        pass
+            dataset = pd.concat((ref_dataset, cur_dataset))
+
+            X_train, X_test, y_train, y_test = train_test_split(
+                dataset.drop(columns="target"),
+                dataset.target,
+                test_size=0.3,
+                stratify=dataset.target,
+            )
+
+            model = LogisticRegression()
+            model.fit(X_train, y_train)
+
+            pos_class_idx = model.classes_.tolist().index(1)
+            y_pred_proba = model.predict_proba(X_test)[:, pos_class_idx]
+            score = roc_auc_score(y_test, y_pred_proba)
+
+            return score
+
+        def rolling_features_drift(data: pd.Series):
+            model_uri = data.name
+            model = load_model(model_uri)
+
+            input_data = pd.DataFrame(data.apply(json.loads).tolist())
+            if input_data.shape[1] == 1:
+                input_data = input_data.iloc[:, 0]
+
+            # All steps except the classifier (last one)
+            pipeline = model[:-1]
+
+            reference_features = pipeline.transform(self.dataset.input)
+            current_features = pipeline.transform(input_data)
+
+            if isinstance(reference_features, scipy.sparse.spmatrix):
+                reference = pd.DataFrame.sparse.from_spmatrix(reference_features)
+                current = pd.DataFrame.sparse.from_spmatrix(
+                    current_features,
+                    index=data.index,
+                )
+            else:
+                reference = pd.DataFrame(reference_features)
+                current = pd.DataFrame(current_features, index=data.index)
+
+            rolling_features_drift_stats = []
+
+            for end_time in tqdm(current.index.drop_duplicates(), desc="Days"):
+                current_window = current.loc[
+                    end_time
+                    - pd.Timedelta(days=self.window_size)
+                    + pd.Timedelta("1D") : end_time
+                ]
+
+                score = features_drift(reference, current_window)
+                rolling_features_drift_stats.append(pd.Series(score, name=end_time))
+
+            rolling_features_drift_stats = (
+                pd.DataFrame(rolling_features_drift_stats)
+                .rename(columns={0: "feat_drift"})
+                .rename_axis("date")
+            )
+
+            return rolling_features_drift_stats
+
+        features_drift_stats = (
+            self.inferences.set_index(self.inferences.created_at.dt.floor("D"))
+            .rename_axis("date")
+            .sort_index()
+            .groupby("model_uri", group_keys=True)["data"]
+            .apply(rolling_features_drift)
+            .reset_index()
+            .pivot(index="date", columns="model_uri")
+            .swaplevel(axis=1)
+            .rename_axis(["model_uri", "stat"], axis=1)
+        )
+
+        self.stats = self.stats.merge(
+            features_drift_stats,
+            how="left",
+            left_index=True,
+            right_index=True,
+        )
+
+    def _compute_estimated_performance(self, decision_threshold: float = 0.5):
+        log.info("Computing estimated performance over time using CBPE")
+
+        cbpe_models = {}
+
+        for model_uri in self.model_uris:
+            p_ref = self.dataset[self._to_column_name(model_uri)]
+
+            y_ref = self.dataset.target
+            y_hat_ref = (p_ref >= decision_threshold).astype(float)
+            correctness_ref = (y_hat_ref == y_ref).astype(float)
+
+            cbpe_models[model_uri] = IsotonicRegression(out_of_bounds="clip")
+            cbpe_models[model_uri].fit(p_ref, correctness_ref)
+
+        def cbpe_metrics(model_uri: str, metric: str, current: pd.Series):
+            epsilon = 1e-12
+
+            p_cur = current
+            y_hat_cur = (p_cur >= decision_threshold).astype(float)
+
+            est_correctness = cbpe_models[model_uri].predict(p_cur)
+
+            match metric.lower():
+                case "accuracy":
+                    e_accuracy = np.mean(est_correctness)
+                    return e_accuracy
+                case "f1":
+                    TP = np.sum(est_correctness * (y_hat_cur == 1.0))
+                    FP = np.sum((1 - est_correctness) * (y_hat_cur == 1.0))
+                    FN = np.sum((1 - est_correctness) * (y_hat_cur == 0.0))
+
+                    precision = TP / (TP + FP + epsilon)
+                    recall = TP / (TP + FN + epsilon)
+                    e_f1 = 2 * precision * recall / (precision + recall + epsilon)
+
+                    return e_f1
+                case _:
+                    return -1.0
+
+        def rolling_cbpe_metrics(metric: str, predictions: pd.Series):
+            model_uri = predictions.name
+
+            rolling_cbpe_metrics_stats = (
+                predictions.rolling(
+                    window=pd.Timedelta(days=self.window_size),
+                    min_periods=1,
+                )
+                .apply(
+                    functools.partial(
+                        cbpe_metrics,
+                        model_uri,
+                        metric,
+                    )
+                )
+                .groupby("date")
+                .mean()
+            )
+
+            return rolling_cbpe_metrics_stats
+
+        cbpe_stats = (
+            self.inferences.set_index(self.inferences.created_at.dt.floor("D"))
+            .rename_axis("date")
+            .sort_index()
+            .groupby("model_uri", group_keys=True)["prediction"]
+            .apply(functools.partial(rolling_cbpe_metrics, "accuracy"))
+            .reset_index()
+            .rename(columns={"prediction": "e_f1"})
+            .pivot(index="date", columns="model_uri")
+            .swaplevel(axis=1)
+            .rename_axis(["model_uri", "stat"], axis=1)
+        )
+
+        self.stats = self.stats.merge(
+            cbpe_stats,
+            how="left",
+            left_index=True,
+            right_index=True,
+        )
+
+    def _compute_user_evaluation(self):
+        user_eval_stats = self.inferences[
+            (~self.inferences.feedback.isna()) & (len(self.inferences.feedback) > 0)
+        ].copy()
+
+        user_eval_stats["user_brier"] = user_eval_stats.apply(
+            lambda row: np.square(row.prediction - row.feedback.mean()),
+            axis=1,
+        )
+
+        user_eval_stats = (
+            user_eval_stats.groupby(
+                [
+                    "model_uri",
+                    "date",
+                ]
+            )["user_brier"]
+            .mean()
+            .reset_index()
+            .pivot(index="date", columns="model_uri")
+            .swaplevel(axis=1)
+        )
+
+        self.stats = self.stats.merge(
+            user_eval_stats,
+            how="left",
+            left_index=True,
+            right_index=True,
+        )
 
     def compute(self):
         self._load_data()
@@ -204,14 +398,11 @@ class Monitoring:
         if MonitoringStats.FEATURE_DRIFT in self.flags:
             self._compute_feature_drift()
 
-        if MonitoringStats.DATA_DRIFT in self.flags:
-            self._compute_data_drift()
-
         if MonitoringStats.ESTIMATED_PERFORMANCE in self.flags:
             self._compute_estimated_performance()
 
-        if MonitoringStats.DATA_QUALITY in self.flags:
-            self._compute_data_quality()
+        if MonitoringStats.USER_EVALUATION in self.flags:
+            self._compute_user_evaluation()
 
     def store(self):
-        pass
+        self.lh.ml_monitoring_store(self.schema, self.stats)
