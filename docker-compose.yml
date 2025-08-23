@@ -44,8 +44,9 @@ services:
       resources:
         reservations:
           devices:
-            - capabilities: [gpu]
-    runtime: nvidia
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     healthcheck:
       test: ["CMD", "ollama", "ls"]
       interval: 10s
