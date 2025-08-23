@@ -5,7 +5,7 @@ SELECT
     text AS input,
     CAST(label AS DOUBLE) AS target
 FROM read_csv(
-    '{{ env_var("RAW__DEPRESSION__CLEAN_ENCODED_DF") }}',
+    '{{ env_var("RAW__DEPRESSION__CLEAN_ENCODED_DF", "NOT_FOUND") }}',
     delim = ',',
     header = true,
     columns = {

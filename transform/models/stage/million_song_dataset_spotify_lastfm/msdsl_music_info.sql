@@ -35,7 +35,7 @@ SELECT
     tempo,
     time_signature
 FROM read_csv(
-    '{{ env_var("RAW__MILLION_SONG_DATASET_SPOTIFY_LASTFM__MUSIC_INFO") }}',
+    '{{ env_var("RAW__MILLION_SONG_DATASET_SPOTIFY_LASTFM__MUSIC_INFO", "NOT_FOUND") }}',
     delim = ',',
     quote = '"',
     escape = '"',

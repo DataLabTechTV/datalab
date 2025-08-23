@@ -8,7 +8,7 @@ WITH dataset AS (
         row_number() OVER (PARTITION BY is_depression ORDER BY clean_text) AS rn,
         count(*) OVER (PARTITION BY is_depression) AS cnt
     FROM read_csv(
-        '{{ env_var("RAW__DEPRESSION_DETECTION__DEPRESSION_DATASET_REDDIT_TWITTER") }}',
+        '{{ env_var("RAW__DEPRESSION_DETECTION__DEPRESSION_DATASET_REDDIT_TWITTER", "NOT_FOUND") }}',
         delim = ',',
         quote = '"',
         escape = '"',
