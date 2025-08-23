@@ -7,7 +7,6 @@ import requests
 from loguru import logger as log
 from tqdm import tqdm
 
-from shared.cache import get_requests_cache_session
 from shared.storage import Storage, StoragePrefix
 
 DATACITE_API_URL = "https://api.datacite.org/"
@@ -17,7 +16,7 @@ class DataCiteFetcher:
     def __init__(self, s3_dir_path: str):
         self.s3_dir_path = s3_dir_path
         self.storage = Storage(StoragePrefix.INGEST)
-        self.session = get_requests_cache_session("datacite")
+        self.session = requests.Session()
 
     def to_canonical_doi(self, doi: str) -> str:
         rel_path = urlsplit(doi).path.removeprefix("/")
