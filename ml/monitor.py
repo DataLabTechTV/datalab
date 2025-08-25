@@ -41,8 +41,8 @@ class Monitoring:
         self,
         schema: str,
         model_uris: list[str],
-        since: datetime,
-        until: datetime,
+        since: datetime | None,
+        until: datetime | None,
         window_size: int = 7,
         flags: MonitoringStats = MonitoringStats.ALL,
     ):
@@ -406,3 +406,9 @@ class Monitoring:
 
     def store(self):
         self.lh.ml_monitoring_store(self.schema, self.stats)
+
+    def load(self):
+        self.stats = self.lh.ml_monitoring_load(self.schema)
+
+    def plot(self):
+        pass
