@@ -261,3 +261,51 @@ def ml_monitor_compute(
 
     stats.compute()
     stats.store()
+
+
+@monitor.command(
+    "plot",
+    help=(
+        "Compute monitoring metrics using the dataset table under the provided schema "
+        "from the stage catalog"
+    ),
+)
+@click.argument("schema")
+@click.option(
+    "--model-uri",
+    "-m",
+    "model_uris",
+    multiple=True,
+    required=True,
+    help=(
+        "Model URI from the MLflow registry in the format models:/<name>/<version> "
+        "(e.g., models:/dd_logreg_tfidf/latest)"
+    ),
+)
+@click.option(
+    "--since",
+    "-s",
+    type=click.DateTime(),
+    help="Inference results start date",
+)
+@click.option(
+    "--until",
+    "-u",
+    type=click.DateTime(),
+    help="Inference results end date",
+)
+def ml_monitor_plot(
+    schema: str,
+    model_uris: list[str],
+    since: datetime | None,
+    until: datetime | None,
+):
+    stats = Monitoring(
+        schema,
+        model_uris=model_uris,
+        since=since,
+        until=until,
+    )
+
+    stats.load()
+    stats.plot()
