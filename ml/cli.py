@@ -201,8 +201,13 @@ def ml_simulate(
     )
 
 
-@ml.command(
-    "monitor",
+@ml.group()
+def monitor():
+    pass
+
+
+@monitor.command(
+    "compute",
     help=(
         "Compute monitoring metrics using the dataset table under the provided schema "
         "from the stage catalog"
@@ -224,14 +229,12 @@ def ml_simulate(
     "--since",
     "-s",
     type=click.DateTime(),
-    default=NOW - timedelta(weeks=8),
     help="Inference results start date",
 )
 @click.option(
     "--until",
     "-u",
     type=click.DateTime(),
-    default=NOW,
     help="Inference results end date",
 )
 @click.option(
@@ -241,11 +244,11 @@ def ml_simulate(
     default=7,
     help="Window size in days",
 )
-def ml_monitor(
+def ml_monitor_compute(
     schema: str,
     model_uris: list[str],
-    since: datetime,
-    until: datetime,
+    since: datetime | None,
+    until: datetime | None,
     window_size: int,
 ):
     stats = Monitoring(
