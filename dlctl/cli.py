@@ -13,6 +13,7 @@ from dlctl.dbt_handler import DBTHandler
 from export.cli import export
 from graph.cli import graph
 from ingest.cli import ingest
+from ml.cli import ml
 from shared.cache import cache_usage, expunge_cache
 from shared.settings import LOCAL_DIR, MART_DB_VARS, env
 from shared.storage import Storage, StoragePrefix
@@ -70,6 +71,7 @@ def dlctl(ctx: click.Context, debug: bool, logfile_enabled: bool, show_version: 
 dlctl.add_command(ingest)
 dlctl.add_command(export)
 dlctl.add_command(graph)
+dlctl.add_command(ml)
 
 # Backups
 # =======

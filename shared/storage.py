@@ -8,9 +8,9 @@ from typing import Any, Iterable, Optional
 import boto3
 from loguru import logger as log
 from mypy_boto3_s3.service_resource import Bucket
-from slugify import slugify
 
 from shared.settings import env
+from shared.utils import fn_sanitize
 
 MANIFEST = "manifest.json"
 IGNORE_PATTERNS = (".keep", "README", "*.md", MANIFEST)
@@ -242,7 +242,7 @@ class Storage:
                     continue
 
                 env_prefix_parts = key_parts[:2] + [
-                    slugify(kp, separator="_") for kp in key_parts[4:]
+                    fn_sanitize(kp) for kp in key_parts[4:]
                 ]
 
                 env_prefix = "__".join(env_prefix_parts).upper()

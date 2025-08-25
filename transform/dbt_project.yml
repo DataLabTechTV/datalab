@@ -25,6 +25,8 @@ models:
         +schema: msdsl
       the_atlas_of_economic_complexity:
         +schema: taoec
+      depression_detection:
+        +schema: dd
     marts:
       +materialized: table
       graphs:

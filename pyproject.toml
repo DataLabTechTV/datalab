@@ -8,6 +8,8 @@ description = "Tooling for a minimalist data lab running on top of DuckLake."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+  "aiokafka>=0.12.0",
+  "anyascii>=0.3.3",
   "bidict>=0.23.1",
   "boto3>=1.38.29",
   "boto3-stubs[s3]>=1.38.29",
@@ -16,9 +18,13 @@ dependencies = [
   "dbt-core>=1.9.6",
   "dbt-duckdb",
   "environs>=14.2.0",
+  "faker>=37.5.3",
+  "fastapi>=0.116.1",
   "geopandas>=1.1.1",
   "gitpython>=3.1.44",
   "humanize>=4.12.3",
+  "inflection>=0.5.1",
+  "joblib>=1.5.1",
   "jupyterlab>=4.4.5",
   "kagglehub>=0.3.12",
   "kuzu==0.11.0",
@@ -28,17 +34,24 @@ dependencies = [
   "loguru>=0.7.3",
   "matplotlib>=3.10.3",
   "minio>=7.2.15",
+  "mlflow>=3.2.0",
   "more-itertools>=10.7.0",
   "networkx>=3.5",
   "ollama>=0.5.1",
   "pandas>=2.3.0",
+  "pip>=25.2",
   "platformdirs>=4.3.8",
   "prompt-toolkit>=3.0.51",
   "python-slugify>=8.0.4",
   "requests-cache>=1.2.1",
+  "rust-just>=1.42.4",
+  "scikit-learn>=1.7.1",
   "scipy>=1.16.1",
+  "sentence-transformers>=5.1.0",
   "torch>=2.7.1",
   "tqdm>=4.67.1",
+  "uvicorn>=0.35.0",
+  "xgboost==3.0.2",
 ]
 
 [dependency-groups]
@@ -60,7 +73,7 @@ dbt-duckdb = { git = "https://github.com/duckdb/dbt-duckdb.git", rev = "afc39991
 addopts = "--capture=no --maxfail=1 --disable-warnings"
 
 [tool.setuptools.packages.find]
-include = ["dlctl", "shared", "ingest", "transform", "export", "graph"]
+include = ["dlctl", "shared", "ingest", "transform", "export", "graph", "ml"]
 
 [tool.semantic_release]
 commit_parser = "conventional"
