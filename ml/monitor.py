@@ -2,7 +2,11 @@ import functools
 import json
 from datetime import datetime
 from enum import Flag, auto
+from pathlib import Path
 
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
 import scipy
@@ -17,7 +21,9 @@ from tqdm import tqdm
 
 from ml.inference import load_model
 from ml.types import InferenceModel
+from shared.color import COLOR_PALETTE
 from shared.lakehouse import Lakehouse
+from shared.settings import LOCAL_DIR
 
 
 class MonitoringStats(Flag):
@@ -411,4 +417,58 @@ class Monitoring:
         self.stats = self.lh.ml_monitoring_load(self.schema)
 
     def plot(self):
-        pass
+        output_dir = Path(LOCAL_DIR) / "monitor"
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        data = self.stats.copy()
+
+        data["model"] = data.model_name + " (" + data.model_version + ")"
+        data = data.drop(columns=["model_name", "model_version"])
+
+        metric_names = {
+            "count": "Number of Inferences Over Time",
+            "pred_drift": "Prediction Shift (KS D-Statistic)",
+            "feat_drift": "Feature Drift (ROC AUC)",
+            "e_f1": "Estimated F1-Score Based on CBPE",
+            "e_accuracy": "Estimated Accuracy Based on CBPE",
+            "user_brier": "Mean Brier Score Based on Avg. User Feedback",
+        }
+
+        metrics = list(set(data.columns) & set(metric_names.keys()))
+
+        data = data[["date", "model"] + metrics].pivot(
+            index="date",
+            columns="model",
+            values=metrics,
+        )
+
+        plt.rcParams["axes.prop_cycle"] = plt.cycler(color=COLOR_PALETTE)
+
+        for metric in metrics:
+            output_path = output_dir / f"{metric}.png"
+            metric_name = metric_names[metric]
+
+            log.info("Plotting {} into {}", metric_name, output_path)
+
+            fig, ax = plt.subplots(figsize=(7, 3.5), dpi=300)
+
+            data[metric].plot.bar(ax=ax, rot=0, xlabel="")
+
+            step = 7
+            ax.set_xticks(range(0, len(data[metric]), step))
+            ax.set_xticklabels(data[metric].index[::step].strftime("%d %b %Y"))
+
+            plt.xticks(ha="left")
+
+            plt.legend(
+                title=None,
+                ncol=2,
+                loc="upper left",
+                bbox_to_anchor=(0, -0.175),
+                borderaxespad=0,
+            )
+
+            plt.title(metric_name)
+            plt.tight_layout()
+
+            fig.savefig(output_path)
