@@ -161,4 +161,9 @@ mlops-simulate-inference: check-dlctl
         --model-uri "models:/dd_xgboost_embeddings/latest" \
         --model-uri "models:/dd_logreg_tfidf/latest"
 
+mlops-monitor-compute: check-dlctl
+    {{dlctl}} ml monitor compute "dd" \
+        --model-uri "models:/dd_xgboost_embeddings/latest" \
+        --model-uri "models:/dd_logreg_tfidf/latest"
+
 mlops-all: mlops-etl mlops-train
