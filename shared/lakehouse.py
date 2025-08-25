@@ -1,12 +1,17 @@
 import json
 import os
-from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Literal, Optional
 
 import duckdb
 import pandas as pd
+from duckdb import (
+    ColumnExpression,
+    ConstantExpression,
+    FunctionExpression,
+    SQLExpression,
+)
 from loguru import logger as log
 
 from ml.types import InferenceFeedback, InferenceResult
@@ -266,35 +271,37 @@ class Lakehouse:
         catalog: str,
         schema: str,
         table_name: str,
-        since: datetime,
-        until: datetime,
+        since: datetime | None,
+        until: datetime | None,
     ) -> pd.DataFrame:
         log.info(
             "Loading inference results from {}.{}.{}, since {}, until {}",
             catalog,
             schema,
             table_name,
-            since,
-            until,
+            "the beginning" if since is None else since,
+            "the end" if until is None else until,
         )
 
-        rel = self.conn.sql(
-            f"""--sql
-            SELECT
-                inference_uuid,
-                model_name,
-                model_version,
-                data,
-                prediction,
-                feedback,
-                created_at
-            FROM
-                "{catalog}"."{schema}"."{table_name}"
-            WHERE
-                created_at BETWEEN ? AND ?
-            """,
-            params=[since, until],
-        )
+        table_fqn = f'"{catalog}"."{schema}"."{table_name}"'
+
+        col_list = [
+            "inference_uuid",
+            "model_name",
+            "model_version",
+            "data",
+            "prediction",
+            "feedback",
+            "created_at",
+        ]
+
+        rel = self.conn.table(table_fqn).select(*col_list)
+
+        if since is not None:
+            rel = rel.filter(ColumnExpression("created_at") >= since)
+
+        if until is not None:
+            rel = rel.filter(ColumnExpression("created_at") <= until)
 
         return rel.to_df()
 
@@ -413,3 +420,8 @@ class Lakehouse:
             SELECT * FROM data
             """
         )
+
+    def ml_monitoring_load(self, schema: str) -> pd.DataFrame:
+        log.info("Loading model monitoring statistics for schema {}", schema)
+        result = self.conn.sql(f"""SELECT * FROM stage."{schema}".stats""")
+        return result.to_df()
