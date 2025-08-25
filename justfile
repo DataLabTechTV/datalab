@@ -166,4 +166,9 @@ mlops-monitor-compute: check-dlctl
         --model-uri "models:/dd_xgboost_embeddings/latest" \
         --model-uri "models:/dd_logreg_tfidf/latest"
 
+mlops-monitor-plot: check-dlctl
+    {{dlctl}} ml monitor plot "dd" \
+        --model-uri "models:/dd_xgboost_embeddings/latest" \
+        --model-uri "models:/dd_logreg_tfidf/latest"
+
 mlops-all: mlops-etl mlops-train
