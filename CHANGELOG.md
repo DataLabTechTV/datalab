@@ -1,6 +1,369 @@
 # CHANGELOG
 
 
+## v0.6.0 (2025-08-25)
+
+### Bug Fixes
+
+- Attempt to solve group coordinator errors
+  ([`25e9cf1`](https://github.com/DataLabTechTV/datalab/commit/25e9cf1d137824e9370c4b39305cb72d2af61e38))
+
+- Capture asyncio cancel exception
+  ([`5f5f07f`](https://github.com/DataLabTechTV/datalab/commit/5f5f07f9fc67a84d218621b1b1212cb3e736390e))
+
+- Consumer task was meant to be awaited from inside the loop
+  ([`0bede44`](https://github.com/DataLabTechTV/datalab/commit/0bede44dee55e854b62eb8c25d03ab0d6a684ea7))
+
+- Correct model uri scheme
+  ([`a6c589b`](https://github.com/DataLabTechTV/datalab/commit/a6c589be80a8ea6cb4c4cf5d47499862aae67f74))
+
+- Dataframe was being forced through the model loaded using mlflow.pyfunc.load, so now we handle
+  multiple input types
+  ([`4d9541e`](https://github.com/DataLabTechTV/datalab/commit/4d9541ee071beef230489a9c58967fefd87f576a))
+
+- Handle failed runs and drop unrequired columns from logged inputs
+  ([`29f9259`](https://github.com/DataLabTechTV/datalab/commit/29f92595ccf6aee8a99ee83d51f3bcf3890da1d7))
+
+- Kafka now runs and initializes properly
+  ([`b94dfc4`](https://github.com/DataLabTechTV/datalab/commit/b94dfc49eac632b8379269a3ebde2d2d5e7df207))
+
+- Mlflow healthcheck, switch to kafka's official image
+  ([`cea3edf`](https://github.com/DataLabTechTV/datalab/commit/cea3edff3d9c077e59670dff67a8b8751d076424))
+
+- Model needs to be initialized every time, otherwise there is a memory leak
+  ([`e53c85f`](https://github.com/DataLabTechTV/datalab/commit/e53c85f36d0a323a582cca7fa81cb1db2ade0742))
+
+- Move mlflow.db to root since db directory didn't exist
+  ([`3fed7f1`](https://github.com/DataLabTechTV/datalab/commit/3fed7f1b03570b3ee58b80f381af43c230ad61b6))
+
+- Ollama will now default to CPU when GPU is not available
+  ([`a13fd72`](https://github.com/DataLabTechTV/datalab/commit/a13fd72258d7d4e96320bc70cdfa506516a101c6))
+
+This will, most likely, make it unusable, but at least it won't stop the other services from
+  starting and working as expected.
+
+- Positive label probability selection
+  ([`00d738e`](https://github.com/DataLabTechTV/datalab/commit/00d738e843528957359b207650f52f0363a9a7a1))
+
+- Queue logic incompatible with list logic, always flush in the end
+  ([`9d59f90`](https://github.com/DataLabTechTV/datalab/commit/9d59f90bfc56b8920725ac24ec1ec35a50548970))
+
+- Requests cache was causing memory overload
+  ([`b734e08`](https://github.com/DataLabTechTV/datalab/commit/b734e0869456a3dcdc91951af26dac7a090bffc9))
+
+- Schema name, remove unused tasks
+  ([`e1944fa`](https://github.com/DataLabTechTV/datalab/commit/e1944fac63c757c1e32b194e19a5dd82b1000e94))
+
+- Train/test split now separate from cross-validation (train only)
+  ([`11b448e`](https://github.com/DataLabTechTV/datalab/commit/11b448e8e980439006d365ae9336025775befa38))
+
+- Transform failed when other datasets were not ingested
+  ([`029e8c4`](https://github.com/DataLabTechTV/datalab/commit/029e8c49eb5328732fc3947519b06f37e6e3ac53))
+
+- Update to new lakehouse schema
+  ([`1240dc9`](https://github.com/DataLabTechTV/datalab/commit/1240dc9d691e558f7ac7f37f4fefcf4c3c5463d2))
+
+- Update to new ml types and lakehouse schema
+  ([`063d28b`](https://github.com/DataLabTechTV/datalab/commit/063d28b5aa7142dbdddd763998d23cd2284edb15))
+
+### Chores
+
+- Add a second topic for updating inference results with user feedback
+  ([`6abb221`](https://github.com/DataLabTechTV/datalab/commit/6abb221689d5fe272917933b1a284f5aba6a606e))
+
+- Add config for new stage catalog with secure storage
+  ([`1009792`](https://github.com/DataLabTechTV/datalab/commit/10097927143ec3efdc8980a39affbb08dfdae2f4))
+
+- Add config for pairs of topic and expected consumer group
+  ([`6224c6c`](https://github.com/DataLabTechTV/datalab/commit/6224c6c11af50112bfd945fb1e5d0021a83e6065))
+
+- Add config for stage catalog with secure storage
+  ([`7d3fbb9`](https://github.com/DataLabTechTV/datalab/commit/7d3fbb94ded24d1cabadca9d894bb262e06bebe9))
+
+- Add kafka config section
+  ([`175474f`](https://github.com/DataLabTechTV/datalab/commit/175474fa985c687942c4794b5668ec0b64068a15))
+
+- Add name to each asyncio task
+  ([`dad0fbe`](https://github.com/DataLabTechTV/datalab/commit/dad0fbe981c6d36a62c4b3b658f6d425d84a6d9b))
+
+- Create justfile with tasks from previous and upcoming videos
+  ([`9289e70`](https://github.com/DataLabTechTV/datalab/commit/9289e706cf523caffc9f9fbe147a730796d863a3))
+
+- Delete unused test module
+  ([`04964ef`](https://github.com/DataLabTechTV/datalab/commit/04964ef7b971a754bfdf1049de3f114a0c8a2cd1))
+
+- Reduce sample fraction
+  ([`a9ab9a7`](https://github.com/DataLabTechTV/datalab/commit/a9ab9a79b92ee2cb8d6796ba0f5819ec66dbbb9b))
+
+- Rename insert/update to result/feedback to match new event topics
+  ([`4ae3ef1`](https://github.com/DataLabTechTV/datalab/commit/4ae3ef1565c09d9a93f007cfe4926a27826949fb))
+
+- Setup mlflow service with sqlite and s3
+  ([`3a0f1ca`](https://github.com/DataLabTechTV/datalab/commit/3a0f1ca0916846ab662495110b316f12a0fcc44b))
+
+- **deps**: Add anyascii and inflection for a more robust sanitization, add just for task running,
+  add xgboost for ML project
+  ([`17cbf48`](https://github.com/DataLabTechTV/datalab/commit/17cbf48ca452a0b045fc4dc2cec0002503e1a9b9))
+
+- **deps**: Add faker to create random dates
+  ([`0814e54`](https://github.com/DataLabTechTV/datalab/commit/0814e545c1dcf092f5c20139f0e8366b0dfc98bf))
+
+- **deps**: Add fastapi and uvicorn for the ml server
+  ([`5907a38`](https://github.com/DataLabTechTV/datalab/commit/5907a38aaeee23b959bc81510c9b3cd71fe84eea))
+
+- **deps**: Add joblib to use Memory for caching
+  ([`1676db1`](https://github.com/DataLabTechTV/datalab/commit/1676db1a8ab2cee1a63a543dcf4e9c08db2eb870))
+
+- **deps**: Add kafka official library
+  ([`2de36e8`](https://github.com/DataLabTechTV/datalab/commit/2de36e82267e49cefe19500fd98c6d6605a22ee3))
+
+- **deps**: Add mlflow
+  ([`5d0b94a`](https://github.com/DataLabTechTV/datalab/commit/5d0b94acacd7cdd03bb0cd195b4e838b29e7f1a0))
+
+- **deps**: Add pip so its version is properly detected by mlflow during model logging
+  ([`63edc5a`](https://github.com/DataLabTechTV/datalab/commit/63edc5a058202895f43a6504d89032eb48c7378d))
+
+- **deps**: Add scikit-learn
+  ([`204411b`](https://github.com/DataLabTechTV/datalab/commit/204411b2a8940e5a6211738486d44f304ce344f3))
+
+- **deps**: Add sentence transformers for text embedding
+  ([`0a852d8`](https://github.com/DataLabTechTV/datalab/commit/0a852d8dcf404988371318f8216d28f031d29bcc))
+
+- **deps**: Downgrade from 3.0.3 to 3.0.2 due to mlflow compatibility
+  ([`8e2d1bd`](https://github.com/DataLabTechTV/datalab/commit/8e2d1bd23c0fbbd0ec575a7ef08810d089a138d8))
+
+- **deps**: Replace confluent-kafka with aiokafka
+  ([`a052aa8`](https://github.com/DataLabTechTV/datalab/commit/a052aa8a5249693ca6e2aa2dca1a1ede4e040ed5))
+
+### Features
+
+- Add 3-folds
+  ([`9c58bfb`](https://github.com/DataLabTechTV/datalab/commit/9c58bfb61d988ebf21222fb453cdcb20f73ead57))
+
+- Add create_at timestamp that defaults to the current date
+  ([`6badaf2`](https://github.com/DataLabTechTV/datalab/commit/6badaf291bae580166181179d7f3578b47d4cd44))
+
+- Add custom MLflow user for tracking
+  ([`4818df8`](https://github.com/DataLabTechTV/datalab/commit/4818df818699f98396aa917e424f7ae398dfe657))
+
+- Add model logging to mlflow_end_run
+  ([`54027f2`](https://github.com/DataLabTechTV/datalab/commit/54027f2741c082064cf7efc6ac8de82128e0c2fb))
+
+- Add monitor compute task
+  ([`36d2b91`](https://github.com/DataLabTechTV/datalab/commit/36d2b91665c094d00514412a622747bb777d5532))
+
+- Add monitor dataset to mlops etl pipeline
+  ([`c227f62`](https://github.com/DataLabTechTV/datalab/commit/c227f62ba537a1e8402b9484922a7385c228eaa8))
+
+- Add monitor plot task
+  ([`27bd6bb`](https://github.com/DataLabTechTV/datalab/commit/27bd6bbc64584ed734952c89e84d93575f9fa698))
+
+- Add reload option to use during development
+  ([`5e175ad`](https://github.com/DataLabTechTV/datalab/commit/5e175ad042b76f45a59fa1a4ffcee114663ef666))
+
+- Add sample fraction parameter
+  ([`813f031`](https://github.com/DataLabTechTV/datalab/commit/813f0310b4e5ad76e67164b79d8ee3bdff5405dc))
+
+- Add train and test tasks, update ETL task with transformation
+  ([`54e1adb`](https://github.com/DataLabTechTV/datalab/commit/54e1adb47785e5210740f4aed6db0fc9211765a9))
+
+- Apache Kafka server
+  ([`b2acb5d`](https://github.com/DataLabTechTV/datalab/commit/b2acb5d07772b5f78752ce92056825a62b81bf17))
+
+- Basic training pipelines and CLI command
+  ([`e27cc5d`](https://github.com/DataLabTechTV/datalab/commit/e27cc5d23fc00ed5b256ace35ccbcc90f6aeabbe))
+
+- Check for curl and add -f to ensure the task fails when status code is >= 400
+  ([`b02c5a1`](https://github.com/DataLabTechTV/datalab/commit/b02c5a173e26cc68129322f03e47d89a9c790d8d))
+
+- Default to 3-folds, since it is now supported
+  ([`daf3db9`](https://github.com/DataLabTechTV/datalab/commit/daf3db9d704b3099337573c27a4ec6ff0989ec84))
+
+- Drop tasks for mlflow model server (images are too bloated)
+  ([`c20ec10`](https://github.com/DataLabTechTV/datalab/commit/c20ec107afb91887a3ca54d97c560b38ecbd76ce))
+
+- Enable artifacts proxy and install boto3 as a dependency
+  ([`8e844a6`](https://github.com/DataLabTechTV/datalab/commit/8e844a606b187e7e4b61782874d0eeba90961e66))
+
+- End-to-end kafka producer/consumer implementation
+  ([`c1fbbc6`](https://github.com/DataLabTechTV/datalab/commit/c1fbbc6c6bebf731fbccdbb5a93af9d1e30ee3a2))
+
+- Endpoint to flush inference log, refactor inference request to handle A/B/n testing
+  ([`8ba2a7e`](https://github.com/DataLabTechTV/datalab/commit/8ba2a7e624ee726014ee8bf698f12c2024dda637))
+
+- Feature pipelines for TF-IDF and sentence transformers
+  ([`70c4182`](https://github.com/DataLabTechTV/datalab/commit/70c41823414c9fe58ae382b39c26d62271aa73ff))
+
+- Feedback is now an array and created_at keeps track of time
+  ([`19d0527`](https://github.com/DataLabTechTV/datalab/commit/19d052771994d0a7d44c1618782e94a862c04fc6))
+
+- Generic ml dataset loader function
+  ([`f364327`](https://github.com/DataLabTechTV/datalab/commit/f364327b69c41a9961d9d93cf6ce143908e66c1e))
+
+- Health check endpoint, and refactor insert/update to results/feedback for clarity
+  ([`d00f612`](https://github.com/DataLabTechTV/datalab/commit/d00f612286dc8447bee1dc66bb42a9915f8c6635))
+
+- Implement dataset transformation with train/test split and 5-folds and 10-folds
+  ([`3e552e0`](https://github.com/DataLabTechTV/datalab/commit/3e552e0ce5d0cf3f9ee5e6d042ae951e3ac46eda))
+
+- Implement scaffolding for monitoring statistics computation class and count stat
+  ([`6d25335`](https://github.com/DataLabTechTV/datalab/commit/6d25335782585dbacf08bf801f7a09a263dff14a))
+
+- Inference API request
+  ([`ccbc242`](https://github.com/DataLabTechTV/datalab/commit/ccbc242425bd9dfb146e0dd14b90f103cd54da70))
+
+- Inference feedback update workflow
+  ([`9127a92`](https://github.com/DataLabTechTV/datalab/commit/9127a9281029aa5483cd6131c6edf0c413504c8e))
+
+- Load ml inference results for a date range
+  ([`d6df078`](https://github.com/DataLabTechTV/datalab/commit/d6df07856df76286efed2029d46ea9459a4c2f54))
+
+- Load monitor stats
+  ([`5969151`](https://github.com/DataLabTechTV/datalab/commit/5969151253ea78c5dd528928645eb26546fceec3))
+
+- Ml monitor is now ml monitor compute and since/until are unspecificed by default
+  ([`5e66a95`](https://github.com/DataLabTechTV/datalab/commit/5e66a955d3d086998b1eedc2eba07f6690c1c920))
+
+- Ml monitor plot command
+  ([`9dc514c`](https://github.com/DataLabTechTV/datalab/commit/9dc514c6c364acc47a3c4248c4f1df2c075e8e56))
+
+- Ml server start command
+  ([`3261c06`](https://github.com/DataLabTechTV/datalab/commit/3261c0627ab8a0a625adf34f0a8907181bc89e97))
+
+- Mlflow docker image building, container running and server testing tasks
+  ([`054f499`](https://github.com/DataLabTechTV/datalab/commit/054f49909786f9c81204f91591d356b6f48aaed1))
+
+- Mlflow tracking URI env var
+  ([`5511986`](https://github.com/DataLabTechTV/datalab/commit/551198665ada7fb6f1d08dd6495e43bcdc8a3b54))
+
+- Mlops train per method and features (added), split everything into individual tasks
+  ([`1e897f3`](https://github.com/DataLabTechTV/datalab/commit/1e897f3c0c01fe22031026f84945e887e4fa1489))
+
+- Monitoring metrics for prediction and feature drift, estimated performance, and user evaluation
+  ([`72286b6`](https://github.com/DataLabTechTV/datalab/commit/72286b6f73f61c5232cef2981e590ce17e88b512))
+
+- Now always the latest model is used to build the docker image
+  ([`6fbb824`](https://github.com/DataLabTechTV/datalab/commit/6fbb8245a712e8ff14bf009d92fd5513b89aa679))
+
+- Output is now probabilities, so threshold can be set externally
+  ([`18d814a`](https://github.com/DataLabTechTV/datalab/commit/18d814a1a9eccc022b4c92fe85b3944bd511fd97))
+
+- Payloads is now types and inference request contains one or multiple models
+  ([`d7b31b7`](https://github.com/DataLabTechTV/datalab/commit/d7b31b720a6d69365abaf41bd0b46d419c62f737))
+
+- Plotting for model monitoring statistics
+  ([`f14d51e`](https://github.com/DataLabTechTV/datalab/commit/f14d51e0d1528d0678dd457db79eadaebde38bb2))
+
+- Query latest snapshot_id (version)
+  ([`779aa61`](https://github.com/DataLabTechTV/datalab/commit/779aa611b398d4ed1abc4c33d0da7bd647d8ec06))
+
+- Replace slugify with custom sanitization alternative
+  ([`cf437c3`](https://github.com/DataLabTechTV/datalab/commit/cf437c3bac95a330df317d46bc13bb247eedd798))
+
+- Rolling prediction drift computation
+  ([`29c439a`](https://github.com/DataLabTechTV/datalab/commit/29c439a53376f2dd8d0e47a236a402abd1ce3fac))
+
+- Safer attach (if not exists only)
+  ([`0ebf16d`](https://github.com/DataLabTechTV/datalab/commit/0ebf16d11a6d36086f8e044a4752cf48d8c85e83))
+
+- Scaffolding for inference simulation and monitoring
+  ([`5d78f5e`](https://github.com/DataLabTechTV/datalab/commit/5d78f5e49dbb213e5bde00eb83857a455fe69396))
+
+- Scaffolding for ML CLI and workflow functions
+  ([`647559f`](https://github.com/DataLabTechTV/datalab/commit/647559f025939ca0a2da5e61873d3b2dc7d6bbb6))
+
+- Scaffolding for ml server
+  ([`3f3d05d`](https://github.com/DataLabTechTV/datalab/commit/3f3d05dd5be373f3ce7d6da4afc6ac59892b9812))
+
+- Schema and count functions, remove redundant initialization code (same as generate_init_sql)
+  ([`b816c9b`](https://github.com/DataLabTechTV/datalab/commit/b816c9b946764d8e38c7dc423bafa66e147de3a4))
+
+- Separate tracking from training logic, and use PandasDataset instead of custom dataset
+  ([`80b895a`](https://github.com/DataLabTechTV/datalab/commit/80b895a069aca721b50cd78552bff68718c23817))
+
+- Start consumer thread with ml server
+  ([`7523cfb`](https://github.com/DataLabTechTV/datalab/commit/7523cfbd32fc9b2c483407d257dbd494411d02cd))
+
+- Support for 3-fold dataset loading and CV training
+  ([`106a6ef`](https://github.com/DataLabTechTV/datalab/commit/106a6ef36bc741699b7ebbd63d9179451acf1e0f))
+
+- Support for catalogs with secure storage
+  ([`e96ce72`](https://github.com/DataLabTechTV/datalab/commit/e96ce725077ca6a8031f174887b22538966b9961))
+
+- Switch to expression api and make since/until optional, and implement loading for monitor stats
+  ([`368d039`](https://github.com/DataLabTechTV/datalab/commit/368d0395693569a86e29a9c171ba7cc4ddc14930))
+
+- Task to generate init SQL, also used on check fail, rename mlflow model server tasks, add
+  mlops-serve task
+  ([`a79c379`](https://github.com/DataLabTechTV/datalab/commit/a79c37940221c2ccb6c252e3a2ea6aaa4895b353))
+
+- Task to run inference simulation using monitor dataset
+  ([`fa48f2c`](https://github.com/DataLabTechTV/datalab/commit/fa48f2ca9271c7eecce3f7faa4004b27d3e4703a))
+
+- Tasks to test inference and logging requests
+  ([`cc1aa31`](https://github.com/DataLabTechTV/datalab/commit/cc1aa3146a9d16f251363ab80d15ad6172cf4837))
+
+- Time tracking logging utils
+  ([`d59abe4`](https://github.com/DataLabTechTV/datalab/commit/d59abe4a2e16063ef8fc2805772c7eaf4bdbb8eb))
+
+- Train and test set loaders for document datasets
+  ([`9bbd7c9`](https://github.com/DataLabTechTV/datalab/commit/9bbd7c94a2988be10ff02f9691c2649fa4c28420))
+
+- Transformation for monitor depression dataset
+  ([`5fb5d78`](https://github.com/DataLabTechTV/datalab/commit/5fb5d78fbe5bdf7db561bdfec3387c35757c3a1a))
+
+- Update to new ml types, fix lakehouse collision with transform, and improve API to make flush
+  usable externally
+  ([`68ef918`](https://github.com/DataLabTechTV/datalab/commit/68ef9189663ebc235b9c024009af34a745fbcd03))
+
+- Working inference simulation
+  ([`6a3fcab`](https://github.com/DataLabTechTV/datalab/commit/6a3fcab63dcbce1692d533a1a269122261b40643))
+
+### Refactoring
+
+- Cleaner variable names and paths
+  ([`1d52213`](https://github.com/DataLabTechTV/datalab/commit/1d52213df06ffff39afb79ec0b76c586bb9cae48))
+
+- Correct and improve log messages
+  ([`c8fc5ca`](https://github.com/DataLabTechTV/datalab/commit/c8fc5cac0f4a7f163aad2571b26c734c2b3f03d0))
+
+- Easier naming for MLOps tasks
+  ([`6ac1853`](https://github.com/DataLabTechTV/datalab/commit/6ac1853e1b60ec2a1ef2dfe9b8dab688b46fae57))
+
+- Extract color functions into a shared module
+  ([`6a859ef`](https://github.com/DataLabTechTV/datalab/commit/6a859efd2b666a754b7e0cf62015dc942d9c0096))
+
+- Extract prediction from server to its own module using joblib Memory for cache
+  ([`60467b7`](https://github.com/DataLabTechTV/datalab/commit/60467b717d21caf7addf64104f92b07652fbc8f6))
+
+- Lakehouse logging is now the default
+  ([`de16c77`](https://github.com/DataLabTechTV/datalab/commit/de16c77b00eb9f9581d16df7db12ebdd37b86409))
+
+- Move server health check to server module
+  ([`c63cd22`](https://github.com/DataLabTechTV/datalab/commit/c63cd22762b8947713ae23b78c890df028214bc0))
+
+- Normalize method names and group by context
+  ([`c01be6c`](https://github.com/DataLabTechTV/datalab/commit/c01be6c298df96bd2476cc3c88313e8c36e30adf))
+
+- Normalize ml dataset column names and target type
+  ([`bee2af9`](https://github.com/DataLabTechTV/datalab/commit/bee2af97cf5c756c6abed192bcfb4b7f09ffd612))
+
+- Remove redundant case for computing the S3 prefix
+  ([`b836af2`](https://github.com/DataLabTechTV/datalab/commit/b836af2d8ce3c1010ae18014eadb6497b0e5fe17))
+
+- Remove unneeded echo
+  ([`5e6dbb9`](https://github.com/DataLabTechTV/datalab/commit/5e6dbb907859380b32c94329359aae0887badcfe))
+
+- Rename all init containers with init suffix
+  ([`99e3939`](https://github.com/DataLabTechTV/datalab/commit/99e3939b4d13e7f209d578fa5d6037d391db5e1b))
+
+- Rename n_folds to k_folds
+  ([`b3ac002`](https://github.com/DataLabTechTV/datalab/commit/b3ac002e8857765ad01c9fdf25e6dbf692498e49))
+
+- Set random model section log level to debug
+  ([`228b805`](https://github.com/DataLabTechTV/datalab/commit/228b805d246f25e3c4c44cbfb7614eb75e8265ad))
+
+
 ## v0.5.0 (2025-08-05)
 
 ### Bug Fixes
