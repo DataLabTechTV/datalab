@@ -427,7 +427,7 @@ class Monitoring:
 
         metric_names = {
             "count": "Number of Inferences Over Time",
-            "pred_drift": "Prediction Shift (KS D-Statistic)",
+            "pred_drift": "Prediction Drift (KS D-Statistic)",
             "feat_drift": "Feature Drift (ROC AUC)",
             "e_f1": "Estimated F1-Score Based on CBPE",
             "e_accuracy": "Estimated Accuracy Based on CBPE",
@@ -452,7 +452,7 @@ class Monitoring:
 
             fig, ax = plt.subplots(figsize=(7, 3.5), dpi=300)
 
-            data[metric].plot.bar(ax=ax, rot=0, xlabel="")
+            data[metric].plot.bar(ax=ax, rot=0, xlabel="", stacked=(metric == "count"))
 
             step = 7
             ax.set_xticks(range(0, len(data[metric]), step))
