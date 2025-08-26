@@ -201,7 +201,12 @@ def ml_simulate(
     )
 
 
-@ml.group()
+@ml.group(
+    help=(
+        "Compute or plot monitoring metrics using the dataset table under the provided "
+        "schema from the stage catalog"
+    )
+)
 def monitor():
     pass
 
@@ -266,7 +271,7 @@ def ml_monitor_compute(
 @monitor.command(
     "plot",
     help=(
-        "Compute monitoring metrics using the dataset table under the provided schema "
+        "Plot monitoring metrics using the dataset table under the provided schema "
         "from the stage catalog"
     ),
 )
