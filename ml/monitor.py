@@ -4,9 +4,7 @@ from datetime import datetime
 from enum import Flag, auto
 from pathlib import Path
 
-import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
 import scipy
