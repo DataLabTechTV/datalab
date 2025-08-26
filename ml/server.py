@@ -1,15 +1,11 @@
 import asyncio
-import random
 import tomllib
 from contextlib import asynccontextmanager
-from uuid import uuid4
 
-import mlflow
 import requests
 from fastapi import FastAPI, Request, Response, status
 from fastapi.responses import JSONResponse
 from loguru import logger as log
-from mlflow.exceptions import RestException
 
 from ml.events import (
     flush_inference_feedback_queue,
@@ -21,13 +17,7 @@ from ml.events import (
     queue_inference_result,
 )
 from ml.inference import ModelNotFound, predict
-from ml.types import (
-    InferenceFeedback,
-    InferenceModel,
-    InferenceProducerType,
-    InferenceRequest,
-    InferenceResult,
-)
+from ml.types import InferenceFeedback, InferenceProducerType, InferenceRequest
 
 SERVER_NAME = "datalab-mlserver"
 DEFAULT_HOST = "0.0.0.0"
