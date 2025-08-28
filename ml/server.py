@@ -134,9 +134,12 @@ async def inference(inference_request: InferenceRequest, request: Request):
 
     if inference_request.log_to_lakehouse:
         log.info("Queuing lakehouse insertion for inference result")
-        await queue_inference_result(
-            request.app.state.inference_result_producer,
-            inference_result,
+
+        asyncio.create_task(
+            queue_inference_result(
+                request.app.state.inference_result_producer,
+                inference_result,
+            )
         )
 
     return inference_result
@@ -146,9 +149,11 @@ async def inference(inference_request: InferenceRequest, request: Request):
 async def inference(inference_feedback: InferenceFeedback, request: Request):
     log.info("Queuing lakehouse append for inference feedback")
 
-    await queue_inference_feedback(
-        request.app.state.inference_feedback_producer,
-        inference_feedback,
+    asyncio.create_task(
+        queue_inference_feedback(
+            request.app.state.inference_feedback_producer,
+            inference_feedback,
+        )
     )
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
