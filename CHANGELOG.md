@@ -1,6 +1,41 @@
 # CHANGELOG
 
 
+## v0.7.0 (2025-08-28)
+
+### Bug Fixes
+
+- Lakehouse is now a singleton, to avoid initialization when running the help command
+  ([`ca5a7ea`](https://github.com/DataLabTechTV/datalab/commit/ca5a7ea9cde99ec0c19201e2a8828a1fc01dec97))
+
+- Normalize loggers to use loguru via an intercept handler
+  ([`d18f572`](https://github.com/DataLabTechTV/datalab/commit/d18f572423d69966299de472e0e5b721d70f021d))
+
+- Shift should be drift, and count plot should be stacked
+  ([`62aefb2`](https://github.com/DataLabTechTV/datalab/commit/62aefb28ff089e38d736e544043b7b5992df1d00))
+
+### Chores
+
+- Add a default task that lists all just tasks
+  ([`897c520`](https://github.com/DataLabTechTV/datalab/commit/897c520c1e9714f4b6af2a7378ce803244ab0c59))
+
+- Add missing help message and fix the one for ml monitor plot
+  ([`7b17e14`](https://github.com/DataLabTechTV/datalab/commit/7b17e14f9f98a93decae7150c41a724a0b9dbbe9))
+
+### Features
+
+- Improve performance of REST API by moving Kafka payload queueing to the background
+  ([`2fe859d`](https://github.com/DataLabTechTV/datalab/commit/2fe859d28aa6156fdf261d65f03c208b00367572))
+
+### Refactoring
+
+- Drop unused matplotlib imports
+  ([`48b9e31`](https://github.com/DataLabTechTV/datalab/commit/48b9e3115fee7717c914f942c7d953a6bbded0ce))
+
+- Remove unused imports
+  ([`f1f8a1f`](https://github.com/DataLabTechTV/datalab/commit/f1f8a1f89828c910c82b62b2287a7b5cf4b50401))
+
+
 ## v0.6.0 (2025-08-25)
 
 ### Bug Fixes
