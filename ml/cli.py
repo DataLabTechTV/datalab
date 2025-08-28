@@ -10,6 +10,7 @@ from ml.server import DEFAULT_HOST, DEFAULT_PORT
 from ml.synthetic import simulate_inference
 from ml.train import Method, train_text_classifier
 from ml.types import InferenceModel
+from shared.logging import setup_intercept
 
 NOW = datetime.now()
 
@@ -65,10 +66,14 @@ def ml_train(schema: str, method: str, features: str, k_folds: int):
 @click.option("--port", "-p", type=click.INT, default=DEFAULT_PORT, help="Server port")
 @click.option("--reload", "-r", is_flag=True, help="Enable reload mode for debugging")
 def ml_server(host: str, port: int, reload: bool):
+    setup_intercept()
+
     uvicorn.run(
         "ml.server:app",
         host=host,
         port=port,
+        log_config=None,
+        log_level=None,
         reload=reload,
     )
 
