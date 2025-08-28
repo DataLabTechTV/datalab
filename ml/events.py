@@ -2,7 +2,6 @@ import asyncio
 import json
 from dataclasses import asdict
 from datetime import timedelta
-from enum import Enum
 
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from loguru import logger as log
@@ -74,35 +73,40 @@ async def queue_inference_feedback(
 # Consumers
 # =========
 
-lakehouse = Lakehouse(in_memory=True)
+lakehouse = None
 inference_result_queue = asyncio.Queue(maxsize=BATCH_SIZE)
 inference_feedback_queue = asyncio.Queue(maxsize=BATCH_SIZE)
 inference_result_last_flush = asyncio.get_event_loop().time()
 inference_feedback_last_flush = asyncio.get_event_loop().time()
 
 
-async def flush_inference_result_queue(schema: str):
+def get_lakehouse() -> Lakehouse:
     global lakehouse
 
+    if lakehouse is None:
+        lakehouse = Lakehouse(in_memory=True)
+
+    return lakehouse
+
+
+async def flush_inference_result_queue(schema: str):
     inference_results = []
 
     while not inference_result_queue.empty():
         inference_results.append(inference_result_queue.get_nowait())
 
     if len(inference_results) > 0:
-        lakehouse.ml_inference_insert_results(schema, inference_results)
+        get_lakehouse().ml_inference_insert_results(schema, inference_results)
 
 
 async def flush_inference_feedback_queue(schema: str):
-    global lakehouse
-
     inference_feedback = []
 
     while not inference_feedback_queue.empty():
         inference_feedback.append(inference_feedback_queue.get_nowait())
 
     if len(inference_feedback) > 0:
-        lakehouse.ml_inference_append_feedback(schema, inference_feedback)
+        get_lakehouse().ml_inference_append_feedback(schema, inference_feedback)
 
 
 async def inference_result_consumer_loop(schema: str):

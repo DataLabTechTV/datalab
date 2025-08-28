@@ -24,6 +24,9 @@ ds_dd_monitor_url := "https://huggingface.co/datasets/joangaes/depression"
 # Common
 # ======
 
+default:
+    just -l
+
 check-dlctl:
     which {{dlctl}} && test -x $(which {{dlctl}})
 
