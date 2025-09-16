@@ -14,3 +14,15 @@ pm_token_secret = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 # ---------------------
 
 pm_host_private_key_path = "~/.ssh/proxmox"
+
+# =====
+# MinIO
+# =====
+
+minio_user = "admin"
+
+minio_buckets = [
+  "sandbox",
+  "lakehouse",
+  "terraform",
+]

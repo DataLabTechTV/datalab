@@ -3,6 +3,11 @@ resource "random_password" "minio_container" {
   special = false
 }
 
+resource "random_password" "minio_admin" {
+  length  = 20
+  special = false
+}
+
 resource "tls_private_key" "minio_container" {
   algorithm = "ED25519"
 }
@@ -18,6 +23,7 @@ resource "proxmox_virtual_environment_download_file" "ubuntu_24_04_vztmpl" {
 resource "proxmox_virtual_environment_container" "container" {
   node_name = var.pm_node
   vm_id     = 101
+  tags      = ["foundation"]
 
   start_on_boot = true
   unprivileged  = true
@@ -79,13 +85,22 @@ resource "proxmox_virtual_environment_container" "container" {
   }
 
   provisioner "file" {
+    content = <<-EOF
+    export MINIO_ROOT_USER='${var.minio_user}'
+    export MINIO_ROOT_PASSWORD='${random_password.minio_admin.result}'
+    export MINIO_DATA_DIR='${self.mount_point[0].path}'
+    export MINIO_DEFAULT_BUCKETS='${join(" ", var.minio_buckets)}'
+    EOF
+
+    destination = "/root/config.envrc"
+  }
+
+  provisioner "file" {
     source      = "scripts/install_minio.sh"
     destination = "/root/install_minio.sh"
   }
 
   provisioner "remote-exec" {
-    inline = [
-      "sh /root/install_minio.sh",
-    ]
+    inline = ["sh /root/install_minio.sh"]
   }
 }

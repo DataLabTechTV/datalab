@@ -46,3 +46,18 @@ variable "pm_host_private_key_path" {
   description = "Path to the SSH private key used to access Proxmox VE"
   default     = "~/.ssh/proxmox"
 }
+
+# =====
+# MinIO
+# =====
+
+variable "minio_user" {
+  type        = string
+  description = "MinIO root username"
+  default     = "admin"
+}
+
+variable "minio_buckets" {
+  type        = list(string)
+  description = "MinIO default buckets"
+}

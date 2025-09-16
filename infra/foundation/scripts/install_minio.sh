@@ -1,14 +1,11 @@
 #!/bin/sh
 
-# Configurations
+# External configurations
+. /root/config.envrc
+
+# Internal configurations
 USER=minio
 GROUP=minio
-
-MINIO_ROOT_USER=minioadmin
-MINIO_ROOT_PASSWORD=minioadmin
-MINIO_DATA_DIR=/data
-
-MINIO_DEFAULT_BUCKETS="terraform lakehouse sandbox"
 
 # Install dependencies
 apt-get update && apt-get install -y wget sudo
