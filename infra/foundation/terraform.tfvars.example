@@ -1,0 +1,16 @@
+# ===================
+# Proxmox: Hypervisor
+# ===================
+
+pm_endpoint     = "https://proxmox:8006"
+pm_insecure     = true
+pm_node         = "pve"
+pm_user         = "terraform"
+pm_token_id     = "datalabtech"
+pm_token_secret = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+
+# ---------------------
+# Proxmox: Host Machine
+# ---------------------
+
+pm_host_private_key_path = "~/.ssh/proxmox"

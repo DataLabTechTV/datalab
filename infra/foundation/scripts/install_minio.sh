@@ -1,0 +1,54 @@
+#!/bin/sh
+
+# Configurations
+USER=minio
+GROUP=minio
+
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin
+MINIO_DATA_DIR=/data
+
+MINIO_DEFAULT_BUCKETS="terraform lakehouse sandbox"
+
+# Install dependencies
+apt-get update && apt-get install -y wget sudo
+
+# Download MinIO
+wget https://dl.min.io/server/minio/release/linux-amd64/minio -O /usr/local/bin/minio
+wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/local/bin/mc
+chmod +x /usr/local/bin/minio /usr/local/bin/mc
+
+# Create directories & user
+mkdir /etc/minio
+id -u $USER 2>/dev/null || useradd -r -s /sbin/nologin $USER
+chown -R $USER:$GROUP $MINIO_DATA_DIR /etc/minio
+
+# Environment file
+echo "MINIO_ROOT_USER=$MINIO_ROOT_USER" > /etc/minio/minio.env
+echo "MINIO_ROOT_PASSWORD=$MINIO_ROOT_PASSWORD" >> /etc/minio/minio.env
+
+# Systemd service
+cat > /etc/systemd/system/minio.service <<EOF
+[Unit]
+Description=MinIO
+After=network.target
+
+[Service]
+User=$USER
+Group=$GROUP
+EnvironmentFile=/etc/minio/minio.env
+ExecStart=/usr/local/bin/minio server $MINIO_DATA_DIR
+Restart=always
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Enable & start MinIO
+systemctl daemon-reload
+systemctl enable --now minio
+
+# Create default buckets
+mc alias set local http://127.0.0.1:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+for bucket in $MINIO_DEFAULT_BUCKETS; do mc mb local/$bucket; done
