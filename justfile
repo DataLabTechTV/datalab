@@ -1,5 +1,7 @@
 set dotenv-load
 
+set shell := ["bash", "-uc"]
+
 dlctl := "dlctl"
 
 # =======
@@ -189,16 +191,65 @@ mlops-all: mlops-etl mlops-train
 # Data Lab Infra
 # ==============
 
+infra-config-check-terraform:
+    @echo -n "Checking terraform... "
+    @which terraform >/dev/null && test -x $(which terraform) \
+        || (echo "failed (terraform not found)"; exit 1)
+    @echo ok
+
+infra-config-check-foundation:
+    @echo -n "Checking foundation configs... "
+    @test -f infra/foundation/terraform.tfvars \
+        || (echo "failed (terraform.tfvars: not found)"; exit 1)
+    @echo ok
+
+infra-config-check-platform:
+    @echo -n "Checking platform configs... "
+    @test -f infra/platform/terraform.tfvars \
+        || (echo "failed: terraform.tfvars not found"; exit 1)
+    @test -f infra/platform/state.config \
+        || (echo "state.config: not found"; exit 2)
+    @echo ok
+
 infra-config-check: infra-config-check-terraform \
     infra-config-check-foundation \
     infra-config-check-platform
 
-infra-config-check-terraform:
-    which terraform && test -x $(which terraform)
+infra-foundation-init:
+    terraform -chdir=infra/foundation init
 
-infra-config-check-foundation:
-    test -f infra/foundation/terraform.tfvars
+infra-platform-init:
+    terraform -chdir=infra/platform init -backend-config=state.config
 
-infra-config-check-platform:
-    test -f infra/platform/terraform.tfvars
-    test -f infra/platform/state.config
+infra-init: infra-config-check infra-foundation-init infra-platform-init
+
+infra-deploy-foundation:
+    terraform -chdir=infra/foundation apply
+
+infra-deploy-platform:
+    terraform -chdir=infra/platform apply
+
+infra-deploy: infra-deploy-foundation infra-deploy-platform
+
+infra-show-credentials-foundation:
+    @terraform -chdir=infra/foundation output -json \
+        | jq -r 'to_entries[] \
+        | select(.value.sensitive==true) \
+        | "\(.key) = \(.value.value)"'
+
+infra-show-credentials-platform:
+    @terraform -chdir=infra/platform output -json \
+        | jq -r 'to_entries[] \
+        | select(.value.sensitive==true) \
+        | "\(.key) = \(.value.value)"'
+
+infra-show-credentials:
+    @echo "=========="
+    @echo "Foundation"
+    @echo "=========="
+    @just infra-show-credentials-foundation
+    @echo
+    @echo "========"
+    @echo "Platform"
+    @echo "========"
+    @just infra-show-credentials-platform
