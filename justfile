@@ -2,9 +2,11 @@ set dotenv-load
 
 dlctl := "dlctl"
 
+# =======
 # Configs
 # =======
 
+# ------
 # Global
 # ------
 
@@ -13,6 +15,7 @@ init_sql_path := join(local_dir, "init.sql")
 
 engine_db_path := join(local_dir, env_var("ENGINE_DB"))
 
+# --------
 # Datasets
 # --------
 
@@ -21,6 +24,7 @@ ds_msdsl_url := "https://www.kaggle.com/datasets/undefinenull/million-song-datas
 ds_dd_url := "https://huggingface.co/datasets/ShreyaR/DepressionDetection"
 ds_dd_monitor_url := "https://huggingface.co/datasets/joangaes/depression"
 
+# ======
 # Common
 # ======
 
@@ -37,6 +41,7 @@ check-curl:
     which curl
 
 
+# ========
 # DuckLake
 # ========
 
@@ -53,6 +58,7 @@ lakehouse: check-duckdb check-init-sql check-engine-db
     duckdb -init {{init_sql_path}} {{engine_db_path}}
 
 
+# ====================
 # GraphRAG with KùzuDB
 # ====================
 
@@ -72,6 +78,7 @@ graphrag: check-dlctl
 graphrag-all: graphrag-etl graphrag-embeddings graphrag
 
 
+# =============================
 # Economic Competition Networks
 # =============================
 
@@ -95,6 +102,7 @@ econ-compnet-scoring: check-dlctl
 econ-compnet-all: econ-compnet-etl econ-compnet-scoring
 
 
+# ===================================================
 # MLOps: A/B Testing with MLflow, Kafka, and DuckLake
 # ===================================================
 
@@ -175,3 +183,22 @@ mlops-monitor-plot: check-dlctl
         --model-uri "models:/dd_logreg_tfidf/latest"
 
 mlops-all: mlops-etl mlops-train
+
+
+# ==============
+# Data Lab Infra
+# ==============
+
+infra-config-check: infra-config-check-terraform \
+    infra-config-check-foundation \
+    infra-config-check-platform
+
+infra-config-check-terraform:
+    which terraform && test -x $(which terraform)
+
+infra-config-check-foundation:
+    test -f infra/foundation/terraform.tfvars
+
+infra-config-check-platform:
+    test -f infra/platform/terraform.tfvars
+    test -f infra/platform/state.config
