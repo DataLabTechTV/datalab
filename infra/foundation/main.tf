@@ -20,7 +20,7 @@ resource "proxmox_virtual_environment_download_file" "ubuntu_24_04_vztmpl" {
   url = "http://download.proxmox.com/images/system/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
 }
 
-resource "proxmox_virtual_environment_container" "container" {
+resource "proxmox_virtual_environment_container" "minio" {
   node_name = var.pm_node
   vm_id     = 101
   tags      = ["foundation"]
