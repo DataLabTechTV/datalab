@@ -34,7 +34,7 @@ After=network.target
 User=$USER
 Group=$GROUP
 EnvironmentFile=/etc/minio/minio.env
-ExecStart=/usr/local/bin/minio server $MINIO_DATA_DIR
+ExecStart=/usr/local/bin/minio server $MINIO_DATA_DIR --console-address ":9001"
 Restart=always
 LimitNOFILE=65536
 
