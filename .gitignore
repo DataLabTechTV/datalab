@@ -9,7 +9,7 @@ history.txt
 # Terraform
 .terraform/
 *.tfstate
-*.tfstate.backup
+*.tfstate*.backup
 *.tfvars
 state.config
 
