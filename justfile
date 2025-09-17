@@ -231,25 +231,22 @@ infra-deploy-platform:
 
 infra-deploy: infra-deploy-foundation infra-deploy-platform
 
-infra-show-credentials-foundation:
-    @terraform -chdir=infra/foundation output -json \
+infra-show-tf-credentials layer:
+    @[[ " foundation platform " == *" {{layer}} "* ]] \
+        || (echo "{{layer}}: invalid layer"; exit 1)
+    @terraform -chdir=infra/{{layer}} output -json \
         | jq -r 'to_entries[] \
         | select(.value.sensitive==true) \
         | "\(.key) = \(.value.value)"'
 
-infra-show-credentials-platform:
-    @terraform -chdir=infra/platform output -json \
-        | jq -r 'to_entries[] \
-        | select(.value.sensitive==true) \
-        | "\(.key) = \(.value.value)"'
-
-infra-show-credentials:
+infra-show-credentials: infra-config-check
+    @echo
     @echo "=========="
     @echo "Foundation"
     @echo "=========="
-    @just infra-show-credentials-foundation
+    @just infra-show-tf-credentials foundation
     @echo
     @echo "========"
     @echo "Platform"
     @echo "========"
-    @just infra-show-credentials-platform
+    @just infra-show-tf-credentials platform
