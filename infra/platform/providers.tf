@@ -15,3 +15,5 @@ provider "random" {}
 provider "null" {}
 
 provider "local" {}
+
+provider "http" {}
