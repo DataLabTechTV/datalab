@@ -92,6 +92,7 @@ resource "proxmox_virtual_environment_vm" "docker" {
 
   node_name = var.pm_node
   vm_id     = local.docker[count.index].vm_id
+  tags      = ["l2-platform"]
 
   agent {
     enabled = true

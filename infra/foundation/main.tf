@@ -23,7 +23,7 @@ resource "proxmox_virtual_environment_download_file" "ubuntu_24_04_vztmpl" {
 resource "proxmox_virtual_environment_container" "minio" {
   node_name = var.pm_node
   vm_id     = 101
-  tags      = ["foundation"]
+  tags      = ["l1-foundation"]
 
   start_on_boot = true
   unprivileged  = true
