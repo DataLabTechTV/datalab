@@ -62,6 +62,10 @@ resource "proxmox_virtual_environment_download_file" "ubuntu_24_04_qcow2" {
   file_name = "ubuntu-24.04-noble-server-cloudimg-amd64.img"
 }
 
+data "http" "docker_gpg" {
+  url = "https://download.docker.com/linux/ubuntu/gpg"
+}
+
 resource "proxmox_virtual_environment_file" "docker" {
   count = length(local.docker)
 
@@ -74,13 +78,36 @@ resource "proxmox_virtual_environment_file" "docker" {
     #cloud-config
     hostname: "${local.docker[count.index].name}"
     password: "${random_password.docker_vm[count.index].result}"
+    chpasswd:
+      expire: false
     ssh_pwauth: true
+    apt:
+      sources:
+        docker:
+          source: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu noble stable"
+          key: | ${data.http.docker_gpg.response_body}
     package_update: true
     package_upgrade: true
     packages:
       - qemu-guest-agent
+      - docker-ce
+    write_files:
+      - path: /etc/docker/daemon.json
+        content: |
+          {
+            "data-root": "/data/docker"
+          }
+        owner: 'root:root'
+        permissions: '0644'
     runcmd:
       - systemctl enable --now qemu-guest-agent
+      - netplan apply
+      - mkfs.ext4 -L DATA /dev/vdb
+      - mkdir -p /data
+      - mount -L DATA /data
+      - echo 'LABEL=DATA /data ext4 defaults 0 2' >> /etc/fstab
+      - systemctl restart docker
+      - reboot
     EOF
 
     file_name = "${local.docker[count.index].name}.cloud-config.yaml"
@@ -139,11 +166,5 @@ resource "proxmox_virtual_environment_vm" "docker" {
     }
 
     user_data_file_id = proxmox_virtual_environment_file.docker[count.index].id
-  }
-
-  lifecycle {
-    ignore_changes = [
-      disk[1],
-    ]
   }
 }
