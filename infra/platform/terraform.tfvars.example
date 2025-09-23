@@ -14,3 +14,12 @@ pm_token_secret = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 # ---------------------
 
 pm_host_private_key_path = "~/.ssh/proxmox"
+
+# ======
+# GitLab
+# ======
+
+# INFO: see GitLab section on variables.tf for more options
+
+s3_access_key = "admin"
+s3_secret_key = "XXXXXXXXXX"
