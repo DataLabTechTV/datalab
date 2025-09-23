@@ -1,5 +1,5 @@
-output "minio_container_password" {
-  value     = random_password.minio_container.result
+output "minio_ct_password" {
+  value     = random_password.minio_ct.result
   sensitive = true
 }
 

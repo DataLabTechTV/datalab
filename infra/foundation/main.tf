@@ -1,4 +1,4 @@
-resource "random_password" "minio_container" {
+resource "random_password" "minio_ct" {
   length  = 20
   special = false
 }
@@ -8,7 +8,7 @@ resource "random_password" "minio_admin" {
   special = false
 }
 
-resource "tls_private_key" "minio_container" {
+resource "tls_private_key" "minio_ct" {
   algorithm = "ED25519"
 }
 
@@ -28,10 +28,6 @@ resource "proxmox_virtual_environment_container" "minio" {
   start_on_boot = true
   unprivileged  = true
 
-  features {
-    nesting = true
-  }
-
   cpu {
     cores = 2
   }
@@ -46,14 +42,7 @@ resource "proxmox_virtual_environment_container" "minio" {
 
   disk {
     datastore_id = "local-lvm"
-    size         = 20
-  }
-
-  mount_point {
-    volume = "local-lvm"
-    path   = "/data"
-    size   = "100G"
-    backup = true
+    size         = 200
   }
 
   operating_system {
@@ -71,8 +60,8 @@ resource "proxmox_virtual_environment_container" "minio" {
     }
 
     user_account {
-      keys     = [trimspace(tls_private_key.minio_container.public_key_openssh)]
-      password = random_password.minio_container.result
+      keys     = [trimspace(tls_private_key.minio_ct.public_key_openssh)]
+      password = random_password.minio_ct.result
     }
   }
 
@@ -80,7 +69,7 @@ resource "proxmox_virtual_environment_container" "minio" {
     agent       = false
     type        = "ssh"
     user        = "root"
-    private_key = trimspace(tls_private_key.minio_container.private_key_openssh)
+    private_key = trimspace(tls_private_key.minio_ct.private_key_openssh)
     host        = self.initialization[0].hostname
   }
 
@@ -88,7 +77,7 @@ resource "proxmox_virtual_environment_container" "minio" {
     content = <<-EOF
     export MINIO_ROOT_USER='${var.minio_user}'
     export MINIO_ROOT_PASSWORD='${random_password.minio_admin.result}'
-    export MINIO_DATA_DIR='${self.mount_point[0].path}'
+    export MINIO_DATA_DIR='/data/minio'
     export MINIO_DEFAULT_BUCKETS='${join(" ", var.minio_buckets)}'
     EOF
 
@@ -102,5 +91,9 @@ resource "proxmox_virtual_environment_container" "minio" {
 
   provisioner "remote-exec" {
     inline = ["sh /root/install_minio.sh"]
+  }
+
+  lifecycle {
+    # prevent_destroy = true
   }
 }

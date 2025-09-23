@@ -16,11 +16,13 @@ wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/local/bin/mc
 chmod +x /usr/local/bin/minio /usr/local/bin/mc
 
 # Create directories & user
-mkdir /etc/minio
 id -u $USER 2>/dev/null || useradd -r -s /sbin/nologin $USER
-chown -R $USER:$GROUP $MINIO_DATA_DIR /etc/minio
+mkdir -p $MINIO_DATA_DIR
+chown -R $USER:$GROUP $MINIO_DATA_DIR
 
 # Environment file
+mkdir /etc/minio
+chown -R $USER:$GROUP /etc/minio
 echo "MINIO_ROOT_USER=$MINIO_ROOT_USER" > /etc/minio/minio.env
 echo "MINIO_ROOT_PASSWORD=$MINIO_ROOT_PASSWORD" >> /etc/minio/minio.env
 
