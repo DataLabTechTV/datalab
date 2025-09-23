@@ -1,0 +1,111 @@
+locals {
+  gitlab = {
+    name  = "gitlab"
+    vm_id = 201
+    cores = 1
+    memory = {
+      dedicated = 6144
+      floating  = 2048
+    }
+    size = 200
+  }
+}
+
+resource "random_password" "gitlab_vm" {
+  length  = 20
+  special = false
+}
+
+resource "random_password" "gitlab_admin" {
+  length  = 20
+  special = false
+}
+
+resource "proxmox_virtual_environment_file" "gitlab_cfg" {
+  content_type = "snippets"
+  datastore_id = "local"
+  node_name    = var.pm_node
+
+  source_raw {
+    data = <<-EOF
+    #cloud-config
+    hostname: ${local.gitlab.name}
+    password: "${random_password.gitlab_vm.result}"
+    chpasswd:
+      expire: false
+    ssh_pwauth: true
+    package_update: true
+    package_upgrade: true
+    packages:
+      - qemu-guest-agent
+      - curl
+    write_files:
+      - path: /etc/gitlab/gitlab-env
+        content: |
+          EXTERNAL_URL="http://${local.gitlab.name}"
+          GITLAB_ROOT_PASSWORD="${random_password.gitlab_admin.result}"
+        owner: 'root:root'
+        permissions: '0600'
+    runcmd:
+      - systemctl enable --now qemu-guest-agent
+      - netplan apply
+      - curl "https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh" | sudo bash
+      - apt install -y gitlab-ce
+      - . /etc/gitlab/gitlab-env && gitlab-ctl reconfigure
+      - reboot
+    EOF
+
+    file_name = "${local.gitlab.name}.cloud-config.yaml"
+  }
+}
+
+resource "proxmox_virtual_environment_vm" "gitlab" {
+  node_name = var.pm_node
+  vm_id     = local.gitlab.vm_id
+  tags      = ["l2-platform"]
+
+  agent {
+    enabled = true
+  }
+
+  cpu {
+    cores = local.gitlab.cores
+    type  = "x86-64-v2-AES"
+  }
+
+  memory {
+    dedicated = local.gitlab.memory.dedicated
+    floating  = local.gitlab.memory.floating
+  }
+
+  network_device {
+    bridge = "vmbr0"
+  }
+
+  disk {
+    datastore_id = "local-lvm"
+    interface    = "virtio0"
+    size         = local.gitlab.size
+    file_id      = proxmox_virtual_environment_download_file.ubuntu_24_04_qcow2.id
+  }
+
+  operating_system {
+    type = "l26"
+  }
+
+  name = "gitlab"
+
+  initialization {
+    ip_config {
+      ipv4 {
+        address = "dhcp"
+      }
+    }
+
+    user_data_file_id = proxmox_virtual_environment_file.gitlab_cfg.id
+  }
+
+  lifecycle {
+    # prevent_destroy = true
+  }
+}
