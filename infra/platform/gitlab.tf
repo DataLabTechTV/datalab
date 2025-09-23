@@ -44,11 +44,7 @@ resource "proxmox_virtual_environment_file" "gitlab_cfg" {
         content: |
           external_url 'http://${local.gitlab.name}'
           gitlab_rails['initial_root_password'] = '${random_password.gitlab_root.result}'
-          gitlab_rails['omniauth_block_auto_created_users'] = true
-          gitlab_rails['initial_gitlab_product_usage_data'] = false
-          gitlab_rails['usage_ping_enabled'] = false
-          gitlab_rails['usage_ping_generation_enabled'] = false
-          gitlab_rails['include_optional_metrics_in_service_ping'] = false
+
           gitlab_rails['registry_enabled'] = true
           registry['database'] = {
             'enabled' => true,
@@ -71,6 +67,17 @@ resource "proxmox_virtual_environment_file" "gitlab_cfg" {
       - curl "https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh" | sudo bash
       - apt install -y gitlab-ce
       - gitlab-ctl reconfigure
+      - |
+        gitlab-rails console -e production <<EOT
+          s = ApplicationSetting.current
+          s.update!(
+            signup_enabled: false,
+            version_check_enabled: false,
+            usage_ping_enabled: false,
+            usage_ping_generation_enabled: false,
+            whats_new_variant: 'disabled'
+          )
+        EOT
       - reboot
     EOF
 
