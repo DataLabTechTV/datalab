@@ -16,7 +16,7 @@ resource "random_password" "gitlab_vm" {
   special = false
 }
 
-resource "random_password" "gitlab_admin" {
+resource "random_password" "gitlab_root" {
   length  = 20
   special = false
 }
@@ -40,10 +40,24 @@ resource "proxmox_virtual_environment_file" "gitlab_cfg" {
       - qemu-guest-agent
       - curl
     write_files:
-      - path: /etc/gitlab/gitlab-env
+      - path: /etc/gitlab/gitlab.rb
         content: |
-          EXTERNAL_URL="http://${local.gitlab.name}"
-          GITLAB_ROOT_PASSWORD="${random_password.gitlab_admin.result}"
+            external_url 'http://${local.gitlab.name}'
+            gitlab_rails['initial_root_password'] = '${random_password.gitlab_root.result}'
+            gitlab_rails['registry_enabled'] = true
+            registry['database'] = {
+                'enabled' => true,
+            }
+            registry['storage'] = {
+                's3_v2' => {
+                    'regionendpoint' => '${var.s3_endpoint}',
+                    'region' => '${var.s3_region}',
+                    'accesskey' => '${var.s3_access_key}',
+                    'secretkey' => '${var.s3_secret_key}',
+                    'pathstyle' => ${var.s3_path_style},
+                    'bucket' => '${var.gitlab_s3_registry_bucket}',
+                }
+            }
         owner: 'root:root'
         permissions: '0600'
     runcmd:

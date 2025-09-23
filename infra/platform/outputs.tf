@@ -18,7 +18,7 @@ output "gitlab_vm_password" {
   sensitive = true
 }
 
-output "gitlab_admin_password" {
-  value     = random_password.gitlab_admin.result
+output "gitlab_root_password" {
+  value     = random_password.gitlab_root.result
   sensitive = true
 }
