@@ -46,6 +46,9 @@ resource "proxmox_virtual_environment_file" "gitlab_cfg" {
           gitlab_rails['initial_root_password'] = '${random_password.gitlab_root.result}'
           gitlab_rails['omniauth_block_auto_created_users'] = true
           gitlab_rails['initial_gitlab_product_usage_data'] = false
+          gitlab_rails['usage_ping_enabled'] = false
+          gitlab_rails['usage_ping_generation_enabled'] = false
+          gitlab_rails['include_optional_metrics_in_service_ping'] = false
           gitlab_rails['registry_enabled'] = true
           registry['database'] = {
             'enabled' => true,
@@ -60,8 +63,8 @@ resource "proxmox_virtual_environment_file" "gitlab_cfg" {
               'bucket' => '${var.gitlab_s3_registry_bucket}',
             }
           }
-      owner: 'root:root'
-      permissions: '0600'
+        owner: 'root:root'
+        permissions: '0600'
     runcmd:
       - systemctl enable --now qemu-guest-agent
       - netplan apply
