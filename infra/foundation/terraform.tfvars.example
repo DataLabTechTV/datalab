@@ -25,4 +25,5 @@ minio_buckets = [
   "sandbox",
   "lakehouse",
   "terraform",
+  "gitlab",
 ]
