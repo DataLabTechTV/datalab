@@ -42,30 +42,32 @@ resource "proxmox_virtual_environment_file" "gitlab_cfg" {
     write_files:
       - path: /etc/gitlab/gitlab.rb
         content: |
-            external_url 'http://${local.gitlab.name}'
-            gitlab_rails['initial_root_password'] = '${random_password.gitlab_root.result}'
-            gitlab_rails['registry_enabled'] = true
-            registry['database'] = {
-                'enabled' => true,
+          external_url 'http://${local.gitlab.name}'
+          gitlab_rails['initial_root_password'] = '${random_password.gitlab_root.result}'
+          gitlab_rails['omniauth_block_auto_created_users'] = true
+          gitlab_rails['initial_gitlab_product_usage_data'] = false
+          gitlab_rails['registry_enabled'] = true
+          registry['database'] = {
+            'enabled' => true,
+          }
+          registry['storage'] = {
+            's3_v2' => {
+              'regionendpoint' => '${var.s3_endpoint}',
+              'region' => '${var.s3_region}',
+              'accesskey' => '${var.s3_access_key}',
+              'secretkey' => '${var.s3_secret_key}',
+              'pathstyle' => ${var.s3_path_style},
+              'bucket' => '${var.gitlab_s3_registry_bucket}',
             }
-            registry['storage'] = {
-                's3_v2' => {
-                    'regionendpoint' => '${var.s3_endpoint}',
-                    'region' => '${var.s3_region}',
-                    'accesskey' => '${var.s3_access_key}',
-                    'secretkey' => '${var.s3_secret_key}',
-                    'pathstyle' => ${var.s3_path_style},
-                    'bucket' => '${var.gitlab_s3_registry_bucket}',
-                }
-            }
-        owner: 'root:root'
-        permissions: '0600'
+          }
+      owner: 'root:root'
+      permissions: '0600'
     runcmd:
       - systemctl enable --now qemu-guest-agent
       - netplan apply
       - curl "https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh" | sudo bash
       - apt install -y gitlab-ce
-      - . /etc/gitlab/gitlab-env && gitlab-ctl reconfigure
+      - gitlab-ctl reconfigure
       - reboot
     EOF
 
