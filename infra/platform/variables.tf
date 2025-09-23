@@ -46,3 +46,45 @@ variable "pm_host_private_key_path" {
   description = "Path to the SSH private key used to access Proxmox VE"
   default     = "~/.ssh/proxmox"
 }
+
+# ===============
+# S3 Object Store
+# ===============
+
+variable "s3_access_key" {
+  type        = string
+  description = "S3 object store access key"
+}
+
+variable "s3_secret_key" {
+  type        = string
+  description = "S3 object store secret key"
+}
+
+variable "s3_region" {
+  type        = string
+  description = "S3 region"
+  default     = "eu-west-1"
+}
+
+variable "s3_endpoint" {
+  type        = string
+  description = "S3 object store endpoint URI"
+  default     = "http://minio:9000"
+}
+
+variable "s3_path_style" {
+  type        = bool
+  description = "S3 object store path style enable"
+  default     = true
+}
+
+# ======
+# GitLab
+# ======
+
+variable "gitlab_s3_registry_bucket" {
+  type        = string
+  description = "S3 object store bucket name for the GitLab container registry"
+  default     = "gitlab"
+}
