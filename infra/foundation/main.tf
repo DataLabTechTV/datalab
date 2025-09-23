@@ -94,6 +94,6 @@ resource "proxmox_virtual_environment_container" "minio" {
   }
 
   lifecycle {
-    # prevent_destroy = true
+    prevent_destroy = true
   }
 }
