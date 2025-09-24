@@ -41,14 +41,19 @@ resource "proxmox_virtual_environment_file" "gitlab_cfg" {
       - curl
     write_files:
       - path: /etc/gitlab/gitlab.rb
+        owner: 'root:root'
+        permissions: '0600'
         content: |
           external_url 'http://${local.gitlab.name}'
           gitlab_rails['initial_root_password'] = '${random_password.gitlab_root.result}'
 
           gitlab_rails['registry_enabled'] = true
+          registry_external_url 'http://${local.gitlab.name}:5050'
+
           registry['database'] = {
             'enabled' => true,
           }
+
           registry['storage'] = {
             's3_v2' => {
               'regionendpoint' => '${var.s3_endpoint}',
@@ -59,8 +64,6 @@ resource "proxmox_virtual_environment_file" "gitlab_cfg" {
               'bucket' => '${var.gitlab_s3_registry_bucket}',
             }
           }
-        owner: 'root:root'
-        permissions: '0600'
     runcmd:
       - systemctl enable --now qemu-guest-agent
       - netplan apply
@@ -78,6 +81,18 @@ resource "proxmox_virtual_environment_file" "gitlab_cfg" {
             whats_new_variant: 'disabled'
           )
         EOT
+      - curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh | sudo bash
+      - apt install -y gitlab-runner
+      - |
+        gitlab-runner register --non-interactive \
+          --url "http://${local.gitlab.name}/" \
+          --registration-token "$(gitlab-rails runner 'puts ApplicationSetting.current.runners_registration_token')" \
+          --executor "docker" \
+          --docker-image "ubuntu:latest" \
+          --description "ubuntu-latest-runner" \
+          --tag-list "docker,remote,ubuntu" \
+          --run-untagged="true" \
+          --docker-host "tcp://${local.docker[0].name}:2375"
       - reboot
     EOF
 
