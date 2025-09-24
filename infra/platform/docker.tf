@@ -69,6 +69,22 @@ resource "proxmox_virtual_environment_file" "docker_cfg" {
     packages:
       - qemu-guest-agent
       - docker-ce
+    write_files:
+      - path: /etc/systemd/system/docker.service.d/override.conf
+        owner: 'root:root'
+        permissions: '0600'
+        content: |
+          [Service]
+          ExecStart=
+          ExecStart=/usr/bin/dockerd
+      - path: /etc/docker/daemon.json
+        owner: 'root:root'
+        permissions: '0600'
+        content: |
+          {
+            "hosts": ["fd://", "tcp://0.0.0.0:2375"],
+            "containerd": "/run/containerd/containerd.sock"
+          }
     runcmd:
       - systemctl enable --now qemu-guest-agent
       - netplan apply
