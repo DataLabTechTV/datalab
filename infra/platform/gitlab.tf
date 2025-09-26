@@ -147,6 +147,6 @@ resource "proxmox_virtual_environment_vm" "gitlab" {
   }
 
   lifecycle {
-    # prevent_destroy = true
+    prevent_destroy = true
   }
 }
