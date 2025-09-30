@@ -19,6 +19,7 @@ locals {
         floating  = 12288
       }
       size = 200
+      gpu  = true
     },
     {
       name  = "docker-apps"
@@ -96,6 +97,32 @@ resource "proxmox_virtual_environment_file" "docker_cfg" {
   }
 }
 
+resource "proxmox_virtual_environment_hardware_mapping_pci" "gpu_vga" {
+  name = "gpu_vga"
+  map = [
+    {
+      node         = var.pm_node
+      path         = "0000:01:00.0"
+      id           = "10de:1f15"
+      subsystem_id = "17aa:3a47"
+      iommu_group  = 10
+    }
+  ]
+}
+
+resource "proxmox_virtual_environment_hardware_mapping_pci" "gpu_audio" {
+  name = "gpu_audio"
+  map = [
+    {
+      node         = var.pm_node,
+      path         = "0000:01:00.1",
+      id           = "10de:10f9",
+      subsystem_id = "10de:10f9"
+      iommu_group  = 10
+    }
+  ]
+}
+
 resource "proxmox_virtual_environment_vm" "docker" {
   count = length(local.docker)
 
@@ -130,6 +157,21 @@ resource "proxmox_virtual_environment_vm" "docker" {
 
   operating_system {
     type = "l26"
+  }
+
+  machine = try(local.docker[count.index].gpu, false) ? "q35" : "pc"
+
+  dynamic "hostpci" {
+    for_each = try(local.docker[count.index].gpu, false) ? [
+      proxmox_virtual_environment_hardware_mapping_pci.gpu_vga.name,
+      proxmox_virtual_environment_hardware_mapping_pci.gpu_audio.name
+    ] : []
+
+    content {
+      device  = "hostpci${hostpci.key}"
+      mapping = hostpci.value
+      pcie    = true
+    }
   }
 
   name = local.docker[count.index].name
