@@ -78,6 +78,16 @@ services:
       '
     restart: no
 
+  open-webui:
+    image: openeuler/open-webui:0.1.108-oe2403sp1
+    ports:
+      - "8080:8080"
+    networks:
+      - ollama
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
   mlflow:
     build:
       context: ./mlflow
@@ -178,11 +188,12 @@ services:
   portainer:
     image: portainer/portainer-ce:2.33.2
     ports:
-      - 9443:9443
+      - 9000:9000
     volumes:
       - portainer:/data
     networks:
       - portainer
+    restart: unless-stopped
 
 volumes:
   minio:
