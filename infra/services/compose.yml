@@ -1,6 +1,8 @@
 services:
   minio:
-    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    profiles:
+      - dev
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -19,7 +21,9 @@ services:
     command: server /data --console-address ":9001"
 
   minio-init:
-    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    profiles:
+      - dev
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
     networks:
       - minio
     depends_on:
@@ -33,7 +37,7 @@ services:
     restart: no
 
   ollama:
-    image: ollama/ollama
+    image: ollama/ollama:0.12.3
     ports:
       - "11434:11434"
     volumes:
@@ -54,7 +58,7 @@ services:
     restart: unless-stopped
 
   ollama-init:
-    image: alpine/curl:latest
+    image: alpine/curl:8.14.1
     networks:
       - ollama
     depends_on:
@@ -76,7 +80,7 @@ services:
 
   mlflow:
     build:
-      context: ./docker/mlflow
+      context: ./mlflow
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
@@ -171,14 +175,25 @@ services:
         '
     restart: no
 
+  portainer:
+    image: portainer/portainer-ce:2.33.2
+    ports:
+      - 9443:9443
+    volumes:
+      - portainer:/data
+    networks:
+      - portainer
+
 volumes:
   minio:
   ollama:
   mlflow:
   kafka:
+  portainer:
 
 networks:
   ollama:
   minio:
   mlflow:
   kafka:
+  portainer:
