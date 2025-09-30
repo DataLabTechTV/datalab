@@ -256,10 +256,17 @@ infra-provision-platform: infra-config-check-platform
 
 infra-provision-services: infra-config-check-services
     #!/bin/bash
+    echo "==> Saving current docker context..."
     meta_file=$(mktemp)
     docker context show > $meta_file
+
+    echo "==> Switching to docker context: {{docker_shared_context}}..."
     docker context use {{docker_shared_context}}
+
+    echo "==> Provisioning docker compose stack..."
     docker compose -p datalab -f infra/services/compose.yml up -d
+
+    echo "==> Switching back to original docker context: $(cat $meta_file)"
     docker context use $(cat $meta_file)
     rm -f $meta_file
 
@@ -281,7 +288,21 @@ infra-destroy-platform:
     terraform -chdir=infra/platform destroy
 
 infra-destroy-services:
+    #!/bin/bash
+    echo "==> Saving current docker context..."
+    meta_file=$(mktemp)
+    docker context show > $meta_file
+
+    echo "==> Switching to docker context: {{docker_shared_context}}..."
+    docker context use {{docker_shared_context}}
+
+    echo "==> Destroying docker compose stack..."
     docker compose -p datalab -f infra/services/compose.yml down -v
+
+    echo "==> Switching back to original docker context: $(cat $meta_file)"
+    docker context use $(cat $meta_file)
+    rm -f $meta_file
+
 
 infra-destroy-all: infra-destroy-services \
     infra-destroy-platform \
