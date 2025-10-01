@@ -255,14 +255,14 @@ infra-provision-platform: infra-config-check-platform
     terraform -chdir=infra/platform apply
 
 infra-provision-services: infra-config-check-services
-    docker -c {{docker_shared_context}} compose -p datalab -f infra/services/compose.yml up -d
+    docker -c {{docker_shared_context}} compose -p datalab -f infra/services/docker/compose.yml up -d
 
 infra-provision-all: infra-provision-foundation \
     infra-provision-platform \
     infra-provision-services
 
 infra-provision-local:
-    docker compose -p datalab -f infra/services/compose.yml --profile dev up -d
+    docker compose -p datalab -f infra/services/docker/compose.yml --profile dev up -d
 
 # -----------
 # Destruction
@@ -275,14 +275,14 @@ infra-destroy-platform:
     terraform -chdir=infra/platform destroy
 
 infra-destroy-services:
-    docker -c {{docker_shared_context}} compose -p datalab -f infra/services/compose.yml down -v
+    docker -c {{docker_shared_context}} compose -p datalab -f infra/services/docker/compose.yml down -v
 
 infra-destroy-all: infra-destroy-services \
     infra-destroy-platform \
     infra-destroy-foundation
 
 infra-destroy-local:
-    docker compose -p datalab -f infra/services/compose.yml --profile dev down -v
+    docker compose -p datalab -f infra/services/docker/compose.yml --profile dev down -v
 
 # ---------
 # Utilities
