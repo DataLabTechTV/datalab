@@ -177,6 +177,6 @@ resource "proxmox_virtual_environment_vm" "docker" {
   }
 
   lifecycle {
-    # prevent_destroy = true
+    prevent_destroy = true
   }
 }
