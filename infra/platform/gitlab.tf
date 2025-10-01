@@ -2,10 +2,10 @@ locals {
   gitlab = {
     name  = "gitlab"
     vm_id = 201
-    cores = 1
+    cores = 2
     memory = {
       dedicated = 6144
-      floating  = 2048
+      floating  = 4096
     }
     size = 200
   }

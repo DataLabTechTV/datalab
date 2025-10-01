@@ -28,7 +28,7 @@ locals {
       vm_id = 204
       cores = 2
       memory = {
-        dedicated = 12288
+        dedicated = 10240
         floating  = 4096
       }
       size = 100
