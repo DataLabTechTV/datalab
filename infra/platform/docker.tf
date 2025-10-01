@@ -1,4 +1,6 @@
 locals {
+  nvidia_driver_version = "580.82.09"
+
   docker = [
     {
       name  = "docker-gitlab"
@@ -44,6 +46,28 @@ data "http" "docker_gpg" {
   url = "https://download.docker.com/linux/ubuntu/gpg"
 }
 
+locals {
+  docker_nvidia_install_cmds = <<-EOT
+  - ls /boot/vmlinuz-* | sort | tail -n1 | cut -d- -f2- > /run/nvidia-kernel-name
+  - apt update && apt install -y build-essential dkms linux-headers-$(cat /run/nvidia-kernel-name)
+  - wget https://us.download.nvidia.com/XFree86/Linux-x86_64/${local.nvidia_driver_version}/NVIDIA-Linux-x86_64-${local.nvidia_driver_version}.run
+  - sh NVIDIA-Linux-x86_64-${local.nvidia_driver_version}.run --silent --dkms --kernel-name=$(cat /run/nvidia-kernel-name)
+  - |
+    cat <<EOF >>/etc/modules-load.d/modules.conf
+    nvidia
+    nvidia-modeset
+    nvidia_uvm
+    EOF
+  - update-initramfs -u
+  - |
+    cat <<EOF >>/etc/udev/rules.d/70-nvidia.rules
+    KERNEL=="nvidia", RUN+="/bin/bash -c '/usr/bin/nvidia-smi -L && /bin/chmod 666 /dev/nvidia*'"
+    KERNEL=="nvidia_modeset", RUN+="/bin/bash -c '/usr/bin/nvidia-modprobe -c0 -m && /bin/chmod 666 /dev/nvidia-modeset*'"
+    KERNEL=="nvidia_uvm", RUN+="/bin/bash -c '/usr/bin/nvidia-modprobe -c0 -u && /bin/chmod 666 /dev/nvidia-uvm*'"
+    EOF
+  EOT
+}
+
 resource "proxmox_virtual_environment_file" "docker_cfg" {
   count = length(local.docker)
 
@@ -52,46 +76,12 @@ resource "proxmox_virtual_environment_file" "docker_cfg" {
   node_name    = var.pm_node
 
   source_raw {
-    data = <<-EOF
-    #cloud-config
-    hostname: "${local.docker[count.index].name}"
-    password: "${random_password.docker_vm[count.index].result}"
-    chpasswd:
-      expire: false
-    ssh_pwauth: true
-    apt:
-      sources:
-        docker:
-          source: "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/docker.gpg] https://download.docker.com/linux/ubuntu noble stable"
-          key: |
-            ${indent(8, chomp(data.http.docker_gpg.response_body))}
-    package_update: true
-    package_upgrade: true
-    packages:
-      - qemu-guest-agent
-      - docker-ce
-    write_files:
-      - path: /etc/systemd/system/docker.service.d/override.conf
-        owner: 'root:root'
-        permissions: '0600'
-        content: |
-          [Service]
-          ExecStart=
-          ExecStart=/usr/bin/dockerd
-      - path: /etc/docker/daemon.json
-        owner: 'root:root'
-        permissions: '0600'
-        content: |
-          {
-            "hosts": ["fd://", "tcp://0.0.0.0:2375"],
-            "containerd": "/run/containerd/containerd.sock"
-          }
-    runcmd:
-      - systemctl enable --now qemu-guest-agent
-      - netplan apply
-      - usermod -aG docker ubuntu
-      - reboot
-    EOF
+    data = templatefile("templates/docker.cloud-config.tftpl", {
+      hostname       = local.docker[count.index].name
+      password       = random_password.docker_vm[count.index].result
+      docker_gpg_key = data.http.docker_gpg.response_body,
+      extra_cmds     = try(local.docker[count.index].gpu, false) ? local.docker_nvidia_install_cmds : ""
+    })
 
     file_name = "${local.docker[count.index].name}.cloud-config.yaml"
   }
@@ -187,6 +177,6 @@ resource "proxmox_virtual_environment_vm" "docker" {
   }
 
   lifecycle {
-    prevent_destroy = true
+    # prevent_destroy = true
   }
 }
