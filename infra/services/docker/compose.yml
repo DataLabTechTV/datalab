@@ -82,6 +82,8 @@ services:
     image: openeuler/open-webui:0.1.108-oe2403sp1
     ports:
       - "8080:8080"
+    volumes:
+      - open-webui:/app/backend/data
     networks:
       - ollama
     depends_on:
@@ -198,6 +200,7 @@ services:
 volumes:
   minio:
   ollama:
+  open-webui:
   mlflow:
   kafka:
   portainer:
