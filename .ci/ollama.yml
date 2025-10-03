@@ -1,0 +1,15 @@
+spec:
+  inputs:
+    pull:
+      description: "Pull Ollama model"
+      type: string
+
+---
+
+ollama_pull:
+  stage: ollama
+  script:
+    - 'echo "Model: $[[ inputs.pull ]]"'
+  rules:
+    - if: '"$[[ inputs.pull ]]" != ""'
+    - when: never

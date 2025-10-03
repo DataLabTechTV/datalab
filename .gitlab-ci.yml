@@ -16,6 +16,10 @@ spec:
       description: "Kafka group to create"
       type: string
       default: ""
+    ollama_pull:
+      description: "Ollama pull model (<model:version>)"
+      type: string
+      default: ""
 
 ---
 
@@ -23,6 +27,7 @@ stages:
   - deploy
   - postgres
   - kafka
+  - ollama
 
 include:
   - .ci/deploy.yml
@@ -34,3 +39,6 @@ include:
     inputs:
       topic: $[[ inputs.kafka_topic ]]
       group: $[[ inputs.kafka_group ]]
+  - local: .ci/ollama.yml
+    inputs:
+      pull: $[[ inputs.ollama_pull ]]
