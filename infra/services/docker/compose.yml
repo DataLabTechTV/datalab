@@ -48,7 +48,7 @@ services:
     networks:
       - postgres
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "root"]
+      test: ["CMD", "pg_isready"]
       interval: 10s
       retries: 5
     restart: unless-stopped
