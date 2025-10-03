@@ -1,0 +1,11 @@
+stages:
+  - deploy
+
+deploy:
+  stage: deploy
+  image: docker:28.4.0-cli
+  variables:
+    DOCKER_HOST: "tcp://docker-shared:2375"
+  script:
+    - docker info
+    - docker ps
