@@ -31,7 +31,7 @@ kafka_create_consumer_group:
   variables:
     DOCKER_HOST: tcp://docker-shared:2375
   script:
-    - 'echo "Creating group for topic $[[ inputs.topic ]]: $[[ inputs.group ]]"'
+    - 'echo "Initializing consumer: topic $[[ inputs.topic ]], group $[[ inputs.group ]]"'
     - |
       docker exec datalab-kafka-1 /opt/kafka/bin/kafka-console-consumer.sh \
         --bootstrap-server localhost:29092 \
