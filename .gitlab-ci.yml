@@ -9,3 +9,6 @@ deploy:
   script:
     - docker compose -p datalab -f infra/services/docker/compose.yml up -d
     - sleep 10 && docker ps
+  rules:
+    - changes:
+        - infra/services/docker/**
