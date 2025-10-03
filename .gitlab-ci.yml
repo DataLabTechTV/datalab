@@ -7,6 +7,5 @@ deploy:
   variables:
     DOCKER_HOST: tcp://docker-shared:2375
   script:
-    - docker info
-    - docker ps
-    - ls -l
+    - docker compose -p datalab -f infra/services/docker/compose.yml up -d
+    - sleep 10 && docker ps
