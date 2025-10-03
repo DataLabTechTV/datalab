@@ -18,6 +18,7 @@ variable "gitlab_project" {
 variable "gitlab_token" {
   type        = string
   description = "GitLab project API token"
+  sensitive   = true
 }
 
 variable "dotenv_path" {
