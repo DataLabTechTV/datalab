@@ -17,7 +17,7 @@ spec:
       type: string
       default: ""
     ollama_pull:
-      description: "Ollama pull model (<model:version>)"
+      description: "Ollama model name to pull"
       type: string
       default: ""
 
