@@ -53,6 +53,16 @@ check-terraform:
 check-docker:
     just check docker
 
+confirm:
+    #!/bin/bash
+    while true; do
+        read -p "Are you sure? [y/N] " yn
+        yn=${yn:-N}
+        case $yn in
+            [Yy]*) exit 0;;
+            [Nn]*) exit 1;;
+        esac
+    done
 
 # ========
 # DuckLake
@@ -255,6 +265,7 @@ infra-provision-platform: infra-config-check-platform
     terraform -chdir=infra/platform apply
 
 infra-provision-services: infra-config-check-services
+    terraform -chdir=infra/services/gitlab apply
     docker -c {{docker_shared_context}} compose -p datalab -f infra/services/docker/compose.yml up -d
 
 infra-provision-all: infra-provision-foundation \
@@ -274,15 +285,16 @@ infra-destroy-foundation:
 infra-destroy-platform:
     terraform -chdir=infra/platform destroy
 
-infra-destroy-services:
-    docker -c {{docker_shared_context}} compose -p datalab -f infra/services/docker/compose.yml down -v
+infra-destroy-services: confirm
+    docker -c {{docker_shared_context}} compose -p datalab -f infra/services/docker/compose.yml down
+    terraform -chdir=infra/services/gitlab destroy -auto-approve
 
 infra-destroy-all: infra-destroy-services \
     infra-destroy-platform \
     infra-destroy-foundation
 
 infra-destroy-local:
-    docker compose -p datalab -f infra/services/docker/compose.yml --profile dev down -v
+    docker compose -p datalab -f infra/services/docker/compose.yml --profile dev down
 
 # ---------
 # Utilities
