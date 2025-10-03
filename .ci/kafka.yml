@@ -25,7 +25,7 @@ kafka_create_topic:
     - if: '"$[[ inputs.topic ]]" != ""'
     - when: never
 
-kafka_create_consumer_group:
+kafka_init_consumer:
   stage: kafka
   image: docker:28.4.0-cli
   variables:
