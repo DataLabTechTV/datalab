@@ -36,6 +36,23 @@ services:
       "
     restart: no
 
+  postgres:
+    image: postgres:18.0
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: ${PGPASSWORD}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    networks:
+      - postgres
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "root"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
   ollama:
     image: ollama/ollama:0.12.3
     ports:
@@ -201,6 +218,7 @@ services:
 
 volumes:
   minio:
+  postgres:
   ollama:
   open-webui:
   mlflow:
@@ -208,6 +226,7 @@ volumes:
   portainer:
 
 networks:
+  postgres:
   ollama:
   minio:
   mlflow:
