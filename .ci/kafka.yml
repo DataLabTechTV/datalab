@@ -16,10 +16,10 @@ kafka_create_topic:
     DOCKER_HOST: tcp://docker-shared:2375
   script:
     - 'echo "Creating topic: $[[ inputs.topic ]]"'
-    - |
-      docker exec -it datalab-kafka-1 /opt/kafka/bin/kafka-topics.sh \
-        --bootstrap-server localhost:29092 \
-        --create --if-not-exists --topic $[[ inputs.topic ]] \
+    - >
+      docker exec -it datalab-kafka-1 /opt/kafka/bin/kafka-topics.sh
+        --bootstrap-server localhost:29092
+        --create --if-not-exists --topic $[[ inputs.topic ]]
         --partitions 1 --replication-factor 1
   rules:
     - if: '"$[[ inputs.topic ]]" != ""'
@@ -32,12 +32,14 @@ kafka_create_consumer_group:
     DOCKER_HOST: tcp://docker-shared:2375
   script:
     - 'echo "Creating group for topic $[[ inputs.topic ]]: $[[ inputs.group ]]"'
-    - |
-      docker exec -it datalab-kafka-1 /opt/kafka/bin/kafka-console-consumer.sh \
-        --bootstrap-server localhost:29092 \
-        --topic $[[ inputs.topic ]] \
-        --group $[[ inputs.group ]] \
+    - >
+      docker exec -it datalab-kafka-1 /opt/kafka/bin/kafka-console-consumer.sh
+        --bootstrap-server localhost:29092
+        --topic $[[ inputs.topic ]]
+        --group $[[ inputs.group ]]
         --timeout-ms 5000
+  needs:
+    - kafka_create_topic
   rules:
     - if: '"$[[ inputs.topic ]]" != "" && "$[[ inputs.group ]]" != ""'
     - when: never
