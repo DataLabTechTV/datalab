@@ -1,14 +1,36 @@
+spec:
+  inputs:
+    postgres_db_user:
+      description: "PostgreSQL username to create and grant privileges to"
+      type: string
+      default: ""
+    postgres_db_name:
+      description: "PostgreSQL database to create"
+      type: string
+      default: ""
+    kafka_topic:
+      description: "Kafka topic to create"
+      type: string
+      default: ""
+    kafka_group:
+      description: "Kafka group to create"
+      type: string
+      default: ""
+
+---
+
 stages:
   - deploy
+  - postgres
+  - kafka
 
-deploy:
-  stage: deploy
-  image: docker:28.4.0-cli
-  variables:
-    DOCKER_HOST: tcp://docker-shared:2375
-  script:
-    - docker compose -p datalab -f infra/services/docker/compose.yml up -d
-    - sleep 10 && docker ps
-  rules:
-    - changes:
-        - infra/services/docker/**
+include:
+  - .ci/deploy.yml
+  - local: .ci/postgres.yml
+    inputs:
+      db_user: $[[ inputs.postgres_db_user ]]
+      db_name: $[[ inputs.postgres_db_name ]]
+  - local: .ci/kafka.yml
+    inputs:
+      topic: $[[ inputs.kafka_topic ]]
+      group: $[[ inputs.kafka_group ]]

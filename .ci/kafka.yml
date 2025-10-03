@@ -1,0 +1,26 @@
+spec:
+  inputs:
+    topic:
+      description: "Kafka topic to create"
+      type: string
+    group:
+      description: "Kafka group to create"
+      type: string
+
+---
+
+kafka_create_topic:
+  stage: kafka
+  script:
+    - 'echo "Topic: $[[ inputs.topic ]]"'
+  rules:
+    - if: '"$[[ inputs.topic ]]" != ""'
+    - when: never
+
+kafka_create_consumer_group:
+  stage: kafka
+  script:
+    - 'echo "GROUP: $[[ inputs.group ]]"'
+  rules:
+    - if: '"$[[ inputs.group ]]" != ""'
+    - when: never

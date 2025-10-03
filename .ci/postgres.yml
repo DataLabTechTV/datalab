@@ -1,0 +1,55 @@
+spec:
+  inputs:
+    db_user:
+      description: "PostgreSQL username to create and grant privileges to"
+      type: string
+    db_name:
+      description: "PostgreSQL database to create"
+      type: string
+
+---
+
+psql_create_user:
+  stage: postgres
+  image: docker:28.4.0-cli
+  variables:
+    DOCKER_HOST: tcp://docker-shared:2375
+  before_script:
+    - apk add --no-cache openssl
+  script:
+    - DB_PASS=$(openssl rand -base64 12)
+    - echo "Attempting to create user '$[[ inputs.db_user ]]' with password '$DB_PASS'"
+    - |
+      docker exec datalab-postgres-1 psql -c "
+      DO
+      \$\$
+      BEGIN
+        IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '$[[ inputs.db_user ]]') THEN
+          CREATE USER $[[ inputs.db_user ]] WITH PASSWORD '$DB_PASS';
+        END IF;
+      END
+      \$\$;
+      "
+  rules:
+    - if: '"$[[ inputs.db_user ]]" != ""'
+    - when: never
+
+psql_create_db:
+  stage: postgres
+  image: docker:28.4.0-cli
+  variables:
+    DOCKER_HOST: tcp://docker-shared:2375
+  script:
+    - echo "Creating database '$[[ inputs.db_name ]]' with all privileges for user '$[[ inputs.db_user ]]'"
+    - |
+      docker exec datalab-postgres-1 psql -c "
+      CREATE DATABASE $[[ inputs.db_name ]]
+      "
+      docker exec datalab-postgres-1 psql -c "
+      GRANT ALL PRIVILEGES ON DATABASE $[[ inputs.db_name ]] TO $[[ inputs.db_user ]];
+      "
+  needs:
+    - psql_create_user
+  rules:
+    - if: '"$[[ inputs.db_name ]]" != ""'
+    - when: never
