@@ -111,6 +111,17 @@ dlctl ...
 >   torch_cluster torch_spline_conv
 > ```
 
+### infra/
+
+Implements a 4-layer infrastructure architecture to help you deploy a data stack on-premise using Proxmox, Terraform, and Docker.
+
+![Infrastructure Architecture](./docs/infra-architecture.png)
+
+- Layer 1 (`foundation/`) is a Terraform project that will provision MinIO on an LXC running on Proxmox.
+- Layer 2 (`platform/`) is a Terraform project, with state storage on MinIO, that will provision three Docker VMs and a GitLab VM. GitLab will provide a container registry and come preconfigured with a GitLab Runner that executes on top of one of the Docker VMs.
+- Layer 3 (`services/`) contains a Terraform project (`gitlab/`) to optionally initialize CI/CD variables/secrets from the local `.env`, and a Docker Compose project (`docker/`) to provision the data stack services.
+- Layer 4 (`applications/`) contains local application deployments via Dockerized services (e.g., `ml.server`) and CI/CD integration to provision the required resources (e.g., postgres database and credentials).
+
 ### ingest/
 
 Helps manage ingestion from difference data sources, creating the proper directory structure (see [Storage Layout](#%EF%B8%8F-storage-layout)) consisting of the retrieval for raw data and the creation proper directory structure creation. Raw data might be dropped manually, from Kaggle, Hugging Face, or some other source. This will make it easy to load it and keep it organized.
@@ -129,15 +140,27 @@ Gold tier datasets under your data marts are only usable externally after you ex
 
 Graph loading and computation on top of KùzuDB. We support operations like graph loading from S3 parquet files, and node embedding via FRP (Fast Random Projection), which is implemented using node batching with input/output from/to KùzuDB and training on top of PyTorch.
 
+### ml/
+
+Complete ML Engineering lifecycle implementation, including feature extraction, and model training and testing, with MLflow experiment tracking and evaluation. It also provides a REST API endpoint for inference, prediction logging, and user feedback tracking, implemented using an even-driven architecture based on Kafka topics. This optionally serves models using an A/B/n testing approach. Finally, we also implement several methods for simulating inference requests and user feedback, based on a monitoring dataset, that we use to compute monitoring metrics over time, like prediction drift, feature drift, estimated performance, or user evaluation.
+
 ### shared/
 
-Includes five modules:
+Includes the following modules:
 
-- `settings`, which loads and provides access to environment variables and other relevant constants;
-- `storage`, which handles mid-level S3 storage operations, like creating a dated directory structure, uploading and downloading files and directories, or managing the manifest files;
-- `lakehouse`, which connects the DuckDB engine and helps with tasks like exporting datasets, or loading the latest snapshot for an export;
-- `templates` contains helper functions and `string.Template` instances to produce files like `init.sql`;
-- `tools` provides a function per CLI tool (callable via `dlctl tools`), for example to generate the `init.sql` file described in the `templates` module.
+- `settings` – loads and provides access to environment variables and other relevant constants;
+- `storage` – handles mid-level S3 storage operations, like creating a dated directory structure, uploading and downloading files and directories, or managing the manifest files;
+- `cache` – provides utilities to manage filesystem-based caching based on a user data directory (usually `~/.cache/datalab`);
+- `lakehouse` – connects the DuckDB engine and helps with tasks like exporting datasets, or loading the latest snapshot for an export;
+- `templates` – contains helper functions and `string.Template` instances to produce files like `init.sql`;
+- `color` – palette and color processing utilities, mostly used to support plotting;
+- `logging` – interceptor logger to replace inconsistent logging utilities (e.g., from `uvicorn`).
+- `tools` – provides a function per CLI tool (callable via `dlctl tools`), for example to generate the `init.sql` file described in the `templates` module;
+- `utils` – provides a `@timed` annotator to print run time, and function name sanitization code.
+
+### notebooks/
+
+Jupyter notebook for prototyping or standalone analyzes. Notebooks are dropped directly on the root path, since all data is loaded and saved to the DuckLake instance.
 
 ### scripts/
 
@@ -212,6 +235,13 @@ S3_REGION=eu-west-1
 
 `S3_REGION` must match MinIO's region (explicitly setting one in MinIO is recommended).
 
+#### PostgreSQL
+
+```bash
+PGPASSWORD=datalabtech
+```
+
+Set this to the `root` user password of your PostgreSQL database—only used when deploying your on-premise infrastructure, so that databases and credentials can be provisioned at a later stage. Otherwise not accessed.
 
 #### Data Lab Specifics
 
@@ -219,7 +249,9 @@ S3_REGION=eu-west-1
 S3_BUCKET=lakehouse
 S3_INGEST_PREFIX=raw
 S3_STAGE_PREFIX=stage
+S3_SECURE_STAGE_PREFIX=secure-stage
 S3_GRAPHS_MART_PREFIX=marts/graphs
+S3_ANALYTICS_MART_PREFIX=marts/analytics
 S3_EXPORTS_PREFIX=exports
 S3_BACKUPS_PREFIX=backups
 ```
@@ -231,18 +263,49 @@ You can use the defaults here. Everything will live under the `S3_BUCKET`. Each 
 ```bash
 ENGINE_DB=engine.duckdb
 STAGE_DB=stage.sqlite
+SECURE_STAGE_DB=secure_stage.sqlite
 GRAPHS_MART_DB=marts/graphs.sqlite
+ANALYTICS_MART_DB=marts/analytics.sqlite
 ```
 
-These files will live under `local/`. The DuckDB `ENGINE_DB` will be leveraged for querying. All data is tracked on the `STAGE_DB` and `*_MART_DB` catalog databases and stored on the corresponding object storage locations, as shown in the previous section.
+These files will live under `local/`. The DuckDB `ENGINE_DB` will be leveraged for querying. All data is tracked on the `STAGE_DB` and `*_MART_DB` catalog databases and stored on the corresponding object storage locations, as shown in the previous section. You can also used `SECURE_STAGE_DB` if you need to encrypt your data (e.g., for sensitive user data).
 
-### KùzuDB Configurations
+#### Kuzu Configurations
 
 ```bash
-MUSIC_TASTE_GRAPH_DB=graphs/music_taste
+MUSIC_TASTE_GRAPH_DB=graphs/music_taste.kuzu
+ECON_COMP_GRAPH_DB=graphs/econ_comp.kuzu
 ```
 
-The data lab also leverages [KùzuDB](https://kuzudb.com/) for graph data science tasks. The path for each graph database can be set here as `*_GRAPH_DB`.
+The data lab also leverages [Kuzu](https://kuzudb.com/) for graph data science tasks. The path for each graph database can be set here as `*_GRAPH_DB`.
+
+#### Ollama Configurations
+
+```bash
+OLLAMA_MODELS=gemma3:latest,phi4:latest
+```
+
+Here you can preconfigure the Ollama models you want to download when running your local or on-premise infrastructure, as comma-separated `model:version` entries.
+
+#### MLflow Configurations
+
+```bash
+MLFLOW_TRACKING_URI=http://docker-shared:5000
+MLFLOW_TRACKING_USERNAME=datalabtech
+S3_MLFLOW_BUCKET=mlflow
+S3_MLFLOW_ARTIFACTS_PREFIX=artifacts
+```
+
+The `MLFLOW_TRACKING_*` variables configure how you interact with the MLflow server, while the `S3_MLFLOW_*` variables configure the S3 bucket where artifacts (e.g., serialized models) will be dropped into.
+
+#### Kafka Configurations
+
+```bash
+KAFKA_BROKER_ENDPOINT=docker-shared:9092
+KAFKA_GROUP_TOPIC_LIST=ml_inference_results:lakehouse-inference-result-consumer,ml_inference_feedback:lakehouse-inference-feedback-consumer
+```
+
+You can configure your Kafka endpoint here, as well as any required topics. We initialize each topic via comma-separated list of `topic:group`, so that consumers can be initialized and no warning is printed when first connecting to a topic from that consumer—this is likely overkill, but it feels cleaner.
 
 ### Generating init.sql
 
@@ -309,6 +372,20 @@ Transformations can be done via `dlctl transform`, which will call `dbt` with th
 
 ```bash
 dlctl transform "<dataset-name>"
+```
+
+You can also run data tests using:
+
+```bash
+dlctl test
+dlctl test -m test_type:singular
+```
+
+Or generate or serve dbt documentation using:
+
+```bash
+dlctl docs generate
+dlctl docs serve
 ```
 
 ### Export
@@ -404,3 +481,216 @@ A collection of graph computation calls will live here. These can be wrappers to
 ```bash
 dlctl graph compute embeddings "<schema>" -d 256 -b 9216 -e 5
 ```
+
+### ML
+
+#### Train
+
+Train and evaluate a model using the `dataset` table under the provided `<schema>`, while tracking the experiment using MLflow:
+
+```bash
+dlctl ml train <schema> --method logreg --features embeddings
+```
+
+The `--method` can be one of the supported algorithms (e.g., `logreg` or `xgboost`), and `--features` follows a similar approach for supported features (e.g., `tfidf` or `embeddings`). Currently only text-based datasets are supported, but the schema and training code has been generalized to support tabular data as well.
+
+#### Server
+
+A REST API endpoint can be run to provide an inference service with optional A/B/n testing and event-based logging, or to receive user feedback on the predictions:
+
+```bash
+dlctl ml server
+dlctl ml server -h 0.0.0.0 -p 8000
+```
+
+#### Simulate
+
+In order to help us implement and test monitoring statistics, we implemented a request simulation framework, where feedback is provided based on a monitoring dataset, which is completely separate from the dataset using for training, validation and testing. For example, to use a 1% sample of the `monitor` table from `<schema>` for A/B testing with the `dd_xgboost_embeddings` and `dd_logreg_tfidf` latest models, we can use:
+
+```bash
+dlctl ml simulate <schema> \
+    --sample-fraction 0.01 \
+    --model-uri "models:/dd_xgboost_embeddings/latest" \
+    --model-uri "models:/dd_logreg_tfidf/latest"
+```
+
+The `models:/` URIs correspond to models trained and logged within MLflow. For production, we usually replace `latest` with a particular tag that we assign to our production models (e.g., a version).
+
+There are several other options to help you control the simulation as well, which you can check under:
+
+```bash
+dlctl ml simulate --help
+```
+
+These include the number of passes, the batch size, the decision threshold, and several ranges to help control the fraction of feedback to provide, the fraction of wrong feedback, or the date range to simulate.
+
+#### Monitor
+
+This will let you compute and plot monitor statistics over time for a specific `<schema>`, optionally specifying a date range and a window size:
+
+```bash
+dlctl ml monitor compute <schema>
+dlctl ml monitor compute <schema> \
+    --since <start> \
+    --until <end> \
+    --window-size 7
+```
+
+For plotting, you must also specify one or several model URIs:
+
+```bash
+dlctl ml monitor plot <schema> \
+    --model-uri "models:/dd_xgboost_embeddings/latest" \
+    --model-uri "models:/dd_logreg_tfidf/latest"
+```
+
+This will produce several PNG plots under `local/monitor/`.
+
+## 🧾 Just Commands
+
+We provide several `just` commands, both for convenience and to keep track of data pipelines (e.g., ETL) for specific datasets. Below we provide an overview on these commands, excluding most secondary commands.
+
+### Common
+
+We provide a `check binary` command that will look for a specific binary in the path and check whether it's executable—the command will fail otherwise, causing any depending commands to fail as well. We implement specific check commands per binary, since we cannot use parameters in dependencies. For example:
+
+```bash
+just check duckdb
+just check-terraform
+```
+
+We also provide a `confirm` command, to add as a dependency of critical commands (e.g., `terraform destroy`). This will display a confirmation message and require user input to continue:
+
+```bash
+just confirm
+```
+
+```
+Are you sure? [y/N] n
+error: Recipe `confirm` failed with exit code 1
+```
+
+### DuckLake
+
+**Related video:** https://youtu.be/zn69Q7FiFfo?si=tiG4DT_apbR_-sVC
+
+In order to run a REPL for the datalab's DuckLake instance, you can simply run:
+
+```bash
+just lakehouse
+```
+
+This will take care of the `init.sql` generation for you, but you might want to regenerate it later as well:
+
+```bash
+just generate-init-sql
+```
+
+### GraphRAG with Kuzu
+
+**Related video:** https://youtu.be/m61u3mqu1qY?si=kmjmPHTY5-8M8Q81
+
+| Command | Description |
+| ------- | ----------- |
+| `graphrag-etl` | Ingest [DSN](https://www.kaggle.com/datasets/andreagarritano/deezer-social-networks) and [MSDSL](https://www.kaggle.com/datasets/undefinenull/million-song-dataset-spotify-lastfm) datasets, run DuckLake transformations, export to Parquet, and load graph into Kuzu. |
+| `graphrag-embeddings` | Compute node embeddings of dimension 256 using 5 epochs and batches of size 9216, and create vector index. |
+| `graphrag` | Launch REPL for graph RAG. |
+| `graphrag-all` | Run all of the above, in order. |
+
+### Economic Competition Networks
+
+**Related video:** https://youtu.be/pIwN7oe54i4?si=-nB0upswBGacklh4
+
+| Command | Description |
+| ------- | ----------- |
+| `econ-compnet-ingest` | Ingest [The Atlas of Economic Complexity](https://atlas.hks.harvard.edu/data-downloads). |
+| `econ-compnet-transform` | Run DuckLake transformations on the dataset, to produce a knowledge graph. |
+| `econ-compnet-export` | Export the graph data to Parquet. |
+| `econ-compnet-load` | Load the graph into Kuzu. |
+| `econ-compnet-etl` | Run all of the above, in order. |
+| `econ-compnet-scoring` | Computes the Common Out-Neighbor (CON) score for the Country-CompetesWith-Country graph projection. |
+| `econ-compnet-all` | Run ETL and scoring commands. |
+
+### MLOps: A/B Testing with MLflow, Kafka, and DuckLake
+
+**Related video:** https://youtu.be/MGuj13NcdjE?si=i56T6updcLE-NFC3
+
+#### Training
+
+| Command | Description |
+| ------- | ----------- |
+| `mlops-ingest` | Ingest the depression dataset for [training](https://huggingface.co/datasets/ShreyaR/DepressionDetection) and [monitoring](https://huggingface.co/datasets/joangaes/depression). |
+| `mlops-transform` | Run DuckLake transformations on the datasets, normalizing into a common format for the ML pipelines, including a train/test split and fixed folds on the training set for validation. |
+| `mlops-etl` | Run all of the above, in order. |
+| `mlops-train-logreg-tfidf` | Train a model using logistic regression and TF-IDF features. |
+| `mlops-train-logreg-embeddings` | Train a model using logistic regression and text embedding features. |
+| `mlops-train-logreg` | Train all logistic regression models. |
+| `mlops-train-xgboost-tfidf` | Train a model using XGBoost and TF-IDF features. |
+| `mlops-train-xgboost-embeddings` | Train a model using XGBoost and text embedding features. |
+| `mlops-train-xgboost` | Train all XGBoost models. |
+| `mlops-train` | Train all models. |
+| `mlops-all` | Run ETL and training. |
+
+#### Inference
+
+| Command | Description |
+| ------- | ----------- |
+| `mlops-serve` | Run ML server listening on 0.0.0.0 and port 8000. |
+| `mlops-test-inference` | Use `curl` to test the inference endpoint. |
+| `mlops-test-feedback` | Use `curl` to test the feedback endpoint. |
+
+#### Monitoring
+
+| Command | Description |
+| ------- | ----------- |
+| `mlops-simulate-inference` | Run inference simulation for XGBoost with text embedding features, and logistic regression with TF-IDF features, using the monitor set to produce feedback. |
+| `mlops-monitor-compute` | Compute monitoring statistics for the two models. |
+| `mlops-monitor-plot` | Plot monitoring statistics for the two models. |
+
+### Data Lab Infra
+
+**Related videos:** https://www.youtube.com/playlist?list=PLeKtvIdgbljMyhjPgJeoXwa_7J9DTx3Fo
+
+#### Config Checks
+
+| Command | Description |
+| ------- | ----------- |
+| `infra-config-check-foundation` | Look for `terraform.tfvars` under `infra/foundation`. |
+| `infra-config-check-platform` | Look for `terraform.tfvars` and `state.config` under `infra/platform`. |
+| `infra-config-check-services` | Look for the `docker-shared` context, that should point to the corresponding Docker VM. |
+| `infra-config-check-all` | Run all of the above, in order. |
+
+#### Initializations
+
+| Command | Description |
+| ------- | ----------- |
+| `infra-foundation-init` | Run `terraform init` for `infra/foundation`. |
+| `infra-platform-init` | Run `terraform init` for `infra/platform`. |
+| `infra-init` | Run all of the above, in order. |
+
+#### Provisioning
+
+| Command | Description |
+| ------- | ----------- |
+| `infra-provision-foundation` | Run `terraform apply` for `infra/foundation`. |
+| `infra-provision-platform` | Run `terraform apply` for `infra/platform`. |
+| `infra-provision-services` | Run `terraform apply` for `infra/services/gitlab` (required a configured `.env`), and `docker compose up` under the appropriate `docker-shared` context, using `infra/services/docker/compose.yml`. |
+| `infra-provision-all` | Run all of the above, in order. |
+| `infra-provision-local` | Run `docker compose up` with the `dev` profile enabled, using `infra/services/docker/compose.yml`. |
+
+#### Destruction
+
+| Command | Description |
+| ------- | ----------- |
+| `infra-destroy-foundation` | Run `terraform destroy` for `infra/foundation`. |
+| `infra-destroy-platform` | Run `terraform destroy` for `infra/platform`. |
+| `infra-destroy-services` | Run `docker compose down` and `terraform destroy` for `infra/services`. |
+| `infra-destroy-all` | Run all of the above, in reversed order. |
+| `infra-destroy-local` | Run `docker compose down` with the `dev` profile enabled for `infra/services`. |
+
+#### Utilities
+
+| Command | Description |
+| ------- | ----------- |
+| `infra-show-tf-credentials` `<layer>` | Print the credentials for a specific `layer` (`foundation` or `platform`). |
+| `infra-show-credentials` | Print all credentials. |
