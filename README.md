@@ -4,12 +4,26 @@ Tooling for a minimalist data lab running on top of DuckLake.
 
 ## 📋 Requirements
 
+Minimum requirements:
+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) with [Python 3.13](https://docs.astral.sh/uv/guides/install-python/#installing-a-specific-version) installed.
 - Access to [MinIO](https://min.io/) or [S3](https://aws.amazon.com/s3/)-compatible object storage.
 
-I keep a MinIO instance on my tiny home lab, made of an old laptop running Proxmox, but you can easily spin up a MinIO instance using the `docker-compose.yml` that we provide (after setting up your `.env`, see below).
+> [!TIP]
+> I keep a MinIO instance on my tiny home lab, made of an old laptop running Proxmox, but you can easily spin up a MinIO instance using the `minio` service using the `dev` profile under `infra/services/docker/compose.yml`, after setting up your `.env` (see below).
+
+To run your own infrastructure, you'll also need:
+
+- [Proxmox VE 9.x](https://proxmox.com/en/products/proxmox-virtual-environment/get-started)
+- [Terraform 1.13.x](https://developer.hashicorp.com/terraform/install) (see [tfswitch](https://tfswitch.warrensbox.com/Installation/))
+- [Docker 28.4.x](https://docs.docker.com/engine/install/)
+
+> [!TIP]
+> Most workflows are saved as [just](https://just.systems/man/en/) commands, which are available after you install `uv` dependencies and load the virtual environment. Run `just -l` to list all available commands (more details below).
 
 > [!NOTE]
+> *The following is no longer required, and will be updated and tested soon:*
+>
 > We rely on the official [duckdb/dbt-duckdb](https://github.com/duckdb/dbt-duckdb) adapter to connect to DuckLake. At this time, the latest stable version of the adapter does not support attaching the external DuckLake catalog with the `DATA_PATH` option and S3 credentials, but there is [PR #564](https://github.com/duckdb/dbt-duckdb/issues/564) that solves this, so we're using what is, at this point, unreleased code (see the [dbt-duckdb](pyproject.toml#L16) dependency and the corresponding entry under [[tools.uv.sources]](pyproject.toml#L37) in the [pyproject.toml](pyproject.toml) file).
 
 ## 🚀 Quick Start
@@ -27,20 +41,28 @@ S3_ACCESS_KEY_ID=minio_username
 S3_SECRET_ACCESS_KEY=minio_password
 ```
 
-You can then setup the MinIO service as follows (it will use your env vars):
-
-```bash
-docker compose up -d
-```
-
-If you're you're having trouble connecting to MinIO, make sure you're using the correct zone, which you set via the `S3_REGION` variable in `.env`. You might need to go into http://localhost:9001 to setup your default region under Configuration → Region.
-
-You can then install `dlctl` via:
+You can then activate `just` and `dlctl` via:
 
 ```bash
 uv sync
 source .venv/bin/activate
 ```
+
+You can then setup the MinIO service as follows (it will use your env vars):
+
+```bash
+docker compose -p datalab -f infra/services/docker/compose.yml \
+    --profile dev up minio minio-init -d
+```
+
+Or you can spin up the whole infrastructure locally, after Docker is running, by using:
+
+```bash
+just infra-provision-local
+```
+
+> [!TIP]
+> If you're you're having trouble connecting to MinIO, make sure you're using the correct zone, which you set via the `S3_REGION` variable in `.env`.
 
 You should also generate the `init.sql` file, so you can easily connect to your DuckLake from the CLI as well:
 
@@ -49,7 +71,13 @@ dlctl tools generate-init-sql
 duckdb -init local/init.sql local/engine.duckdb
 ```
 
-The general workflow you're expected to follow is illustrated in the following diagram:
+Or simply run the following command whenever you want to access your DuckLake, which will take care of the setup process for you:
+
+```bash
+just lakehouse
+```
+
+The general workflow you're expected to follow for data engineering is illustrated in the following diagram:
 
 ![Data Lab Architecture Diagram](docs/datalab-architecture.png)
 
@@ -57,6 +85,8 @@ You're expected to implement your own [dbt](https://docs.getdbt.com/) models to 
 
 - [andreagarritano/deezer-social-networks](https://www.kaggle.com/datasets/andreagarritano/deezer-social-networks)
 - [undefinenull/million-song-dataset-spotify-lastfm](https://www.kaggle.com/datasets/undefinenull/million-song-dataset-spotify-lastfm)
+
+A few datasets are already supported and pipeline are encoded using `just` commands (e.g., `econ-compnet-etl`, `graphrag-etl`, `mlops-etl`, which correspond to projects with their own YouTube videos).
 
 You can learn all other details below.
 
