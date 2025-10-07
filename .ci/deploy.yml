@@ -5,7 +5,7 @@ services_deploy:
     DOCKER_HOST: tcp://docker-shared:2375
   script:
     - docker compose -p datalab -f infra/services/docker/compose.yml up -d
-    - sleep 10 && docker ps
+    - docker ps
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
       changes:
