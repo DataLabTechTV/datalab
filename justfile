@@ -2,6 +2,7 @@ set shell := ["bash", "-uc"]
 
 set dotenv-load
 
+
 # =======
 # Configs
 # =======
@@ -64,6 +65,7 @@ confirm:
         esac
     done
 
+
 # ========
 # DuckLake
 # ========
@@ -90,6 +92,7 @@ graphrag-etl: check-dlctl
     dlctl ingest dataset {{ds_msdsl_url}}
     dlctl transform -m "+marts.graphs.music_taste"
     dlctl export dataset graphs "music_taste"
+    dlctl graph load "music_taste"
 
 graphrag-embeddings: check-dlctl
     dlctl graph compute embeddings "music_taste" -d 256 -b 9216 -e 5
@@ -129,6 +132,10 @@ econ-compnet-all: econ-compnet-etl econ-compnet-scoring
 # MLOps: A/B Testing with MLflow, Kafka, and DuckLake
 # ===================================================
 
+# ----
+# ETL
+# ----
+
 mlops-ingest: check-dlctl
     dlctl ingest dataset {{ds_dd_url}}
     dlctl ingest dataset {{ds_dd_monitor_url}}
@@ -137,6 +144,10 @@ mlops-transform: check-dlctl
     dlctl transform -m "+stage.depression_detection"
 
 mlops-etl: mlops-ingest mlops-transform
+
+# --------
+# Training
+# --------
 
 mlops-train-logreg-tfidf: check-dlctl
     dlctl ml train "dd" --method "logreg" --features "tfidf"
@@ -155,6 +166,16 @@ mlops-train-xgboost-embeddings: check-dlctl
 mlops-train-xgboost: mlops-train-xgboost-tfidf mlops-train-xgboost-embeddings
 
 mlops-train: mlops-train-logreg mlops-train-xgboost
+
+# --------------
+# ETL + Training
+# --------------
+
+mlops-all: mlops-etl mlops-train
+
+# ------
+# Server
+# ------
 
 mlops-serve: check-dlctl
     dlctl ml server
@@ -189,6 +210,10 @@ mlops-test-feedback uuid feedback: check-curl
         -d '{"inference_uuid": "{{uuid}}", "feedback": {{feedback}}}'
     curl -f -X GET "http://localhost:8000/inference/logs/flush"
 
+# ----------
+# Monitoring
+# ----------
+
 mlops-simulate-inference: check-dlctl
     dlctl ml simulate "dd" \
         --sample-fraction 0.01 \
@@ -204,8 +229,6 @@ mlops-monitor-plot: check-dlctl
     dlctl ml monitor plot "dd" \
         --model-uri "models:/dd_xgboost_embeddings/latest" \
         --model-uri "models:/dd_logreg_tfidf/latest"
-
-mlops-all: mlops-etl mlops-train
 
 
 # ==============
