@@ -7,7 +7,11 @@ data "dotenv" "config" {
 }
 
 resource "gitlab_project_variable" "datalab_config" {
-  for_each      = { for k, v in data.dotenv.config.env : k => v if !can(regex(local.secret_regex, k)) }
+  for_each = {
+    for k, v in data.dotenv.config.env :
+    k => v if !can(regex(local.secret_regex, k))
+  }
+
   project       = "${var.gitlab_user}/${var.gitlab_project}"
   key           = each.key
   value         = each.value
@@ -15,11 +19,15 @@ resource "gitlab_project_variable" "datalab_config" {
   protected     = false
   raw           = true
   hidden        = false
-  masked        = can(regex(local.secret_regex, each.key))
+  masked        = false
 }
 
 resource "gitlab_project_variable" "datalab_secrets" {
-  for_each      = { for k, v in data.dotenv.config.env : k => v if can(regex(local.secret_regex, k)) }
+  for_each = {
+    for k, v in data.dotenv.config.env :
+    k => v if can(regex(local.secret_regex, k))
+  }
+
   project       = "${var.gitlab_user}/${var.gitlab_project}"
   key           = each.key
   value         = sensitive(each.value)
@@ -27,5 +35,5 @@ resource "gitlab_project_variable" "datalab_secrets" {
   protected     = false
   raw           = true
   hidden        = false
-  masked        = can(regex(local.secret_regex, each.key))
+  masked        = true
 }
