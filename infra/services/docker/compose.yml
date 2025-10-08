@@ -209,7 +209,7 @@ services:
   portainer:
     image: portainer/portainer-ce:2.33.2
     ports:
-      - 9000:9000
+      - 9080:9000
     volumes:
       - portainer:/data
     networks:
