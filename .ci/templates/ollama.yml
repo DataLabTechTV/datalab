@@ -6,6 +6,9 @@ spec:
 
 ---
 
+stages:
+  - ollama
+
 ollama_pull:
   stage: ollama
   image: docker:28.4.0-cli

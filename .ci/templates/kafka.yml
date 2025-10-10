@@ -9,6 +9,9 @@ spec:
 
 ---
 
+stages:
+  - kafka
+
 kafka_create_topic:
   stage: kafka
   image: docker:28.4.0-cli
