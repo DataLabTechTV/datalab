@@ -9,6 +9,9 @@ spec:
 
 ---
 
+stages:
+  - postgres
+
 psql_load_credentials:
   stage: postgres
   before_script:
