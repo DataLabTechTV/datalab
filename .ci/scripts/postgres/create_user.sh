@@ -12,13 +12,13 @@ if [ -z "$DB_PASS" ]; then
             CREATE USER $DB_USER WITH PASSWORD '$DB_PASS';
         END IF;
         END
-        \$\$;
+        \$\$
     "
 
     echo "Updating CI/CD variable: PSQL_SECRETS"
 
     PSQL_SECRETS=${PSQL_SECRETS:-"{}"}
-    PSQL_SECRETS=$(echo "$PSQL_SECRETS" | jq -c '. + { "$DB_USER": "$DB_PASS" }')
+    PSQL_SECRETS=$(echo "$PSQL_SECRETS" | jq -c ". + { \"$DB_USER\": \"$DB_PASS\" }")
 
     curl \
         -X POST \
