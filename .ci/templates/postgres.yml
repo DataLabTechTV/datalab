@@ -16,6 +16,8 @@ psql_load_credentials:
     - apt install -y software-properties-common
     - add-apt-repository universe
     - apt install -y jq
+  variables:
+    DB_USER: $[[ inputs.db_user ]]
   script:
     - .ci/scripts/postgres/load_credentials.sh
   artifacts:
@@ -48,6 +50,7 @@ psql_create_db:
   image: docker:28.4.0-cli
   variables:
     DOCKER_HOST: tcp://docker-shared:2375
+    DB_NAME: $[[ inputs.db_name ]]
   script:
     - .ci/scripts/postgres/create_db.sh
   artifacts:
