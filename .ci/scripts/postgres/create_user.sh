@@ -14,6 +14,22 @@ if [ -z "$DB_PASS" ]; then
         END
         \$\$;
     "
+
+    echo "Updating CI/CD variable: PSQL_SECRETS"
+
+    PSQL_SECRETS=${PSQL_SECRETS:-"{}"}
+    PSQL_SECRETS=$(echo "$PSQL_SECRETS" | jq -c '. + { "$DB_USER": "$DB_PASS" }')
+
+    curl \
+        -X POST \
+        -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+        -d "key=PSQL_SECRETS" \
+        -d "value=$PSQL_SECRETS" \
+        -d "protected=false" \
+        -d "raw=true" \
+        -d "hidden=true" \
+        -d "masked=true" \
+        "$CI_API_V4_URL/projects/$CI_PROJECT_ID/variables"
 else
     echo "User found: $DB_USER"
 fi
