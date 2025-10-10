@@ -10,3 +10,16 @@ services_deploy:
     - if: $CI_PIPELINE_SOURCE == "push"
       changes:
         - infra/services/docker/**
+
+apps_deploy:
+  stage: deploy
+  image: docker:28.4.0-cli
+  variables:
+    DOCKER_HOST: tcp://docker-apps:2375
+  script:
+    - docker compose -p datalab -f infra/apps/docker/compose.yml up -d
+    - docker ps
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - infra/apps/docker/**
