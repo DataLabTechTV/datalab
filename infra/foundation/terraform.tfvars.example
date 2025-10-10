@@ -23,7 +23,8 @@ minio_user = "admin"
 
 minio_buckets = [
   "sandbox",
-  "lakehouse",
   "terraform",
   "gitlab",
+  "lakehouse",
+  "mlflow",
 ]
