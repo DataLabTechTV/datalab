@@ -1,6 +1,6 @@
 FROM astral/uv:python3.13-trixie-slim
 
-RUN apt update && apt install -y git
+RUN apt update && apt install -y git curl
 
 WORKDIR /datalab
 COPY pyproject.toml pyproject.toml
