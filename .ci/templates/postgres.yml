@@ -33,7 +33,7 @@ psql_create_user:
   variables:
     DOCKER_HOST: tcp://docker-shared:2375
   before_script:
-    - apk add --no-cache openssl
+    - apk add --no-cache openssl curl jq
   script:
     - .ci/scripts/postgres/create_user.sh
   artifacts:
