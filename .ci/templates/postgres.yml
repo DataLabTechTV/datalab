@@ -14,10 +14,7 @@ psql_load_credentials:
   before_script:
     - apt install -y jq
   script:
-    - export PSQL_SECRETS=${PSQL_SECRETS:-{}}
-    - export DB_PASS=$(echo $PSQL_SECRETS | jq -r '.["$[[ inputs.db_user ]]"]')
-    - echo DB_USER=$DB_USER > secrets.env
-    - echo DB_PASS=$DB_PASS >> secrets.env
+    - .ci/scripts/postgres/load_credentials.sh
   artifacts:
     reports:
       dotenv: credentials.env
