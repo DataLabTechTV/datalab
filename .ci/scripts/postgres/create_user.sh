@@ -18,5 +18,5 @@ else
     echo "User found: $DB_USER"
 fi
 
-echo DB_USER="$DB_USER" > "$CI_PROJECT_DIR/credentials.env"
-echo DB_PASS="$DB_PASS" >> "$CI_PROJECT_DIR/credentials.env"
+echo DB_USER="$DB_USER" > credentials.env
+echo DB_PASS="$DB_PASS" >> credentials.env
