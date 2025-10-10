@@ -11,7 +11,7 @@ SELECT
     export_value,
     import_value
 FROM read_csv(
-    '{{ env_var("RAW__THE_ATLAS_OF_ECONOMIC_COMPLEXITY__HS92__HS92_COUNTRY_COUNTRY_PRODUCT_YEAR_6_2020_2023") }}',
+    '{{ env_var("RAW__THE_ATLAS_OF_ECONOMIC_COMPLEXITY__HS92__HS92_COUNTRY_COUNTRY_PRODUCT_YEAR_6_2020_2023", "NOT_FOUND") }}',
     delim = ',',
     quote = '"',
     escape = '"',

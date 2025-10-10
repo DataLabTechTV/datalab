@@ -12,7 +12,7 @@ SELECT
     natural_resource,
     green_product
 FROM read_csv(
-    '{{ env_var("RAW__THE_ATLAS_OF_ECONOMIC_COMPLEXITY__CLASSIFICATIONS__PRODUCT_HS92") }}',
+    '{{ env_var("RAW__THE_ATLAS_OF_ECONOMIC_COMPLEXITY__CLASSIFICATIONS__PRODUCT_HS92", "NOT_FOUND") }}',
     delim = ',',
     quote = '"',
     escape = '"',
