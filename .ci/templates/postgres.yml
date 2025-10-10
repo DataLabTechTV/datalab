@@ -11,6 +11,8 @@ spec:
 
 psql_load_credentials:
   stage: postgres
+  before_script:
+    - apt install -y jq
   script:
     - export PSQL_SECRETS=${PSQL_SECRETS:-{}}
     - export DB_PASS=$(echo $PSQL_SECRETS | jq -r '.["$[[ inputs.db_user ]]"]')
