@@ -14,13 +14,9 @@ kafka_create_topic:
   image: docker:28.4.0-cli
   variables:
     DOCKER_HOST: tcp://docker-shared:2375
+    TOPIC: $[[ inputs.topic ]]
   script:
-    - 'echo "Creating topic: $[[ inputs.topic ]]"'
-    - |
-      docker exec datalab-kafka-1 /opt/kafka/bin/kafka-topics.sh \
-        --bootstrap-server localhost:29092 \
-        --create --if-not-exists --topic $[[ inputs.topic ]] \
-        --partitions 1 --replication-factor 1
+    - .ci/scripts/kafka/create_topic.sh
   rules:
     - if: '"$[[ inputs.topic ]]" != ""'
     - when: never
@@ -30,14 +26,10 @@ kafka_init_consumer:
   image: docker:28.4.0-cli
   variables:
     DOCKER_HOST: tcp://docker-shared:2375
+    TOPIC: $[[ inputs.topic ]]
+    GROUP: $[[ inputs.group ]]
   script:
-    - 'echo "Initializing consumer: topic $[[ inputs.topic ]], group $[[ inputs.group ]]"'
-    - |
-      docker exec datalab-kafka-1 /opt/kafka/bin/kafka-console-consumer.sh \
-        --bootstrap-server localhost:29092 \
-        --topic $[[ inputs.topic ]] \
-        --group $[[ inputs.group ]] \
-        --timeout-ms 5000
+    - .ci/scripts/kafka/init_consumer.sh
   needs:
     - kafka_create_topic
   rules:

@@ -11,9 +11,9 @@ ollama_pull:
   image: docker:28.4.0-cli
   variables:
     DOCKER_HOST: tcp://docker-shared:2375
+    PULL: $[[ inputs.pull ]]
   script:
-    - 'echo "Installing Ollama model: $[[ inputs.pull ]]"'
-    - docker exec datalab-ollama-1 ollama pull $[[ inputs.pull ]]
+    - .ci/scripts/ollama/pull.sh
   rules:
     - if: '"$[[ inputs.pull ]]" != ""'
     - when: never
