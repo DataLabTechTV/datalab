@@ -30,15 +30,15 @@ stages:
   - ollama
 
 include:
-  - .ci/deploy.yml
-  - local: .ci/postgres.yml
+  - .ci/templates/deploy.yml
+  - local: .ci/templates/postgres.yml
     inputs:
       db_user: $[[ inputs.postgres_db_user ]]
       db_name: $[[ inputs.postgres_db_name ]]
-  - local: .ci/kafka.yml
+  - local: .ci/templates/kafka.yml
     inputs:
       topic: $[[ inputs.kafka_topic ]]
       group: $[[ inputs.kafka_group ]]
-  - local: .ci/ollama.yml
+  - local: .ci/templates/ollama.yml
     inputs:
       pull: $[[ inputs.ollama_pull ]]
