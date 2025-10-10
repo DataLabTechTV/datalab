@@ -17,7 +17,7 @@ apps_deploy:
   variables:
     DOCKER_HOST: tcp://docker-apps:2375
   script:
-    - docker compose -p datalab -f infra/apps/docker/compose.yml up -d
+    - docker compose -p datalab -f infra/apps/docker/compose.yml up -d --build
     - docker ps
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
