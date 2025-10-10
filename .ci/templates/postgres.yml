@@ -22,7 +22,12 @@ psql_load_credentials:
   variables:
     DB_USER: $[[ inputs.db_user ]]
   script:
-    - .ci/scripts/postgres/load_credentials.sh
+    - |
+      PSQL_SECRETS=${PSQL_SECRETS:-"{}"}
+      DB_PASS="$(echo "$PSQL_SECRETS" | jq -r ".$DB_USER // \"\"")"
+
+      echo DB_USER="$DB_USER" > credentials.env
+      echo DB_PASS="$DB_PASS" >> credentials.env
   artifacts:
     reports:
       dotenv: credentials.env
@@ -38,7 +43,43 @@ psql_create_user:
   before_script:
     - apk add --no-cache openssl curl jq
   script:
-    - .ci/scripts/postgres/create_user.sh
+    - |
+      if [ -z "$DB_PASS" ]; then
+            DB_PASS=$(openssl rand -base64 12)
+            echo "Creating user: $DB_USER"
+
+            docker exec datalab-postgres-1 psql -c "
+                DO
+                \$\$
+                BEGIN
+                IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '$DB_USER') THEN
+                    CREATE USER $DB_USER WITH PASSWORD '$DB_PASS';
+                END IF;
+                END
+                \$\$
+            "
+
+            echo "Updating CI/CD variable: PSQL_SECRETS"
+
+            PSQL_SECRETS=${PSQL_SECRETS:-"{}"}
+            PSQL_SECRETS=$(echo "$PSQL_SECRETS" | jq -c ". + { \"$DB_USER\": \"$DB_PASS\" }")
+
+            curl \
+                -X POST \
+                -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+                -d "key=PSQL_SECRETS" \
+                -d "value=$PSQL_SECRETS" \
+                -d "protected=false" \
+                -d "raw=true" \
+                -d "hidden=true" \
+                -d "masked=true" \
+                "$CI_API_V4_URL/projects/$CI_PROJECT_ID/variables"
+        else
+            echo "User found: $DB_USER"
+        fi
+
+        echo DB_USER="$DB_USER" > credentials.env
+        echo DB_PASS="$DB_PASS" >> credentials.env
   artifacts:
     reports:
       dotenv: credentials.env
@@ -55,7 +96,20 @@ psql_create_db:
     DOCKER_HOST: tcp://docker-shared:2375
     DB_NAME: $[[ inputs.db_name ]]
   script:
-    - .ci/scripts/postgres/create_db.sh
+    - |
+      echo "Creating database: $DB_NAME"
+
+      docker exec datalab-postgres-1 \
+          psql -c "CREATE DATABASE $DB_NAME" --set ON_ERROR_STOP=off
+
+      echo "Granting all privileges to user: $DB_USER"
+
+      docker exec datalab-postgres-1 \
+          psql -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER"
+
+      echo DB_NAME="$DB_NAME" > credentials.env
+      echo DB_USER="$DB_USER" >> credentials.env
+      echo DB_PASS="$DB_PASS" >> credentials.env
   artifacts:
     paths:
       - credentials.env
