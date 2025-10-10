@@ -2,7 +2,7 @@
 
 echo "Creating database: $DB_NAME"
 
-docker exec datalab-postgres-1
+docker exec datalab-postgres-1 \
     psql -c "CREATE DATABASE $DB_NAME" --set ON_ERROR_STOP=off
 
 echo "Granting all privileges to user: $DB_USER"
