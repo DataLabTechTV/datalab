@@ -12,9 +12,10 @@ spec:
 psql_load_credentials:
   stage: postgres
   before_script:
-    - apt update && apt install -y software-properties-common
+    - apt update
+    - apt install -y software-properties-common
     - add-apt-repository universe
-    - apt update && apt install -y jq
+    - apt install -y jq
   script:
     - .ci/scripts/postgres/load_credentials.sh
   artifacts:
