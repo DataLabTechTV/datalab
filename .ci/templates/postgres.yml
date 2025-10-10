@@ -57,8 +57,9 @@ psql_create_db:
   script:
     - .ci/scripts/postgres/create_db.sh
   artifacts:
-    reports:
-      dotenv: credentials.env
+    paths:
+      - credentials.env
+    expire_in: 15 minutes
   needs:
     - psql_create_user
   rules:
