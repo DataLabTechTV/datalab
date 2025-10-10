@@ -5,4 +5,4 @@ set -e
 # shellcheck source=/dev/null
 . .venv/bin/activate
 
-dlctl server "$@"
+dlctl ml server "$@"
