@@ -12,4 +12,4 @@ COPY . .
 
 RUN uv sync --frozen
 
-ENTRYPOINT ["infra/apps/docker/mlserver/docker-entrypoint.sh"]
+ENTRYPOINT ["./infra/apps/docker/mlserver/docker-entrypoint.sh"]
