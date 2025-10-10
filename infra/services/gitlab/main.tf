@@ -1,5 +1,6 @@
 locals {
   secret_regex = "(?i)PASSWORD|SECRET"
+  project      = "${var.gitlab_user}/${var.gitlab_project}"
 }
 
 data "dotenv" "config" {
@@ -12,7 +13,7 @@ resource "gitlab_project_variable" "datalab_config" {
     k => v if !can(regex(local.secret_regex, k))
   }
 
-  project       = "${var.gitlab_user}/${var.gitlab_project}"
+  project       = local.project
   key           = each.key
   value         = each.value
   variable_type = "env_var"
@@ -28,12 +29,23 @@ resource "gitlab_project_variable" "datalab_secrets" {
     k => v if can(regex(local.secret_regex, k))
   }
 
-  project       = "${var.gitlab_user}/${var.gitlab_project}"
+  project       = local.project
   key           = each.key
   value         = sensitive(each.value)
   variable_type = "env_var"
   protected     = false
   raw           = true
   hidden        = false
+  masked        = true
+}
+
+resource "gitlab_project_variable" "gitlab_token_secret" {
+  project       = local.project
+  key           = "GITLAB_TOKEN"
+  value         = var.gitlab_token
+  variable_type = "env_var"
+  protected     = false
+  raw           = true
+  hidden        = true
   masked        = true
 }
