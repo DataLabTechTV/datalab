@@ -1,7 +1,7 @@
 services:
   mlserver:
     build:
-      context: ../../../../
+      context: ../../../
       dockerfile: infra/apps/docker/mlserver/Dockerfile
     ports:
       - "8000:8000"
