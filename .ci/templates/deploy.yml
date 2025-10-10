@@ -9,7 +9,7 @@ services_deploy:
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
       changes:
-        - infra/services/docker/**
+        - infra/services/docker/**/*
 
 apps_deploy:
   stage: deploy
@@ -22,4 +22,4 @@ apps_deploy:
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
       changes:
-        - infra/apps/docker/**
+        - infra/apps/docker/**/*
