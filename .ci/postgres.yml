@@ -14,11 +14,7 @@ stages:
 
 psql_load_credentials:
   stage: postgres
-  before_script:
-    - apt update
-    - apt install -y software-properties-common
-    - add-apt-repository universe
-    - apt install -y jq
+  image: gitlab:5050/datalabtechtv/datalab/ubuntu:custom
   variables:
     DB_USER: $[[ inputs.db_user ]]
   script:
