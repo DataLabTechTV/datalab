@@ -29,7 +29,8 @@ write_files:
     content: |
       {
         "hosts": ["fd://", "tcp://0.0.0.0:2375"],
-        "containerd": "/run/containerd/containerd.sock"
+        "containerd": "/run/containerd/containerd.sock",
+        "insecure-registries": ["${gitlab_hostname}:5050"]
       }
 runcmd:
   - systemctl enable --now qemu-guest-agent

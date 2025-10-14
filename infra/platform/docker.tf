@@ -85,10 +85,11 @@ resource "proxmox_virtual_environment_file" "docker_cfg" {
 
   source_raw {
     data = templatefile("templates/docker.cloud-config.tftpl", {
-      hostname       = local.docker[count.index].name
-      password       = random_password.docker_vm[count.index].result
-      docker_gpg_key = data.http.docker_gpg.response_body,
-      extra_cmds     = try(local.docker[count.index].gpu, false) ? local.docker_nvidia_install_cmds : ""
+      hostname        = local.docker[count.index].name
+      password        = random_password.docker_vm[count.index].result
+      gitlab_hostname = local.gitlab.name
+      docker_gpg_key  = data.http.docker_gpg.response_body,
+      extra_cmds      = try(local.docker[count.index].gpu, false) ? local.docker_nvidia_install_cmds : ""
     })
 
     file_name = "${local.docker[count.index].name}.cloud-config.yaml"
