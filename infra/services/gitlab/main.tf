@@ -49,3 +49,26 @@ resource "gitlab_project_variable" "gitlab_token_secret" {
   hidden        = true
   masked        = true
 }
+
+resource "docker_image" "ubuntu" {
+  name = "gitlab:5050/datalabtechtv/datalab/ubuntu:custom"
+
+  triggers = {
+    sha1 = filesha1("${path.module}/../docker/ubuntu/Dockerfile")
+  }
+
+  build {
+    context    = "${path.module}/../docker/ubuntu/"
+    dockerfile = "Dockerfile"
+  }
+}
+
+resource "docker_registry_image" "ubuntu" {
+  name = docker_image.ubuntu.name
+
+  auth_config {
+    address  = "http://gitlab:5050"
+    username = var.gitlab_user
+    password = var.gitlab_token
+  }
+}

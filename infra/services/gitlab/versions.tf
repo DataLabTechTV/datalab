@@ -7,6 +7,11 @@ terraform {
       version = "18.4.1"
     }
 
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "3.6.2"
+    }
+
     dotenv = {
       source  = "jrhouston/dotenv"
       version = "1.0.1"
