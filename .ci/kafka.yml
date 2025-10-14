@@ -19,7 +19,13 @@ kafka_create_topic:
     DOCKER_HOST: tcp://docker-shared:2375
     TOPIC: $[[ inputs.topic ]]
   script:
-    - .ci/scripts/kafka/create_topic.sh
+    - 'echo "Creating topic if not exists: $TOPIC"'
+    - |
+      docker exec datalab-kafka-1 /opt/kafka/bin/kafka-topics.sh \
+          --bootstrap-server localhost:29092 \
+          --create --if-not-exists --topic "$TOPIC" \
+          --partitions 1 \
+          --replication-factor 1
   rules:
     - if: '"$[[ inputs.topic ]]" != ""'
     - when: never
@@ -32,7 +38,13 @@ kafka_init_consumer:
     TOPIC: $[[ inputs.topic ]]
     GROUP: $[[ inputs.group ]]
   script:
-    - .ci/scripts/kafka/init_consumer.sh
+    - 'echo "Initializing consumer: topic $TOPIC, group $GROUP"'
+    - |
+      docker exec datalab-kafka-1 /opt/kafka/bin/kafka-console-consumer.sh \
+          --bootstrap-server localhost:29092 \
+          --topic "$TOPIC" \
+          --group "$GROUP" \
+          --timeout-ms 5000
   needs:
     - kafka_create_topic
   rules:

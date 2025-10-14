@@ -22,12 +22,10 @@ psql_load_credentials:
   variables:
     DB_USER: $[[ inputs.db_user ]]
   script:
-    - |
-      PSQL_SECRETS=${PSQL_SECRETS:-"{}"}
-      DB_PASS="$(echo "$PSQL_SECRETS" | jq -r ".$DB_USER // \"\"")"
-
-      echo DB_USER="$DB_USER" > credentials.env
-      echo DB_PASS="$DB_PASS" >> credentials.env
+    - PSQL_SECRETS=${PSQL_SECRETS:-"{}"}
+    - DB_PASS="$(echo "$PSQL_SECRETS" | jq -r ".$DB_USER // \"\"")"
+    - echo DB_USER="$DB_USER" > credentials.env
+    - echo DB_PASS="$DB_PASS" >> credentials.env
   artifacts:
     reports:
       dotenv: credentials.env
@@ -77,9 +75,8 @@ psql_create_user:
         else
             echo "User found: $DB_USER"
         fi
-
-        echo DB_USER="$DB_USER" > credentials.env
-        echo DB_PASS="$DB_PASS" >> credentials.env
+    - echo DB_USER="$DB_USER" > credentials.env
+    - echo DB_PASS="$DB_PASS" >> credentials.env
   artifacts:
     reports:
       dotenv: credentials.env
