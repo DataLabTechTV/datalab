@@ -58,16 +58,28 @@ psql_create_user:
             PSQL_SECRETS=${PSQL_SECRETS:-"{}"}
             PSQL_SECRETS=$(echo "$PSQL_SECRETS" | jq -c ". + { \"$DB_USER\": \"$DB_PASS\" }")
 
-            curl \
-                -X POST \
+            STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+              -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+              "$CI_API_V4_URL/projects/$CI_PROJECT_ID/variables/PSQL_SECRETS")
+
+            if [ "$STATUS_CODE" = "200" ]; then
+              curl \
+                -X PUT \
                 -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
-                -d "key=PSQL_SECRETS" \
                 -d "value=$PSQL_SECRETS" \
-                -d "protected=false" \
-                -d "raw=true" \
-                -d "hidden=true" \
-                -d "masked=true" \
                 "$CI_API_V4_URL/projects/$CI_PROJECT_ID/variables"
+            else
+              curl \
+                  -X POST \
+                  -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+                  -d "key=PSQL_SECRETS" \
+                  -d "value=$PSQL_SECRETS" \
+                  -d "protected=false" \
+                  -d "raw=true" \
+                  -d "hidden=true" \
+                  -d "masked=true" \
+                  "$CI_API_V4_URL/projects/$CI_PROJECT_ID/variables"
+            fi
         else
             echo "User found: $DB_USER"
         fi
