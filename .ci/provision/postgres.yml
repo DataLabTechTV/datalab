@@ -1,0 +1,75 @@
+spec:
+  inputs:
+    db_user:
+      description: "PostgreSQL username to create and grant privileges to"
+      type: string
+    db_name:
+      description: "PostgreSQL database to create"
+      type: string
+
+---
+
+stages:
+  - provision
+
+variables:
+  PROVISIONER_ID: datalabtechtv%2Fdatalab
+
+provision_db:
+  image: gitlab:5050/datalabtechtv/datalab/ubuntu:custom
+  variables:
+    DB_USER: $[[ inputs.db_user ]]
+    DB_NAME: $[[ inputs.db_name ]]
+  script:
+    - echo "Triggering downstream pipeline"
+    - |
+      PIPELINE_ID=$(curl -s -X POST \
+        --form token=$GITLAB_TRIGGER_TOKEN \
+        --form ref=infra \
+        --form inputs[postgres_db_user]=$DB_USER \
+        --form inputs[postgres_db_name]=$DB_NAME \
+        $CI_API_V4_URL/projects/$PROVISIONER_ID/trigger/pipeline | jq -r '.id')
+    - echo "Triggered pipeline $PIPELINE_ID"
+    - |
+      while true; do
+        STATUS=$(curl -s -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+          $CI_API_V4_URL/projects/$PROVISIONER_ID/pipelines/$PIPELINE_ID \
+          | jq -r '.status')
+        echo "Pipeline status: $STATUS"
+        [[ "$STATUS" == "success" || "$STATUS" == "failed" ]] && break
+        sleep 10
+      done
+    - echo PIPELINE_ID=$PIPELINE_ID > pipeline.env
+  artifacts:
+    reports:
+      dotenv: pipeline.env
+
+get_job_id:
+  image: gitlab:5050/datalabtechtv/datalab/ubuntu:custom
+  needs:
+    - provision_db
+  script:
+    - |
+      JOB_ID=$(curl -s -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+        "$CI_API_V4_URL/projects/$PROVISIONER_ID/pipelines/$PIPELINE_ID/jobs" \
+        | jq '.[] | select(.name=="psql_create_db") | .id')
+    - 'echo Job ID found: $JOB_ID'
+    - echo PIPELINE_ID=$PIPELINE_ID > pipeline.env
+    - echo JOB_ID=$JOB_ID >> pipeline.env
+  artifacts:
+    reports:
+      dotenv: pipeline.env
+
+fetch_credentials:
+  image: gitlab:5050/datalabtechtv/datalab/ubuntu:custom
+  needs:
+    - get_job_id
+  script:
+    - |
+      curl -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+        -L -o artifacts.zip \
+        "$CI_API_V4_URL/projects/$PROVISIONER_ID/jobs/$JOB_ID/artifacts"
+    - unzip artifacts.zip
+  artifacts:
+    reports:
+      dotenv: credentials.env
