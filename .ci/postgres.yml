@@ -66,7 +66,7 @@ psql_create_user:
                 -X PUT \
                 -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
                 -d "value=$PSQL_SECRETS" \
-                "$CI_API_V4_URL/projects/$CI_PROJECT_ID/variables"
+                "$CI_API_V4_URL/projects/$CI_PROJECT_ID/variables/PSQL_SECRETS"
             else
               echo "Creating CI/CD variable: PSQL_SECRETS"
               curl \
