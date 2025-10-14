@@ -53,8 +53,6 @@ psql_create_user:
                 \$\$
             "
 
-            echo "Updating CI/CD variable: PSQL_SECRETS"
-
             PSQL_SECRETS=${PSQL_SECRETS:-"{}"}
             PSQL_SECRETS=$(echo "$PSQL_SECRETS" | jq -c ". + { \"$DB_USER\": \"$DB_PASS\" }")
 
@@ -63,12 +61,14 @@ psql_create_user:
               "$CI_API_V4_URL/projects/$CI_PROJECT_ID/variables/PSQL_SECRETS")
 
             if [ "$STATUS_CODE" = "200" ]; then
+              echo "Updating CI/CD variable: PSQL_SECRETS"
               curl \
                 -X PUT \
                 -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
                 -d "value=$PSQL_SECRETS" \
                 "$CI_API_V4_URL/projects/$CI_PROJECT_ID/variables"
             else
+              echo "Creating CI/CD variable: PSQL_SECRETS"
               curl \
                   -X POST \
                   -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
