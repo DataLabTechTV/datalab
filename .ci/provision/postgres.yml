@@ -44,7 +44,7 @@ provision_db:
     reports:
       dotenv: pipeline.env
 
-get_job_id:
+get_db_credentials_job_id:
   image: gitlab:5050/datalabtechtv/datalab/ubuntu:custom
   needs:
     - provision_db
@@ -60,10 +60,10 @@ get_job_id:
     reports:
       dotenv: pipeline.env
 
-fetch_credentials:
+fetch_db_credentials:
   image: gitlab:5050/datalabtechtv/datalab/ubuntu:custom
   needs:
-    - get_job_id
+    - get_db_credentials_job_id
   script:
     - |
       curl -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
