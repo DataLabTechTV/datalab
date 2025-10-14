@@ -62,6 +62,7 @@ resource "proxmox_virtual_environment_file" "gitlab_cfg" {
               'secretkey' => '${var.s3_secret_key}',
               'pathstyle' => ${var.s3_path_style},
               'bucket' => '${var.gitlab_s3_registry_bucket}',
+              'checksum_disabled' => true,
             }
           }
     runcmd:
