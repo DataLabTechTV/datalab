@@ -94,6 +94,7 @@ resource "proxmox_virtual_environment_file" "gitlab_cfg" {
           --tag-list "docker,remote,ubuntu" \
           --run-untagged="true" \
           --docker-host "tcp://${local.docker[0].name}:2375"
+      - sed -i 's/^concurrent = 1/concurrent = 4/' /etc/gitlab-runner/config.toml
       - reboot
     EOF
 
