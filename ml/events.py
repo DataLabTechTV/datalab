@@ -14,8 +14,19 @@ from shared.settings import env
 # ===================
 
 KAFKA_BROKER_ENDPOINT = env.str("KAFKA_BROKER_ENDPOINT")
-INFERENCE_RESULTS_TOPIC = "ml_inference_results"
-INFERENCE_FEEDBACK_TOPIC = "ml_inference_feedback"
+
+INFERENCE_RESULTS_TOPIC = env.str("INFERENCE_RESULTS_TOPIC", "ml_inference_results")
+INFERENCE_FEEDBACK_TOPIC = env.str("INFERENCE_FEEDBACK_TOPIC", "ml_inference_feedback")
+
+INFERENCE_RESULTS_GROUP = env.str(
+    "INFERENCE_RESULTS_GROUP",
+    "lakehouse-inference-result-consumer",
+)
+INFERENCE_FEEDBACK_GROUP = env.str(
+    "INFERENCE_FEEDBACK_GROUP",
+    "lakehouse-inference-feedback-consumer",
+)
+
 BATCH_SIZE = 1000
 FLUSH_INTERVAL = timedelta(minutes=15)
 
@@ -115,7 +126,7 @@ async def inference_result_consumer_loop(schema: str):
     consumer = AIOKafkaConsumer(
         INFERENCE_RESULTS_TOPIC,
         bootstrap_servers=KAFKA_BROKER_ENDPOINT,
-        group_id="lakehouse-inference-result-consumer",
+        group_id=INFERENCE_RESULTS_GROUP,
         auto_offset_reset="earliest",
     )
 
@@ -146,7 +157,7 @@ async def inference_feedback_consumer_loop(schema: str):
     consumer = AIOKafkaConsumer(
         INFERENCE_FEEDBACK_TOPIC,
         bootstrap_servers=KAFKA_BROKER_ENDPOINT,
-        group_id="lakehouse-inference-feedback-consumer",
+        group_id=INFERENCE_FEEDBACK_GROUP,
         auto_offset_reset="earliest",
     )
 
