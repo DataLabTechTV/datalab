@@ -23,7 +23,7 @@ services_deploy:
     - if: $CI_PIPELINE_SOURCE == "push"
       changes:
         - infra/services/docker/**/*
-    - if: $[[ inputs.force_services_deploy ]]
+    - if: '"$[[ inputs.force_services_deploy ]]" == "true"'
       when: manual
 
 apps_deploy:
@@ -38,5 +38,5 @@ apps_deploy:
     - if: $CI_PIPELINE_SOURCE == "push"
       changes:
         - infra/apps/docker/**/*
-    - if: $[[ inputs.force_apps_deploy ]]
+    - if: '"$[[ inputs.force_apps_deploy ]]" == "true"'
       when: manual
