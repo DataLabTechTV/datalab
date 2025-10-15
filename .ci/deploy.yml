@@ -50,6 +50,12 @@ provision_mlserver_resources:
         inputs:
           topic: ml_inference_feedback
           group: lakehouse-inference-feedback-consumer
+    strategy: depend
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - infra/apps/docker/**/*
+    - if: '"$[[ inputs.force_apps_deploy ]]" == "true"'
 
 apps_deploy:
   stage: deploy
