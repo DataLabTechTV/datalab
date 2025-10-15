@@ -35,6 +35,7 @@ services_deploy:
 # =====================
 
 provision_mlserver_resources:
+  stage: deploy
   trigger:
     include:
       - local: .ci/provision/kafka.yml
