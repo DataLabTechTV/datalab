@@ -13,6 +13,7 @@ variables:
   PROVISIONER_ID: datalabtechtv%2Fdatalab
 
 provision_ollama_model:
+  stage: provision
   image: gitlab:5050/datalabtechtv/datalab/ubuntu:custom
   variables:
     PULL: $[[ inputs.pull ]]
