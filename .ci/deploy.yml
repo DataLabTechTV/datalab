@@ -30,6 +30,7 @@ services_deploy:
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
       changes:
+        - .ci/deploy.yml
         - infra/services/docker/**/*
     - if: '"$[[ inputs.force_services_deploy ]]" == "true"'
 
@@ -54,6 +55,7 @@ provision_mlserver_resources:
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
       changes:
+        - .ci/deploy.yml
         - infra/apps/docker/**/*
     - if: '"$[[ inputs.force_apps_deploy ]]" == "true"'
 
@@ -75,5 +77,6 @@ apps_deploy:
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
       changes:
+        - .ci/deploy.yml
         - infra/apps/docker/**/*
     - if: '"$[[ inputs.force_apps_deploy ]]" == "true"'
