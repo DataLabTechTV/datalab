@@ -1,3 +1,16 @@
+spec:
+  inputs:
+    force_services_deploy:
+      description: "Force a deploy of the services docker compose project"
+      type: boolean
+      default: false
+    force_apps_deploy:
+      description: "Force a deploy of the apps docker compose project"
+      type: boolean
+      default: false
+
+---
+
 services_deploy:
   stage: deploy
   image: docker:28.4.0-cli
@@ -10,6 +23,8 @@ services_deploy:
     - if: $CI_PIPELINE_SOURCE == "push"
       changes:
         - infra/services/docker/**/*
+    - if: $[[ inputs.force_services_deploy ]]
+      when: manual
 
 apps_deploy:
   stage: deploy
@@ -23,3 +38,5 @@ apps_deploy:
     - if: $CI_PIPELINE_SOURCE == "push"
       changes:
         - infra/apps/docker/**/*
+    - if: $[[ inputs.force_apps_deploy ]]
+      when: manual

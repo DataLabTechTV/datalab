@@ -1,5 +1,13 @@
 spec:
   inputs:
+    trigger_services_deploy:
+      description: "Force a deploy of the services docker compose project"
+      type: boolean
+      default: false
+    trigger_apps_deploy:
+      description: "Force a deploy of the apps docker compose project"
+      type: boolean
+      default: false
     postgres_db_user:
       description: "PostgreSQL username to create and grant privileges to"
       type: string
@@ -30,7 +38,10 @@ stages:
   - ollama
 
 include:
-  - .ci/deploy.yml
+  - local: .ci/deploy.yml
+    inputs:
+      force_services_deploy: $[[ inputs.trigger_services_deploy ]]
+      force_apps_deploy: $[[ inputs.trigger_apps_deploy ]]
   - local: .ci/postgres.yml
     inputs:
       db_user: $[[ inputs.postgres_db_user ]]
