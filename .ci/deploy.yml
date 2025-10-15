@@ -39,7 +39,7 @@ services_deploy:
 # Applications
 # =====================
 
-provision_mlserver_resources:
+provision_mlserver_results_topic:
   stage: deploy
   trigger:
     include:
@@ -47,6 +47,18 @@ provision_mlserver_resources:
         inputs:
           topic: test_ml_inference_results
           group: test-lakehouse-inference-result-consumer
+    strategy: depend
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - .ci/deploy.yml
+        - infra/apps/docker/**/*
+    - if: '"$[[ inputs.force_apps_deploy ]]" == "true"'
+
+provision_mlserver_feedback_topic:
+  stage: deploy
+  trigger:
+    include:
       - local: .ci/provision/kafka.yml
         inputs:
           topic: test_ml_inference_feedback
@@ -58,6 +70,12 @@ provision_mlserver_resources:
         - .ci/deploy.yml
         - infra/apps/docker/**/*
     - if: '"$[[ inputs.force_apps_deploy ]]" == "true"'
+
+provision_mlserver_resources:
+  stage: deploy
+  needs:
+    - provision_mlserver_results_topic
+    - provision_mlserver_feedback_topic
 
 apps_deploy:
   stage: deploy
