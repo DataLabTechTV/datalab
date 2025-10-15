@@ -45,8 +45,8 @@ provision_mlserver_results_topic:
     include:
       - local: .ci/provision/kafka.yml
         inputs:
-          topic: test_ml_inference_results
-          group: test-lakehouse-inference-result-consumer
+          topic: ml_inference_results
+          group: lakehouse-inference-result-consumer
     strategy: depend
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
@@ -61,8 +61,8 @@ provision_mlserver_feedback_topic:
     include:
       - local: .ci/provision/kafka.yml
         inputs:
-          topic: test_ml_inference_feedback
-          group: test-lakehouse-inference-feedback-consumer
+          topic: ml_inference_feedback
+          group: lakehouse-inference-feedback-consumer
     strategy: depend
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
@@ -80,10 +80,10 @@ apps_deploy:
   variables:
     DOCKER_HOST: tcp://docker-apps:2375
     DOCKER_BUILDKIT: 1
-    INFERENCE_RESULTS_TOPIC: test_ml_inference_results
-    INFERENCE_FEEDBACK_TOPIC: test-lakehouse-inference-result-consumer
-    INFERENCE_RESULTS_GROUP: test_ml_inference_feedback
-    INFERENCE_FEEDBACK_GROUP: test-lakehouse-inference-feedback-consumer
+    INFERENCE_RESULTS_TOPIC: ml_inference_results
+    INFERENCE_FEEDBACK_TOPIC: lakehouse-inference-result-consumer
+    INFERENCE_RESULTS_GROUP: ml_inference_feedback
+    INFERENCE_FEEDBACK_GROUP: lakehouse-inference-feedback-consumer
   script:
     - docker compose -p datalab -f infra/apps/docker/compose.yml up -d --build
     - docker ps
