@@ -24,7 +24,6 @@ services_deploy:
       changes:
         - infra/services/docker/**/*
     - if: '"$[[ inputs.force_services_deploy ]]" == "true"'
-      when: manual
 
 apps_deploy:
   stage: deploy
@@ -39,4 +38,3 @@ apps_deploy:
       changes:
         - infra/apps/docker/**/*
     - if: '"$[[ inputs.force_apps_deploy ]]" == "true"'
-      when: manual
