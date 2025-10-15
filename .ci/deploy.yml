@@ -11,6 +11,10 @@ spec:
 
 ---
 
+# =====================
+# Services
+# =====================
+
 services_deploy:
   stage: deploy
   image: docker:28.4.0-cli
@@ -25,11 +29,35 @@ services_deploy:
         - infra/services/docker/**/*
     - if: '"$[[ inputs.force_services_deploy ]]" == "true"'
 
+
+# =====================
+# Applications
+# =====================
+
+provision_mlserver_resources:
+  trigger:
+    include:
+      - local: .ci/provision/kafka.yml
+        inputs:
+          topic: ml_inference_results
+          group: lakehouse-inference-result-consumer
+      - local: .ci/provision/kafka.yml
+        inputs:
+          topic: ml_inference_feedback
+          group: lakehouse-inference-feedback-consumer
+
 apps_deploy:
   stage: deploy
   image: docker:28.4.0-cli
+  needs:
+    - provision_mlserver_resources
   variables:
     DOCKER_HOST: tcp://docker-apps:2375
+    DOCKER_BUILDKIT: 1
+    INFERENCE_RESULTS_TOPIC: ml_inference_results
+    INFERENCE_FEEDBACK_TOPIC: lakehouse-inference-result-consumer
+    INFERENCE_RESULTS_GROUP: ml_inference_feedback
+    INFERENCE_FEEDBACK_GROUP: lakehouse-inference-feedback-consumer
   script:
     - docker compose -p datalab -f infra/apps/docker/compose.yml up -d --build
     - docker ps
