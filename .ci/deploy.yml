@@ -11,6 +11,10 @@ spec:
 
 ---
 
+stages:
+  - deploy
+  - provision
+
 # =====================
 # Services
 # =====================
