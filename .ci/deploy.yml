@@ -71,17 +71,12 @@ provision_mlserver_feedback_topic:
         - infra/apps/docker/**/*
     - if: '"$[[ inputs.force_apps_deploy ]]" == "true"'
 
-provision_mlserver_resources:
-  stage: deploy
-  needs:
-    - provision_mlserver_results_topic
-    - provision_mlserver_feedback_topic
-
 apps_deploy:
   stage: deploy
   image: docker:28.4.0-cli
   needs:
-    - provision_mlserver_resources
+    - provision_mlserver_results_topic
+    - provision_mlserver_feedback_topic
   variables:
     DOCKER_HOST: tcp://docker-apps:2375
     DOCKER_BUILDKIT: 1
