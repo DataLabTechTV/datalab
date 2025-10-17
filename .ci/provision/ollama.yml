@@ -6,11 +6,11 @@ spec:
 
 ---
 
-stages:
-  - provision
-
 variables:
   PROVISIONER_ID: datalabtechtv%2Fdatalab
+
+stages:
+  - provision
 
 provision_ollama_model:
   stage: provision

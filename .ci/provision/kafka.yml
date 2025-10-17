@@ -9,11 +9,11 @@ spec:
 
 ---
 
-stages:
-  - provision
-
 variables:
   PROVISIONER_ID: datalabtechtv%2Fdatalab
+
+stages:
+  - provision
 
 provision_kafka_topic:
   stage: provision
