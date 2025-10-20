@@ -1,6 +1,454 @@
 # CHANGELOG
 
 
+## v1.0.0 (2025-10-20)
+
+### Bug Fixes
+
+- Add default value to env vars on dbt models
+  ([`eef59ff`](https://github.com/DataLabTechTV/datalab/commit/eef59ff367d5c21e9c6e68a7104e650e91f1e43d))
+
+- Add missing curl and jq dependencies
+  ([`99ce192`](https://github.com/DataLabTechTV/datalab/commit/99ce192aaac5c64f2b3b9df8986b6e8fcca8ee27))
+
+- Add missing curl dependency
+  ([`0d4609f`](https://github.com/DataLabTechTV/datalab/commit/0d4609fee635042f026818c0dedd1c906d42c1cc))
+
+- Add missing env vars
+  ([`a5e153d`](https://github.com/DataLabTechTV/datalab/commit/a5e153d8820a296f35b4a89d4a33b7ae6829d19c))
+
+- Add missing graph load command, add spacing and comment sections
+  ([`f9150bc`](https://github.com/DataLabTechTV/datalab/commit/f9150bc40a2b64536757dbb6860ca360ac9005fa))
+
+- Add universe apt repo
+  ([`ce5e18a`](https://github.com/DataLabTechTV/datalab/commit/ce5e18a13afd0ed73b1ce4c871049d72fff84def))
+
+- Change to correct context path
+  ([`4534a27`](https://github.com/DataLabTechTV/datalab/commit/4534a2778c45d74856dbb3229977550406c6c19c))
+
+- Correct command to ml server
+  ([`29dfbf7`](https://github.com/DataLabTechTV/datalab/commit/29dfbf7df289fa7f03c3a188bc1bdb9079bd89a7))
+
+- Destroy services was not switching to the appropriate docker context
+  ([`3aee07e`](https://github.com/DataLabTechTV/datalab/commit/3aee07e286a82cb64160f8eed95a1a91ac2fd7c7))
+
+- Enable prevent_destroy so we can tune cores and memory without risking destruction in the future
+  ([`ae7947d`](https://github.com/DataLabTechTV/datalab/commit/ae7947d886b683ca3219cc0a419f8e8f6c1be88a))
+
+- Expired password by default and dhcp hostname broadcast
+  ([`2e5bc08`](https://github.com/DataLabTechTV/datalab/commit/2e5bc0841c31b7dba49e4870d0b804b7485168df))
+
+- Force build to ensure image is rebuilt when required
+  ([`d84cc77`](https://github.com/DataLabTechTV/datalab/commit/d84cc774acec06a01f821a0175c7a499fd7d329a))
+
+- Incorrect create user script path
+  ([`22e6e0f`](https://github.com/DataLabTechTV/datalab/commit/22e6e0f343a77a17d653ab5a0d0e351caf92912d))
+
+- Indentation
+  ([`c7f1b17`](https://github.com/DataLabTechTV/datalab/commit/c7f1b17410f74464d416f44d05be3ccdbb058e3b))
+
+- Mark env var secrets as sensitive
+  ([`c52f940`](https://github.com/DataLabTechTV/datalab/commit/c52f9401ea5caca1ed55eaea6ee3ce1426467d77))
+
+- Mark gitlab token as sensitive
+  ([`3832bb1`](https://github.com/DataLabTechTV/datalab/commit/3832bb149314a332a605aa2b93e309678583a6d6))
+
+- Missing add-apt-repository
+  ([`2e2cf53`](https://github.com/DataLabTechTV/datalab/commit/2e2cf533380582cd764c04d58100970a68ae7d1d))
+
+- Missing backslash
+  ([`3ab832d`](https://github.com/DataLabTechTV/datalab/commit/3ab832d23f82552bc82880ab40b591f5554dcf09))
+
+- Overcommit gitlab resources with 4 cores and 8 GiB without ballooning, for stability
+  ([`48622fe`](https://github.com/DataLabTechTV/datalab/commit/48622fe5b4e3ea4ff01f61048477410a3b5b4218))
+
+- Portainer would collide with minio when running locally
+  ([`fcc0093`](https://github.com/DataLabTechTV/datalab/commit/fcc00932f09edbdf8d00bd2d44997093d95ce7a3))
+
+- Preinstall missing jq
+  ([`4c80525`](https://github.com/DataLabTechTV/datalab/commit/4c80525bd7e18a8a2786f65fa0a994b4bf067df2))
+
+- Pushing large images would fail without checksum_disabled on the registry storage
+  ([`eae3d6f`](https://github.com/DataLabTechTV/datalab/commit/eae3d6ff56a5cb22c4fd81e750883f7f3240a7bb))
+
+- Re-enable prevent_destroy
+  ([`94a5d69`](https://github.com/DataLabTechTV/datalab/commit/94a5d69fb74edcbccf24d34f0150fa1523839ee0))
+
+- Script executable permissions
+  ([`17bfd3b`](https://github.com/DataLabTechTV/datalab/commit/17bfd3b7e6ea59dc1ddf712f3a629c2072993d69))
+
+- Set env file to the ci project dir
+  ([`2642e03`](https://github.com/DataLabTechTV/datalab/commit/2642e034ac66559f94d88f2a5da81230ab6a8945))
+
+- Set options that reconfigure couldn't using gitlab-rails console
+  ([`d4e88cd`](https://github.com/DataLabTechTV/datalab/commit/d4e88cdd3b3d923334da12ce390f9f059393d5a9))
+
+- Should be secret_key, not a duplicate access_key
+  ([`e10b44e`](https://github.com/DataLabTechTV/datalab/commit/e10b44efc86bce17e2611d0b5f4f54873482c35c))
+
+- Should be the node name, not the endpoint
+  ([`09816d4`](https://github.com/DataLabTechTV/datalab/commit/09816d43240c3c704e3367e424fb8458c0f89f22))
+
+- Tfstate backups have a timestamp before the backup extension
+  ([`74261fe`](https://github.com/DataLabTechTV/datalab/commit/74261fe77604ed2a340fbdf3c538610302e1f058))
+
+- Use env var instead of input, return empty string on null
+  ([`f7ea5db`](https://github.com/DataLabTechTV/datalab/commit/f7ea5db491f69672ba5cb5c88d7c05250f734ed5))
+
+- Use env var to expose external kafka advertised listener
+  ([`355c787`](https://github.com/DataLabTechTV/datalab/commit/355c787d3314a70730f11581d73fe501bc2568c3))
+
+- Variables were not being expanded
+  ([`5c97801`](https://github.com/DataLabTechTV/datalab/commit/5c97801b3976e60086cdfe88da42aad97838b3b7))
+
+- Wrong env filename
+  ([`0d26f03`](https://github.com/DataLabTechTV/datalab/commit/0d26f033cf1e57321fcb8e49f98a67865a77a167))
+
+### Chores
+
+- Add gitlab bucket to default buckets
+  ([`f56252c`](https://github.com/DataLabTechTV/datalab/commit/f56252cad7fc1680515a7718482222bd70bfb757))
+
+- Add mlflow bucket to default foundation layer minio buckets
+  ([`63a6ab9`](https://github.com/DataLabTechTV/datalab/commit/63a6ab96e99b5c88baa98de59ec2101a9a3f0ee7))
+
+- Bump up mlflow from 3.2.0 to 3.4.0
+  ([`cd3760d`](https://github.com/DataLabTechTV/datalab/commit/cd3760d8f69faba2d36fababe9257099e389242e))
+
+- Enable prevent_destroy for docker and gitlab vms
+  ([`0b1e914`](https://github.com/DataLabTechTV/datalab/commit/0b1e914cb7933aab566c3880c7c85dc0c660aea0))
+
+- Ignore terraform state files and tfvars
+  ([`4e3bc78`](https://github.com/DataLabTechTV/datalab/commit/4e3bc785dce3372f02750cd0c69f721eaf30e85e))
+
+- Increase cores and memory for gitlab, reducing memory for docker-apps
+  ([`b65292e`](https://github.com/DataLabTechTV/datalab/commit/b65292edefc6d7a17772d486881865902203cc80))
+
+- Increase the number of concurrent jobs
+  ([`602b85a`](https://github.com/DataLabTechTV/datalab/commit/602b85a1f73f0288fb4e189d6eb49ad47ebda10c))
+
+- Minimal s3 config example
+  ([`22bddc6`](https://github.com/DataLabTechTV/datalab/commit/22bddc658f7ef4aaaaca8f798075f827d800e5a5))
+
+- Normalize tags to use layer number and name
+  ([`ea5ef9d`](https://github.com/DataLabTechTV/datalab/commit/ea5ef9db0a64d6cce4f50c634b9690523e565bce))
+
+- Postgres root password config
+  ([`34bfb06`](https://github.com/DataLabTechTV/datalab/commit/34bfb064554d5437258d974e3ec2618e23949f5d))
+
+- **deps**: Add http provider
+  ([`0f90970`](https://github.com/DataLabTechTV/datalab/commit/0f90970c77dbe1bcb7939268ba3286c31a58de50))
+
+- **deps**: Update uv.lock with the latest datalab version
+  ([`5f3c233`](https://github.com/DataLabTechTV/datalab/commit/5f3c23387c972f6614134ebec624c2b862e55eac))
+
+### Continuous Integration
+
+- Add explicit stage to postgres template
+  ([`840c4f8`](https://github.com/DataLabTechTV/datalab/commit/840c4f8db1289d8b69999bcbba086c77649132f3))
+
+- Add explicit stages block
+  ([`b7ee333`](https://github.com/DataLabTechTV/datalab/commit/b7ee3338775e5101160b24fb04cd69afdcefeed4))
+
+- Add explicit stages to kafka and ollama templates
+  ([`b56bd57`](https://github.com/DataLabTechTV/datalab/commit/b56bd5706db8420e53fd2f64960d60f7907abd83))
+
+- Add missing provision stage
+  ([`f2091c6`](https://github.com/DataLabTechTV/datalab/commit/f2091c6eae13177c42d0652d4eb1a7493008505e))
+
+- Add missing stage
+  ([`abe9df5`](https://github.com/DataLabTechTV/datalab/commit/abe9df55c398ae901f386f2e7d56f027496129fc))
+
+- Automated apps deployment
+  ([`39facd0`](https://github.com/DataLabTechTV/datalab/commit/39facd017c31f9331158fe67a6369040e0044cb7))
+
+- Change entry point to force trigger
+  ([`9a86ada`](https://github.com/DataLabTechTV/datalab/commit/9a86adac6d1a1c879d3742b76a978d9af5615772))
+
+- Change entry point to force trigger
+  ([`093a8a9`](https://github.com/DataLabTechTV/datalab/commit/093a8a9f0425d81aad2a34debad4f43c1fc779d5))
+
+- Create_db now returns a credentials.env file that expires in 15 min
+  ([`ed66f69`](https://github.com/DataLabTechTV/datalab/commit/ed66f69a81754c8292c60a3ada7d4b308c72adad))
+
+- Deploy job only runs when services are changed
+  ([`cc857df`](https://github.com/DataLabTechTV/datalab/commit/cc857df71b8c39f152f549acad0e048a623834df))
+
+- Docker compose stack update
+  ([`6785af2`](https://github.com/DataLabTechTV/datalab/commit/6785af2e62f93fd35f60ab36f84c4e2d9e9c7523))
+
+- Drop intermediary job
+  ([`d3649c4`](https://github.com/DataLabTechTV/datalab/commit/d3649c46897794265541ba04477b27ea79f90b9a))
+
+- Ensure both topics are created
+  ([`6668b22`](https://github.com/DataLabTechTV/datalab/commit/6668b228da7fcc9838521be80fb2ebdce28df47d))
+
+- Fix changes rule with matches to files
+  ([`08c6d1d`](https://github.com/DataLabTechTV/datalab/commit/08c6d1dd08066c1551a8704e9264f034969ccb77))
+
+- Fix syntax for manual triggering conditions
+  ([`33d667b`](https://github.com/DataLabTechTV/datalab/commit/33d667b7d0935ecb900d4edd3ef37e5e1f3d57fb))
+
+- Implement kafka topic and topic consumer group creation
+  ([`cd3f8ea`](https://github.com/DataLabTechTV/datalab/commit/cd3f8ea5447fda6e502ac292b85bd11361a4aec1))
+
+- Implement ollama model pull
+  ([`2956c09`](https://github.com/DataLabTechTV/datalab/commit/2956c09ab5afe973b85d2390d144e52cb1a89831))
+
+- Improve logging messages
+  ([`30f9b31`](https://github.com/DataLabTechTV/datalab/commit/30f9b31e28b8e62cd421919d2c04766d67760e69))
+
+- Kafka and ollama provisioner templates to use on external projects
+  ([`e1acd62`](https://github.com/DataLabTechTV/datalab/commit/e1acd6254a87a0486715d0df19e9c7d19abf0dd9))
+
+- Manual trigger option for services and apps deployment
+  ([`685ecda`](https://github.com/DataLabTechTV/datalab/commit/685ecda9c6926412989091f8a513fbcf9ea13abf))
+
+- Missing variable name for update
+  ([`cadf82c`](https://github.com/DataLabTechTV/datalab/commit/cadf82cce83f7a0679399eb8970eaa94ead76c4d))
+
+- Posgres provisioning job template for including on other projects
+  ([`2c3008e`](https://github.com/DataLabTechTV/datalab/commit/2c3008efdeff847da4731f9495e96be3181a2be0))
+
+- Postgres user and db creation, kafka initial setup
+  ([`1cd1ec2`](https://github.com/DataLabTechTV/datalab/commit/1cd1ec289a7421f66d99d52f06b8f0572fb4f609))
+
+- Provision kafka topics and groups explicitly for the mlserver app
+  ([`fdaeaa0`](https://github.com/DataLabTechTV/datalab/commit/fdaeaa018b51e5833375f3bf325bae6854a6e527))
+
+- Refactor so variables are on top
+  ([`bfb8847`](https://github.com/DataLabTechTV/datalab/commit/bfb88478075165c4eab2d1911820991b8296780a))
+
+- Refactor with more general job names
+  ([`c04c149`](https://github.com/DataLabTechTV/datalab/commit/c04c1490064f043cb7c5141a39b01a0df3244f44))
+
+- Remove redundant when manual that was blocking the job
+  ([`d4f7305`](https://github.com/DataLabTechTV/datalab/commit/d4f7305f5be6bc8a4729b79536d8c47aebd9ae45))
+
+- Remove unrequired sleep
+  ([`1bab0dc`](https://github.com/DataLabTechTV/datalab/commit/1bab0dcd246a5d63221910310dd382b081c4add2))
+
+- Replace before_script with custom ubuntu image
+  ([`6271461`](https://github.com/DataLabTechTV/datalab/commit/627146151c14b620a8d6622bb65bd5d9ee3333b5))
+
+- Reproduce rules from apps deploy job
+  ([`f40fde4`](https://github.com/DataLabTechTV/datalab/commit/f40fde43ee1fe1a2f12cf219207624efab75baca))
+
+- Rollback to production topic and group names
+  ([`2dc2e6b`](https://github.com/DataLabTechTV/datalab/commit/2dc2e6b9044d867d9cb4d39a87895e8e1366e097))
+
+- Soft fail when db exists
+  ([`82415ba`](https://github.com/DataLabTechTV/datalab/commit/82415ba2e1a57e5f3648c6b8f43f9660c69bc96e))
+
+- Stub for ollama jobs
+  ([`17ee3de`](https://github.com/DataLabTechTV/datalab/commit/17ee3de2df929d6d5d5ed4b3e3460b997128daa5))
+
+- Switch back to inline scripts for postgres
+  ([`59f7e81`](https://github.com/DataLabTechTV/datalab/commit/59f7e81d7961ffa4dea802fd4c126749b5a6aa9a))
+
+- Testing docker access
+  ([`92c35d1`](https://github.com/DataLabTechTV/datalab/commit/92c35d13fa35385d937ee7f3d931a1655e56a066))
+
+- Testing file list
+  ([`f6257bd`](https://github.com/DataLabTechTV/datalab/commit/f6257bd1613aa3409a014b6a088d41f0822da1dd))
+
+- Testing topic and group provisioning
+  ([`92eba7a`](https://github.com/DataLabTechTV/datalab/commit/92eba7a8b11b6d09c528a092fd519daf67b5be8e))
+
+- Trigger on changes to the deploy template
+  ([`01e1048`](https://github.com/DataLabTechTV/datalab/commit/01e1048b287a4943499d110a7657731956710a8d))
+
+- Upsert behavior for PSQL_SECRETS
+  ([`efc00ba`](https://github.com/DataLabTechTV/datalab/commit/efc00ba55f3c1ff0da87cb279de1604072d6ea58))
+
+- **fix**: Missing backslash
+  ([`8627b5c`](https://github.com/DataLabTechTV/datalab/commit/8627b5c7f466a11c18a0e6c87be1bb002f4ea055))
+
+- **fix**: Remove -it from docker command
+  ([`eadcdab`](https://github.com/DataLabTechTV/datalab/commit/eadcdabd7c65312438b9a599bbfe5e5828ba385c))
+
+- **fix**: Single line command
+  ([`024fc4a`](https://github.com/DataLabTechTV/datalab/commit/024fc4ac299bd3d9c136786eaf9e46af78a57e9b))
+
+- **fix**: Try again
+  ([`eab2623`](https://github.com/DataLabTechTV/datalab/commit/eab26231a4550a3fee727996ab6885a7d661efab))
+
+- **refactor**: Clarify log message
+  ([`1e2a976`](https://github.com/DataLabTechTV/datalab/commit/1e2a976863721d225cc95a279dbfb88a545e51f8))
+
+- **refactor**: Improve description
+  ([`c2f5472`](https://github.com/DataLabTechTV/datalab/commit/c2f5472f4e43a7d164aef7b4f727e77f0ef87608))
+
+- **refactor**: Rename job to init consumer
+  ([`bcaedb5`](https://github.com/DataLabTechTV/datalab/commit/bcaedb5ae6eb2698a30caf08b9bdeb16e129ee10))
+
+### Documentation
+
+- Update requirements and quick start
+  ([`b1ef974`](https://github.com/DataLabTechTV/datalab/commit/b1ef974c2e09b41bd41444df23040bd86f9de3af))
+
+- Update with latest workflows and add missing documentation
+  ([`ba48b98`](https://github.com/DataLabTechTV/datalab/commit/ba48b987d198c5788527e054b31a7d7528a7c91b))
+
+- Add missing requirements. - Add missing ml/ and infra/ components. - Add missing shared/ modules.
+  - Add PosgreSQL dotenv config. - Add missing dotenv configs: datalab, DuckLake, Kuzu, Ollama,
+  MLflow, and Kafka. - Add docs for CLI test and docs commands. - Add docs for ML CLI commands. -
+  Add just commands documentation.
+
+### Features
+
+- Add confirmation task, destroy services but never volumes
+  ([`43fa345`](https://github.com/DataLabTechTV/datalab/commit/43fa34553558496036b310e6187faf14b8167a33))
+
+- Add custom image for gitlab runner
+  ([`91c86ae`](https://github.com/DataLabTechTV/datalab/commit/91c86ae4298127d246a02d4c9ef469c11cd2f536))
+
+- Add GITLAB_TOKEN to CI/CD variables
+  ([`2602d5b`](https://github.com/DataLabTechTV/datalab/commit/2602d5b05af043e2497800e626e74aa882073f57))
+
+- Add missing docker configs to use the nvidia gpu
+  ([`a005a68`](https://github.com/DataLabTechTV/datalab/commit/a005a681e2735a0f3022c3f6710c0ae79dc7f4fa))
+
+- Add missing registry config and configure a remote docker gitlab runner
+  ([`81784cd`](https://github.com/DataLabTechTV/datalab/commit/81784cd5d70233deaf8088eb5bb7887f2ed70280))
+
+- Add open webui and switch to plain http on portainer
+  ([`4c23e64`](https://github.com/DataLabTechTV/datalab/commit/4c23e6407f13e1397226b3f1fdc5a5b3b6540897))
+
+- Add volume to open webui for persistence
+  ([`0d4c883`](https://github.com/DataLabTechTV/datalab/commit/0d4c883b2bda61eb4bfb4690254c8fcee98564dd))
+
+- Basic Docker VM provisioning (untested)
+  ([`1f2f7fd`](https://github.com/DataLabTechTV/datalab/commit/1f2f7fd8d13f5b9201be1b248faa34dff6e6e1b6))
+
+- Basic gitlab-terraform project to handle CI/CD variables
+  ([`1e04c04`](https://github.com/DataLabTechTV/datalab/commit/1e04c04630b51ed2b8fd931dff3a765bf744e427))
+
+- Basic Terraform project with stored state using S3 backend
+  ([`d14b5cb`](https://github.com/DataLabTechTV/datalab/commit/d14b5cb7741ed01a99f43c68fc459103acd664a3))
+
+- Basic Terraform setup for provisioning an LXC running MinIO on Proxmox
+  ([`60cb6b2`](https://github.com/DataLabTechTV/datalab/commit/60cb6b2dff96b5cbe8f85d7485d085fdf033f226))
+
+- Change to official open-webui image and preconfigure the ollama endpoint
+  ([`fd56c92`](https://github.com/DataLabTechTV/datalab/commit/fd56c92cce1b91f014700ce3be6bfbc1645e063a))
+
+- Configs now done via gitlab.rb directly, added container registry
+  ([`1a79081`](https://github.com/DataLabTechTV/datalab/commit/1a79081511930679b64462163c451ec9ceee925e))
+
+- Data lab infra config check tasks
+  ([`b861d95`](https://github.com/DataLabTechTV/datalab/commit/b861d957da14de2c2f37f316826436d75a6995ed))
+
+- Disable usage tracking and user creation, remove unused gitlab-env, and fix indentation
+  ([`4c2333a`](https://github.com/DataLabTechTV/datalab/commit/4c2333a5483f211a3a400d2de76a2db824240b95))
+
+- Dockerized ml server
+  ([`544427f`](https://github.com/DataLabTechTV/datalab/commit/544427ff926adcda399662ec7defcab756064842))
+
+- Dotenv loading into gitlab ci/cd vars now working
+  ([`1dd5691`](https://github.com/DataLabTechTV/datalab/commit/1dd569132ba786f3e6726459bc500e5073d271bb))
+
+- Env var configurable topics and consumer groups
+  ([`87d7b55`](https://github.com/DataLabTechTV/datalab/commit/87d7b55beb14636f1044f188d67642be13598042))
+
+- Extract MinIO environment variables from the install script into Terraform and produce random
+  passwords
+  ([`d6ab46e`](https://github.com/DataLabTechTV/datalab/commit/d6ab46e2c95954a3fd9d9ba263c1a3eead4f6270))
+
+- First gitlab working deployment, and docker and gitlab now split into separate tf files
+  ([`09a7ca0`](https://github.com/DataLabTechTV/datalab/commit/09a7ca097c9599048fdac7f5862f3b3b98b9a78d))
+
+- Gpu passthrough for docker-shared VM
+  ([`12eecef`](https://github.com/DataLabTechTV/datalab/commit/12eecefeda53a0ef906e5f2f78cc565aea8e0cf3))
+
+- Improve error control and add credentials printing task
+  ([`406f5b8`](https://github.com/DataLabTechTV/datalab/commit/406f5b899776d550e347d730cdee2f6ed09f10e5))
+
+- Improve postgres workflow for credentials and db creation
+  ([`ac7c573`](https://github.com/DataLabTechTV/datalab/commit/ac7c57387f183389f6b01317392ab2e7cf46fd5e))
+
+- Optional NVIDIA driver install for Docker VMs (cloud-config now a template)
+  ([`8a2abfb`](https://github.com/DataLabTechTV/datalab/commit/8a2abfb3a78f3b44a8a1077ab7b7f81e1b912a65))
+
+- Overall task cleanup, add infra provisioning for services layer and destruction tasks
+  ([`f88158c`](https://github.com/DataLabTechTV/datalab/commit/f88158c7fd0116f2f71e0ad2153b28ff7bff08f1))
+
+- Postgres deployment
+  ([`f8f7db2`](https://github.com/DataLabTechTV/datalab/commit/f8f7db2cf8f4bea706c73f617697b123dae42793))
+
+- Preconfigure gitlab container registry as an insecure registry for all docker vms
+  ([`5520d35`](https://github.com/DataLabTechTV/datalab/commit/5520d3528b129bffe2b97f1685ca121396bf7759))
+
+- Refactor docker-compose.yml into the services layer compose file, adding portainer and limiting
+  minio to the dev profile
+  ([`fcb43e0`](https://github.com/DataLabTechTV/datalab/commit/fcb43e040bcf51fc8934a3b6644599d877dc3b44))
+
+BREAKING CHANGE: There no longer is a docker-compose.yml, as it will be integrated into
+  infra/services/docker/compose.yml with MinIO available only under the dev project.
+
+- S3 config variables (required by gitlab)
+  ([`a544409`](https://github.com/DataLabTechTV/datalab/commit/a5444094348a0259b05c8d20a2238c19476e59bc))
+
+- Set a fixed port for MinIO's console
+  ([`78741fe`](https://github.com/DataLabTechTV/datalab/commit/78741fee86f7caa8d78095d1a49c3c6593c5f985))
+
+- Simplify showing credentials and add validation
+  ([`d0a7d36`](https://github.com/DataLabTechTV/datalab/commit/d0a7d362a03661dcd1fdfa07a194a4a8da7946a4))
+
+- Simplify the way the custom docker context is accessed
+  ([`57977f4`](https://github.com/DataLabTechTV/datalab/commit/57977f4e3cd1ff24fa5abcaa7b28cbe46bba64ca))
+
+- Tcp listening for remote access
+  ([`a0caf5a`](https://github.com/DataLabTechTV/datalab/commit/a0caf5a7d8e5ef3fdb2de43262189882b8d30a0b))
+
+- Update PSQL_SECRETS env var
+  ([`0dbd79d`](https://github.com/DataLabTechTV/datalab/commit/0dbd79d53f0b1f37a7e2fec50de7742bd89b0e0d))
+
+### Refactoring
+
+- Better defaults, less redundant title comments
+  ([`6c3f42b`](https://github.com/DataLabTechTV/datalab/commit/6c3f42b2883d7cca1eeb8dbc7c69884e3de6117f))
+
+- Explicitly use true/false for masked and improve formatting
+  ([`4e63668`](https://github.com/DataLabTechTV/datalab/commit/4e63668b77ae0e523036121e410b90fc44faae6a))
+
+- Extract scripts from templates
+  ([`cdf5283`](https://github.com/DataLabTechTV/datalab/commit/cdf52838d0887f8f810e0040d24eaa08c1837fed))
+
+- Fix linting issues
+  ([`01bdae2`](https://github.com/DataLabTechTV/datalab/commit/01bdae2c7740f367d40147e73a8ce1f501979317))
+
+- Make it clear that create database can safely fail
+  ([`9fff4c1`](https://github.com/DataLabTechTV/datalab/commit/9fff4c1b5b55569881ed443d707bc2f78cd6c54b))
+
+- Move services docker files into its own directory
+  ([`2ae6fee`](https://github.com/DataLabTechTV/datalab/commit/2ae6fee4e5e1489d6ff4aa3aa80b4ad2a2f9a7e6))
+
+- Normalize comment title formatting
+  ([`9b255d3`](https://github.com/DataLabTechTV/datalab/commit/9b255d335bb23b302b47b4179bcc51d51da42881))
+
+- Remove explicit user
+  ([`9d2118a`](https://github.com/DataLabTechTV/datalab/commit/9d2118a542f65523fcf10a55e87187ec920f63c2))
+
+- Rename the container resource to minio
+  ([`3c41783`](https://github.com/DataLabTechTV/datalab/commit/3c417838d6c48d673216bc50fd642770196a907d))
+
+- Rename to gitlab
+  ([`c2c383c`](https://github.com/DataLabTechTV/datalab/commit/c2c383c5e0825361b6aa970269f2646f0c147d28))
+
+- Rollback to inline scripts, move templates to root of dotci
+  ([`f0d12b8`](https://github.com/DataLabTechTV/datalab/commit/f0d12b8141a09e231a5ed69c697c0fd75265c963))
+
+- Split docker vm passwords into multiple outputs again
+  ([`23b4cbe`](https://github.com/DataLabTechTV/datalab/commit/23b4cbe57634161cc494891bd20567645170f6ba))
+
+- Split script into multiple lines for psql_create_db
+  ([`10444ff`](https://github.com/DataLabTechTV/datalab/commit/10444ff76f7a3ec5e00412756e919d7de874c7a4))
+
+- Switch to single rootfs volume and improve resource naming
+  ([`f773714`](https://github.com/DataLabTechTV/datalab/commit/f7737143005d908869a67703af4a837e3d3864ba))
+
+
 ## v0.7.0 (2025-08-28)
 
 ### Bug Fixes
