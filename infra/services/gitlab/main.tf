@@ -1,0 +1,74 @@
+locals {
+  secret_regex = "(?i)PASSWORD|SECRET"
+  project      = "${var.gitlab_user}/${var.gitlab_project}"
+}
+
+data "dotenv" "config" {
+  filename = var.dotenv_path
+}
+
+resource "gitlab_project_variable" "datalab_config" {
+  for_each = {
+    for k, v in data.dotenv.config.env :
+    k => v if !can(regex(local.secret_regex, k))
+  }
+
+  project       = local.project
+  key           = each.key
+  value         = each.value
+  variable_type = "env_var"
+  protected     = false
+  raw           = true
+  hidden        = false
+  masked        = false
+}
+
+resource "gitlab_project_variable" "datalab_secrets" {
+  for_each = {
+    for k, v in data.dotenv.config.env :
+    k => v if can(regex(local.secret_regex, k))
+  }
+
+  project       = local.project
+  key           = each.key
+  value         = sensitive(each.value)
+  variable_type = "env_var"
+  protected     = false
+  raw           = true
+  hidden        = false
+  masked        = true
+}
+
+resource "gitlab_project_variable" "gitlab_token_secret" {
+  project       = local.project
+  key           = "GITLAB_TOKEN"
+  value         = var.gitlab_token
+  variable_type = "env_var"
+  protected     = false
+  raw           = true
+  hidden        = true
+  masked        = true
+}
+
+resource "docker_image" "ubuntu" {
+  name = "gitlab:5050/datalabtechtv/datalab/ubuntu:custom"
+
+  triggers = {
+    sha1 = filesha1("${path.module}/../docker/ubuntu/Dockerfile")
+  }
+
+  build {
+    context    = "${path.module}/../docker/ubuntu/"
+    dockerfile = "Dockerfile"
+  }
+}
+
+resource "docker_registry_image" "ubuntu" {
+  name = docker_image.ubuntu.name
+
+  auth_config {
+    address  = "http://gitlab:5050"
+    username = var.gitlab_user
+    password = var.gitlab_token
+  }
+}

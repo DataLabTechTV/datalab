@@ -1,0 +1,16 @@
+.git
+.gitignore
+
+local/**
+logs/**
+.vscode/**
+history.txt
+*:Zone.Identifier
+!.gitkeep
+
+.env
+terraform.tfvars
+
+.venv
+
+*.bak

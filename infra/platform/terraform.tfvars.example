@@ -1,0 +1,25 @@
+# ===================
+# Proxmox: Hypervisor
+# ===================
+
+pm_endpoint     = "https://proxmox:8006"
+pm_insecure     = true
+pm_node         = "pve"
+pm_user         = "terraform"
+pm_token_id     = "datalabtech"
+pm_token_secret = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+
+# ---------------------
+# Proxmox: Host Machine
+# ---------------------
+
+pm_host_private_key_path = "~/.ssh/proxmox"
+
+# ======
+# GitLab
+# ======
+
+# INFO: see GitLab section on variables.tf for more options
+
+s3_access_key = "admin"
+s3_secret_key = "XXXXXXXXXX"

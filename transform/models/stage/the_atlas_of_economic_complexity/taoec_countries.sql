@@ -8,7 +8,7 @@ SELECT
     in_rankings,
     former_country
 FROM read_csv(
-    '{{ env_var("RAW__THE_ATLAS_OF_ECONOMIC_COMPLEXITY__CLASSIFICATIONS__LOCATION_COUNTRY") }}',
+    '{{ env_var("RAW__THE_ATLAS_OF_ECONOMIC_COMPLEXITY__CLASSIFICATIONS__LOCATION_COUNTRY", "NOT_FOUND") }}',
     delim = ',',
     quote = '"',
     escape = '"',

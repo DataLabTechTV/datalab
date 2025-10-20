@@ -1,0 +1,15 @@
+services:
+  mlserver:
+    build:
+      context: ../../../
+      dockerfile: infra/apps/docker/mlserver/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
+      KAFKA_BROKER_ENDPOINT: ${KAFKA_BROKER_ENDPOINT}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped

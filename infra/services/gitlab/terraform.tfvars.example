@@ -1,0 +1,6 @@
+gitlab_token = "glpat-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.XX.XXXXXXXXX"
+gitlab_user  = "YourGitLabUsername"
+
+# gitlab_api     = "http://gitlab/api/v4/"
+# gitlab_project = "datalab"
+# dotenv_path    = "../../../.env"

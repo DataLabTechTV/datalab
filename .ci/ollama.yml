@@ -1,0 +1,23 @@
+spec:
+  inputs:
+    pull:
+      description: "Pull Ollama model"
+      type: string
+
+---
+
+stages:
+  - ollama
+
+ollama_pull:
+  stage: ollama
+  image: docker:28.4.0-cli
+  variables:
+    DOCKER_HOST: tcp://docker-shared:2375
+    PULL: $[[ inputs.pull ]]
+  script:
+    - 'echo "Pulling Ollama model: $PULL"'
+    - docker exec datalab-ollama-1 ollama pull "$PULL"
+  rules:
+    - if: '"$[[ inputs.pull ]]" != ""'
+    - when: never

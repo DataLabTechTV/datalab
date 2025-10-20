@@ -1,0 +1,42 @@
+#cloud-config
+hostname: "${hostname}"
+password: "${password}"
+chpasswd:
+    expire: false
+ssh_pwauth: true
+apt:
+  sources:
+    docker:
+      source: "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/docker.gpg] https://download.docker.com/linux/ubuntu noble stable"
+      key: |
+        ${indent(8, chomp(docker_gpg_key))}
+package_update: true
+package_upgrade: true
+packages:
+  - qemu-guest-agent
+  - docker-ce
+write_files:
+  - path: /etc/systemd/system/docker.service.d/override.conf
+    owner: 'root:root'
+    permissions: '0600'
+    content: |
+      [Service]
+      ExecStart=
+      ExecStart=/usr/bin/dockerd
+  - path: /etc/docker/daemon.json
+    owner: 'root:root'
+    permissions: '0600'
+    content: |
+      {
+        "hosts": ["fd://", "tcp://0.0.0.0:2375"],
+        "containerd": "/run/containerd/containerd.sock",
+        "insecure-registries": ["${gitlab_hostname}:5050"]
+      }
+runcmd:
+  - systemctl enable --now qemu-guest-agent
+  - netplan apply
+  - usermod -aG docker ubuntu
+%{ if length(extra_cmds) > 0 ~}
+  ${indent(2, chomp(extra_cmds))}
+%{ endif ~}
+  - reboot

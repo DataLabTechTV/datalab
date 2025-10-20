@@ -1,0 +1,95 @@
+spec:
+  inputs:
+    force_services_deploy:
+      description: "Force a deploy of the services docker compose project"
+      type: boolean
+      default: false
+    force_apps_deploy:
+      description: "Force a deploy of the apps docker compose project"
+      type: boolean
+      default: false
+
+---
+
+stages:
+  - deploy
+  - provision
+
+# =====================
+# Services
+# =====================
+
+services_deploy:
+  stage: deploy
+  image: docker:28.4.0-cli
+  variables:
+    DOCKER_HOST: tcp://docker-shared:2375
+  script:
+    - docker compose -p datalab -f infra/services/docker/compose.yml up -d
+    - docker ps
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - .ci/deploy.yml
+        - infra/services/docker/**/*
+    - if: '"$[[ inputs.force_services_deploy ]]" == "true"'
+
+
+# =====================
+# Applications
+# =====================
+
+provision_mlserver_results_topic:
+  stage: deploy
+  trigger:
+    include:
+      - local: .ci/provision/kafka.yml
+        inputs:
+          topic: ml_inference_results
+          group: lakehouse-inference-result-consumer
+    strategy: depend
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - .ci/deploy.yml
+        - infra/apps/docker/**/*
+    - if: '"$[[ inputs.force_apps_deploy ]]" == "true"'
+
+provision_mlserver_feedback_topic:
+  stage: deploy
+  trigger:
+    include:
+      - local: .ci/provision/kafka.yml
+        inputs:
+          topic: ml_inference_feedback
+          group: lakehouse-inference-feedback-consumer
+    strategy: depend
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - .ci/deploy.yml
+        - infra/apps/docker/**/*
+    - if: '"$[[ inputs.force_apps_deploy ]]" == "true"'
+
+apps_deploy:
+  stage: deploy
+  image: docker:28.4.0-cli
+  needs:
+    - provision_mlserver_results_topic
+    - provision_mlserver_feedback_topic
+  variables:
+    DOCKER_HOST: tcp://docker-apps:2375
+    DOCKER_BUILDKIT: 1
+    INFERENCE_RESULTS_TOPIC: ml_inference_results
+    INFERENCE_FEEDBACK_TOPIC: lakehouse-inference-result-consumer
+    INFERENCE_RESULTS_GROUP: ml_inference_feedback
+    INFERENCE_FEEDBACK_GROUP: lakehouse-inference-feedback-consumer
+  script:
+    - docker compose -p datalab -f infra/apps/docker/compose.yml up -d --build
+    - docker ps
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - .ci/deploy.yml
+        - infra/apps/docker/**/*
+    - if: '"$[[ inputs.force_apps_deploy ]]" == "true"'

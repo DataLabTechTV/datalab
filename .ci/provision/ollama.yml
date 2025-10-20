@@ -1,0 +1,37 @@
+spec:
+  inputs:
+    pull:
+      description: "Pull Ollama model"
+      type: string
+
+---
+
+variables:
+  PROVISIONER_ID: datalabtechtv%2Fdatalab
+
+stages:
+  - provision
+
+provision_ollama_model:
+  stage: provision
+  image: gitlab:5050/datalabtechtv/datalab/ubuntu:custom
+  variables:
+    PULL: $[[ inputs.pull ]]
+  script:
+    - echo "Triggering downstream pipeline"
+    - |
+      PIPELINE_ID=$(curl -s -X POST \
+        --form token=$GITLAB_TRIGGER_TOKEN \
+        --form ref=infra \
+        --form inputs[ollama_pull]=$PULL \
+        $CI_API_V4_URL/projects/$PROVISIONER_ID/trigger/pipeline | jq -r '.id')
+    - echo "Triggered pipeline $PIPELINE_ID"
+    - |
+      while true; do
+        STATUS=$(curl -s -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+          $CI_API_V4_URL/projects/$PROVISIONER_ID/pipelines/$PIPELINE_ID \
+          | jq -r '.status')
+        echo "Pipeline status: $STATUS"
+        [[ "$STATUS" == "success" || "$STATUS" == "failed" ]] && break
+        sleep 10
+      done

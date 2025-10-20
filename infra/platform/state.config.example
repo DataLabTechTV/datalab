@@ -1,0 +1,15 @@
+bucket = "terraform"
+key    = "state/platform/terraform.tfstate"
+
+endpoints = {
+  s3 = "http://minio:9000"
+}
+
+region     = "eu-west-1"
+access_key = "admin"
+secret_key = "XXXXXXXXXXXXXXXXXXXX"
+
+skip_credentials_validation = true
+skip_metadata_api_check     = true
+skip_requesting_account_id  = true
+use_path_style              = true

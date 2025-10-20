@@ -1,0 +1,55 @@
+spec:
+  inputs:
+    trigger_services_deploy:
+      description: "Force a deploy of the services docker compose project"
+      type: boolean
+      default: false
+    trigger_apps_deploy:
+      description: "Force a deploy of the apps docker compose project"
+      type: boolean
+      default: false
+    postgres_db_user:
+      description: "PostgreSQL username to create and grant privileges to"
+      type: string
+      default: ""
+    postgres_db_name:
+      description: "PostgreSQL database to create"
+      type: string
+      default: ""
+    kafka_topic:
+      description: "Kafka topic to create"
+      type: string
+      default: ""
+    kafka_group:
+      description: "Kafka group to create"
+      type: string
+      default: ""
+    ollama_pull:
+      description: "Ollama model name to pull"
+      type: string
+      default: ""
+
+---
+
+stages:
+  - deploy
+  - postgres
+  - kafka
+  - ollama
+
+include:
+  - local: .ci/deploy.yml
+    inputs:
+      force_services_deploy: $[[ inputs.trigger_services_deploy ]]
+      force_apps_deploy: $[[ inputs.trigger_apps_deploy ]]
+  - local: .ci/postgres.yml
+    inputs:
+      db_user: $[[ inputs.postgres_db_user ]]
+      db_name: $[[ inputs.postgres_db_name ]]
+  - local: .ci/kafka.yml
+    inputs:
+      topic: $[[ inputs.kafka_topic ]]
+      group: $[[ inputs.kafka_group ]]
+  - local: .ci/ollama.yml
+    inputs:
+      pull: $[[ inputs.ollama_pull ]]
