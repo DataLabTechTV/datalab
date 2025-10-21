@@ -109,7 +109,7 @@ graphrag-etl: check-dlctl
     dlctl ingest dataset {{ds_msdsl_url}}
     dlctl transform -m "+marts.graphs.music_taste"
     dlctl export dataset graphs "music_taste"
-    dlctl graph load "music_taste"
+    dlctl graph load --overwrite "music_taste"
 
 graphrag-embeddings: check-dlctl
     dlctl graph compute embeddings "music_taste" -d 256 -b 9216 -e 5
@@ -135,7 +135,7 @@ econ-compnet-export: check-dlctl
     dlctl export dataset graphs "econ_comp"
 
 econ-compnet-load: check-dlctl
-    dlctl graph load "econ_comp"
+    dlctl graph load --overwrite "econ_comp"
 
 econ-compnet-etl: econ-compnet-ingest econ-compnet-transform econ-compnet-export econ-compnet-load
 
