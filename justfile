@@ -1,15 +1,13 @@
-set shell := ["bash", "-uc"]
-
-set dotenv-load
-
-
 # =======
 # Configs
 # =======
 
-# ------
-# Global
-# ------
+set shell := ["bash", "-uc"]
+set dotenv-load
+
+# -----
+# Paths
+# -----
 
 local_dir := "local/"
 init_sql_path := join(local_dir, "init.sql")
@@ -104,12 +102,22 @@ lakehouse: check-duckdb check-init-sql check-engine-db
 # GraphRAG with KùzuDB
 # ====================
 
-graphrag-etl: check-dlctl
+graphrag-ingest: check-dlctl
     dlctl ingest dataset {{ds_dsn_url}}
     dlctl ingest dataset {{ds_msdsl_url}}
+
+graphrag-transform:
     dlctl transform -m "+marts.graphs.music_taste"
+
+graphrag-export:
     dlctl export dataset graphs "music_taste"
+
+graphrag-load:
     dlctl graph load --overwrite "music_taste"
+
+graphrag-tl: graphrag-transform graphrag-export graphrag-load
+
+graphrag-etl: graphrag-ingest graphrag-tl
 
 graphrag-embeddings: check-dlctl
     dlctl graph compute embeddings "music_taste" -d 256 -b 9216 -e 5
@@ -137,7 +145,9 @@ econ-compnet-export: check-dlctl
 econ-compnet-load: check-dlctl
     dlctl graph load --overwrite "econ_comp"
 
-econ-compnet-etl: econ-compnet-ingest econ-compnet-transform econ-compnet-export econ-compnet-load
+econ-compnet-tl: econ-compnet-transform econ-compnet-export econ-compnet-load
+
+econ-compnet-etl: econ-compnet-ingest econ-compnet-tl
 
 econ-compnet-scoring: check-dlctl
     dlctl graph compute con-score "econ_comp" "Country" "CompetesWith"
@@ -160,7 +170,9 @@ mlops-ingest: check-dlctl
 mlops-transform: check-dlctl
     dlctl transform -m "+stage.depression_detection"
 
-mlops-etl: mlops-ingest mlops-transform
+mlops-tl: mlops-transform
+
+mlops-etl: mlops-ingest mlops-tl
 
 # --------
 # Training
@@ -359,3 +371,12 @@ infra-show-credentials: infra-config-check-all
     @echo "Platform"
     @echo "========"
     @just infra-show-tf-credentials platform
+
+
+# ======
+# Global
+# ======
+
+global-etl: graphrag-etl econ-compnet-etl mlops-etl
+global-ingest: graphrag-ingest econ-compnet-ingest mlops-ingest
+global-tl: graphrag-tl econ-compnet-tl mlops-tl
