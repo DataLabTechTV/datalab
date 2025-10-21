@@ -31,6 +31,8 @@ class KuzuOps:
                 if db_path.is_dir():
                     shutil.rmtree(db_path)
                 elif db_path.is_file():
+                    db_path.with_suffix(".wal").unlink(missing_ok=True)
+                    db_path.with_suffix(".lock").unlink(missing_ok=True)
                     db_path.unlink()
 
         db = kuzu.Database(db_path)
