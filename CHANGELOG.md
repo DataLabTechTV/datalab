@@ -1,6 +1,31 @@
 # CHANGELOG
 
 
+## v1.0.1 (2025-10-21)
+
+### Bug Fixes
+
+- Kuzu overwrite would fail when other files remained in the directory
+  ([`186a774`](https://github.com/DataLabTechTV/datalab/commit/186a774e9754173039d6a3cd853ab40c4937bc16))
+
+### Chores
+
+- Add overwrite to graph load commands for idempotency
+  ([`8de97c9`](https://github.com/DataLabTechTV/datalab/commit/8de97c9c38c0cce88833db97b65ad4a1235b4319))
+
+- Bump up datalab locked version to 1.0.0 (latest)
+  ([`d58130b`](https://github.com/DataLabTechTV/datalab/commit/d58130bdc36877f458d1606b4074451685e0af83))
+
+- Just command to setup dev tools
+  ([`345aecf`](https://github.com/DataLabTechTV/datalab/commit/345aecfeffc416b7008aa1792626eac374875e95))
+
+- Setup nbstripout so that notebooks are not committed with any output
+  ([`3bdef36`](https://github.com/DataLabTechTV/datalab/commit/3bdef365399db7a7dfb47fd9c5e11a7c8c7a5cd9))
+
+- Strip outputs from existing notebooks
+  ([`cf439e0`](https://github.com/DataLabTechTV/datalab/commit/cf439e0b6a332b9347a58431cf939ad603985671))
+
+
 ## v1.0.0 (2025-10-20)
 
 ### Bug Fixes
