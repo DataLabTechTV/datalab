@@ -66,6 +66,23 @@ confirm:
     done
 
 
+# ===========
+# Development
+# ===========
+
+check-dev:
+    just check git
+    just check uv
+    just check nbdime
+    just check nbstripout
+
+setup-dev:
+    just check git || sudo apt install -y git
+    just check uv || curl -LsSf https://astral.sh/uv/install.sh | sh
+    just check nbdime || nbdime config-git --enable --global
+    just check nbstripout || nbstripout --install --global
+
+
 # ========
 # DuckLake
 # ========
