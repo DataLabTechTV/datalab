@@ -1,5 +1,7 @@
 import os
+import subprocess
 import sys
+import tempfile
 from datetime import datetime
 from importlib.metadata import version
 from pathlib import Path
@@ -86,22 +88,25 @@ def backup():
 def backup_create():
     log.info("Creating a catalog backup")
 
-    source_files = [env.str("ENGINE_DB"), env.str("STAGE_DB")]
-    source_files += (env.str(varname) for varname in MART_SCHEMA_VARS)
+    os.environ["PGHOST"] = env.str("PSQL_CATALOG_HOST")
+    os.environ["PGPORT"] = env.str("PSQL_CATALOG_PORT")
+    os.environ["PGDATABASE"] = env.str("PSQL_CATALOG_DB")
+    os.environ["PGUSER"] = env.str("PSQL_CATALOG_USER")
+    os.environ["PGPASSWORD"] = env.str("PSQL_CATALOG_PASSWORD")
 
-    for source_file in source_files:
-        source_path = os.path.join(LOCAL_DIR, source_file)
+    with tempfile.NamedTemporaryFile(
+        prefix="datalab-lakehouse-",
+        suffix=".dump",
+    ) as tmp:
+        log.debug("Dumping to temporary file: {}", tmp.name)
+        subprocess.run(["pg_dump", "-Fc", "-f", tmp.name], check=True)
 
-        if not os.path.exists(source_path):
-            log.error("source path doesn't exist: {}", source_path)
-            return
+        s = Storage(prefix=StoragePrefix.BACKUPS)
+        s3_backup_path = s.get_dir("catalog", dated=True)
+        s.upload_file(tmp.name, f"{s3_backup_path}/lakehouse.dump")
+        s.upload_manifest("catalog", latest=s3_backup_path)
 
-    s = Storage(prefix=StoragePrefix.BACKUPS)
-    s3_backup_path = s.get_dir("catalog", dated=True)
-    s.upload_files(LOCAL_DIR, source_files, s3_backup_path)
-    s.upload_manifest("catalog", latest=s3_backup_path)
-
-    log.info("Catalog backup created: {}", s3_backup_path)
+        log.info("Catalog backup created: {}", s3_backup_path)
 
 
 @backup.command(name="restore", help="Restore engine and catalog into a directory")
@@ -111,9 +116,13 @@ def backup_create():
     type=click.DateTime(formats=["%Y-%m-%dT%H:%M:%S.%f"]),
     help="Timestamp for backup source (YYYY-mm-ddTHH:MM:SS.sss)",
 )
-@click.option("--target", default=LOCAL_DIR, type=click.STRING, help="Target directory")
-def backup_restore(source_date: Optional[datetime], target: str):
-    os.makedirs(target, exist_ok=True)
+def backup_restore(source_date: Optional[datetime]):
+    os.environ["PGHOST"] = env.str("PSQL_CATALOG_HOST")
+    os.environ["PGPORT"] = env.str("PSQL_CATALOG_PORT")
+    os.environ["PGUSER"] = env.str("PSQL_CATALOG_USER")
+    os.environ["PGPASSWORD"] = env.str("PSQL_CATALOG_PASSWORD")
+
+    db = env.str("PSQL_CATALOG_DB")
 
     s = Storage(prefix=StoragePrefix.BACKUPS)
 
@@ -130,8 +139,20 @@ def backup_restore(source_date: Optional[datetime], target: str):
         time = source_date.strftime("%H_%M_%S_%f")[:-3]
         s3_path = s.to_s3_path(f"{env.str('S3_BACKUPS_PREFIX')}/catalog/{date}/{time}")
 
-    log.info("Restoring backup from {} into {}", s3_path, target)
-    s.download_dir(s3_path, target)
+    log.info("Restoring backup from {}", s3_path)
+
+    with tempfile.NamedTemporaryFile(
+        prefix="datalab-lakehouse-",
+        suffix=".dump",
+    ) as tmp:
+        log.debug("Downloading dump to temporary file: {}", tmp.name)
+        s.download_file(f"{s3_path}/lakehouse.dump", tmp.name)
+
+        log.debug("Restoring dump from temporary file: {}", tmp.name)
+        subprocess.run(
+            ["pg_restore", "-c", "--if-exists", "-d", db, tmp.name],
+            check=True,
+        )
 
 
 @backup.command(name="ls", help="List catalog backups")
