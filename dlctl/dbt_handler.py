@@ -35,14 +35,6 @@ class DBTHandler:
         engine_db_dir = os.path.dirname(os.path.join(LOCAL_DIR, env.str("ENGINE_DB")))
         os.makedirs(engine_db_dir, exist_ok=True)
 
-        stage_db_dir = os.path.dirname(os.path.join(LOCAL_DIR, env.str("STAGE_DB")))
-        os.makedirs(stage_db_dir, exist_ok=True)
-
-        for name, value in os.environ.items():
-            if name.endswith("_MART_DB"):
-                mart_db_dir = os.path.dirname(os.path.join(LOCAL_DIR, value))
-                os.makedirs(mart_db_dir, exist_ok=True)
-
     def deps(self):
         self.dbt.invoke(["deps"] + self.PROJECT_ARGS)
 

@@ -98,13 +98,10 @@ setup-dev:
 check-init-sql:
     test -r {{init_sql_path}} || just generate-init-sql
 
-check-engine-db:
-    test -r {{engine_db_path}}
-
 generate-init-sql: check-dlctl
     dlctl tools generate-init-sql --path {{init_sql_path}}
 
-lakehouse: check-duckdb check-init-sql check-engine-db
+lakehouse: check-duckdb check-init-sql
     duckdb -init {{init_sql_path}} {{engine_db_path}}
 
 

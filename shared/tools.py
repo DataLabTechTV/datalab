@@ -3,7 +3,7 @@ from typing import Optional
 
 from loguru import logger as log
 
-from shared.settings import LOCAL_DIR, MART_DB_VARS, env
+from shared.settings import LOCAL_DIR, MART_SCHEMA_VARS, env
 from shared.templates import (
     INIT_SQL_ATTACHED_DB_TPL,
     INIT_SQL_ATTACHED_SECURE_DB_TPL,
@@ -17,26 +17,32 @@ def generate_init_sql(path: Optional[str] = None) -> Optional[str]:
 
     log.info(
         "Found {} env vars for data mart DBs: {}",
-        len(MART_DB_VARS),
-        ", ".join(MART_DB_VARS),
+        len(MART_SCHEMA_VARS),
+        ", ".join(MART_SCHEMA_VARS),
     )
+
+    schema_vars = [
+        "PSQL_CATALOG_STAGE_SCHEMA",
+        "PSQL_CATALOG_SECURE_STAGE_SCHEMA",
+    ] + MART_SCHEMA_VARS
 
     attachments_sql = []
 
-    for varname in ["STAGE_DB", "SECURE_STAGE_DB"] + MART_DB_VARS:
-        s3_prefix = env.str(f"S3_{varname.removesuffix('_DB')}_PREFIX")
+    for varname in schema_vars:
+        basename = varname.removeprefix("PSQL_CATALOG_").removesuffix("_SCHEMA")
+        s3_prefix = env.str(f"S3_{basename}_PREFIX")
 
         match varname:
-            case "SECURE_STAGE_DB":
+            case "PSQL_CATALOG_SECURE_STAGE_SCHEMA":
                 tpl = INIT_SQL_ATTACHED_SECURE_DB_TPL
             case _:
                 tpl = INIT_SQL_ATTACHED_DB_TPL
 
         attachment_sql = reformat_render(
             tpl.substitute(
-                db_path=os.path.join(LOCAL_DIR, env.str(varname)),
                 s3_bucket=env.str("S3_BUCKET"),
                 s3_prefix=s3_prefix,
+                psql_schema=env.str(varname),
             )
         )
 
@@ -50,6 +56,11 @@ def generate_init_sql(path: Optional[str] = None) -> Optional[str]:
             s3_use_ssl=env.str("S3_USE_SSL"),
             s3_url_style=env.str("S3_URL_STYLE"),
             s3_region=env.str("S3_REGION"),
+            psql_host=env.str("PSQL_CATALOG_HOST"),
+            psql_port=env.str("PSQL_CATALOG_PORT"),
+            psql_db=env.str("PSQL_CATALOG_DB"),
+            psql_user=env.str("PSQL_CATALOG_USER"),
+            psql_password=env.str("PSQL_CATALOG_PASSWORD"),
         )
     )
 

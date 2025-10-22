@@ -15,7 +15,7 @@ from graph.cli import graph
 from ingest.cli import ingest
 from ml.cli import ml
 from shared.cache import cache_usage, expunge_cache
-from shared.settings import LOCAL_DIR, MART_DB_VARS, env
+from shared.settings import LOCAL_DIR, MART_SCHEMA_VARS, env
 from shared.storage import Storage, StoragePrefix
 
 LOG_FILE = Path(__file__).resolve().parents[1] / "logs/datalab.log"
@@ -87,7 +87,7 @@ def backup_create():
     log.info("Creating a catalog backup")
 
     source_files = [env.str("ENGINE_DB"), env.str("STAGE_DB")]
-    source_files += (env.str(varname) for varname in MART_DB_VARS)
+    source_files += (env.str(varname) for varname in MART_SCHEMA_VARS)
 
     for source_file in source_files:
         source_path = os.path.join(LOCAL_DIR, source_file)
