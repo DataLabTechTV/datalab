@@ -26,12 +26,11 @@ class LakehouseException(Exception):
 
 class Lakehouse:
     def __init__(self, in_memory: bool = False, read_only: bool = True):
-        engine_db = os.path.join(LOCAL_DIR, env.str("ENGINE_DB"))
-
         if in_memory:
             log.info("Connecting to DuckDB: in-memory")
             self.conn = duckdb.connect()
         else:
+            engine_db = os.path.join(LOCAL_DIR, env.str("ENGINE_DB"))
             log.info("Connecting to DuckDB: {}", engine_db)
             self.conn = duckdb.connect(engine_db, read_only=read_only)
 
