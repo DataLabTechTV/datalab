@@ -238,7 +238,7 @@ S3_REGION=eu-west-1
 #### PostgreSQL
 
 ```bash
-PGPASSWORD=datalabtech
+PSQL_ROOT_PASSWORD=datalabtech
 ```
 
 Set this to the `root` user password of your PostgreSQL database—only used when deploying your on-premise infrastructure, so that databases and credentials can be provisioned at a later stage. Otherwise not accessed.
