@@ -6,12 +6,7 @@ from typing import Literal, Optional
 
 import duckdb
 import pandas as pd
-from duckdb import (
-    ColumnExpression,
-    ConstantExpression,
-    FunctionExpression,
-    SQLExpression,
-)
+from duckdb import ColumnExpression
 from loguru import logger as log
 
 from ml.types import InferenceFeedback, InferenceResult
