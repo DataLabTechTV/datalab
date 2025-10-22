@@ -13,6 +13,10 @@ local_dir := "local/"
 init_sql_path := join(local_dir, "init.sql")
 
 engine_db_path := join(local_dir, env_var("ENGINE_DB"))
+stage_db_path := join(local_dir, env_var("STAGE_DB"))
+secure_stage_db_path := join(local_dir, env_var("SECURE_STAGE_DB"))
+graphs_mart_db_path := join(local_dir, env_var("GRAPHS_MART_DB"))
+analytics_mart_db_path := join(local_dir, env_var("ANALYTICS_MART_DB"))
 
 # --------
 # Datasets
@@ -51,6 +55,12 @@ check-terraform:
 
 check-docker:
     just check docker
+
+check-psql:
+    just check psql
+
+check-pgloader:
+    just check pgloader
 
 confirm:
     #!/bin/bash
@@ -371,6 +381,113 @@ infra-show-credentials: infra-config-check-all
     @echo "Platform"
     @echo "========"
     @just infra-show-tf-credentials platform
+
+
+# ====================================================
+# Migrating DuckLake Catalog From SQLite to PostgreSQL
+# ====================================================
+
+test-lakehouse-catalog-connection: check-psql
+    #!/bin/bash
+
+    export PGHOST=$PSQL_CATALOG_HOST
+    export PGPORT=$PSQL_CATALOG_PORT
+    export PGDATABASE=$PSQL_CATALOG_DB
+    export PGUSER=$PSQL_CATALOG_USER
+    export PGPASSWORD=$PSQL_CATALOG_PASSWORD
+
+    echo -n "Testing lakehouse catalog connection... "
+
+    if output=$(psql -c '\q' 2>&1); then
+        echo "ok"
+    else
+        echo "failed"
+        echo $output
+    fi
+
+migrate-lakehouse-catalog catalog: check-pgloader test-lakehouse-catalog-connection
+    #!/bin/bash
+
+    set -e
+
+    export PGHOST=$PSQL_CATALOG_HOST
+    export PGPORT=$PSQL_CATALOG_PORT
+    export PGDATABASE=$PSQL_CATALOG_DB
+    export PGUSER=$PSQL_CATALOG_USER
+    export PGPASSWORD=$PSQL_CATALOG_PASSWORD
+
+    case "{{catalog}}" in
+        "stage")
+            sqlite_db_path="{{stage_db_path}}"
+            psql_schema="$PSQL_CATALOG_STAGE_SCHEMA"
+            ;;
+        "secure_stage")
+            sqlite_db_path="{{secure_stage_db_path}}"
+            psql_schema="$PSQL_CATALOG_SECURE_STAGE_SCHEMA"
+            ;;
+        "graphs_mart")
+            sqlite_db_path="{{graphs_mart_db_path}}"
+            psql_schema="$PSQL_CATALOG_GRAPHS_MART_SCHEMA"
+            ;;
+        "analytics_mart")
+            sqlite_db_path="{{analytics_mart_db_path}}"
+            psql_schema="$PSQL_CATALOG_ANALYTICS_MART_SCHEMA"
+            ;;
+    esac
+
+    echo "Migrating {{catalog}} catalog from SQLite to PostgreSQL..."
+
+    psql_conn_str="postgresql://$PGUSER:$PGPASSWORD@$PGHOST:$PGPORT/$PGDATABASE"
+
+    psql -c "CREATE SCHEMA IF NOT EXISTS $psql_schema"
+    pgloader --set search_path="'$psql_schema'" $sqlite_db_path $psql_conn_str
+
+    psql <<EOF
+    SET search_path TO $psql_schema;
+
+    ALTER TABLE ducklake_snapshot
+    ALTER snapshot_time TYPE TIMESTAMPTZ USING snapshot_time::TIMESTAMPTZ;
+
+    ALTER TABLE ducklake_schema
+    ALTER COLUMN schema_uuid TYPE UUID USING schema_uuid::UUID,
+    ALTER COLUMN path_is_relative TYPE BOOLEAN USING path_is_relative::INTEGER = 1;
+
+    ALTER TABLE ducklake_table
+    ALTER COLUMN table_uuid TYPE UUID USING table_uuid::UUID,
+    ALTER COLUMN path_is_relative TYPE BOOLEAN USING path_is_relative::INTEGER = 1;
+
+    ALTER TABLE ducklake_view
+    ALTER COLUMN view_uuid TYPE UUID USING view_uuid::UUID;
+
+    ALTER TABLE ducklake_data_file
+    ALTER COLUMN path_is_relative TYPE BOOLEAN USING path_is_relative::INTEGER = 1;
+
+    ALTER TABLE ducklake_file_column_stats
+    ALTER COLUMN contains_nan TYPE BOOLEAN USING contains_nan::INTEGER = 1;
+
+    ALTER TABLE ducklake_delete_file
+    ALTER COLUMN path_is_relative TYPE BOOLEAN USING path_is_relative::INTEGER = 1;
+
+    ALTER TABLE ducklake_column
+    ALTER COLUMN nulls_allowed TYPE BOOLEAN USING nulls_allowed::INTEGER = 1;
+
+    ALTER TABLE ducklake_table_column_stats
+    ALTER COLUMN contains_null TYPE BOOLEAN USING contains_null::INTEGER = 1,
+    ALTER COLUMN contains_nan TYPE BOOLEAN USING contains_nan::INTEGER = 1;
+
+    ALTER TABLE ducklake_files_scheduled_for_deletion
+    ALTER COLUMN path_is_relative TYPE BOOLEAN USING path_is_relative::INTEGER = 1,
+    ALTER COLUMN schedule_start TYPE TIMESTAMPTZ USING schedule_start::TIMESTAMPTZ;
+
+    ALTER TABLE ducklake_name_mapping
+    ALTER COLUMN is_partition TYPE BOOLEAN USING is_partition::INTEGER = 1;
+    EOF
+
+migrate-lakehouse-catalog-all:
+    just migrate-lakehouse-catalog stage
+    just migrate-lakehouse-catalog secure_stage
+    just migrate-lakehouse-catalog graphs_mart
+    just migrate-lakehouse-catalog analytics_mart
 
 
 # ======
