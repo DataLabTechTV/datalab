@@ -440,7 +440,6 @@ migrate-lakehouse-catalog catalog: check-pgloader test-lakehouse-catalog-connect
 
     psql -c "CREATE SCHEMA IF NOT EXISTS $psql_schema"
     pgloader --set search_path="'$psql_schema'" $sqlite_db_path $psql_conn_str
-
     PGOPTIONS="--search-path=$psql_schema" psql -f {{migrate_lakehouse_fix_script}}
 
 migrate-lakehouse-catalog-all:
