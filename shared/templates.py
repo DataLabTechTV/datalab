@@ -3,15 +3,20 @@ from string import Template
 
 INIT_SQL_ATTACHED_DB_TPL = Template(
     """--sql
-    ATTACH IF NOT EXISTS 'ducklake:sqlite:$db_path'
-    (DATA_PATH 's3://$s3_bucket/$s3_prefix');
+    ATTACH 'ducklake:' AS $psql_schema (
+        METADATA_SCHEMA '$psql_schema',
+        DATA_PATH 's3://$s3_bucket/$s3_prefix'
+    );
     """
 )
 
 INIT_SQL_ATTACHED_SECURE_DB_TPL = Template(
     """--sql
-    ATTACH IF NOT EXISTS 'ducklake:sqlite:$db_path'
-    (DATA_PATH 's3://$s3_bucket/$s3_prefix', ENCRYPTED 1);
+    ATTACH 'ducklake:' AS $psql_schema (
+        METADATA_SCHEMA '$psql_schema',
+        DATA_PATH 's3://$s3_bucket/$s3_prefix',
+        ENCRYPTED 1
+    );
     """
 )
 
@@ -24,7 +29,7 @@ INIT_SQL_TPL = Template(
 
     INSTALL httpfs;
     INSTALL parquet;
-    INSTALL sqlite;
+    INSTALL postgres;
     INSTALL ducklake;
 
     CREATE OR REPLACE SECRET minio (
@@ -36,6 +41,24 @@ INIT_SQL_TPL = Template(
         USE_SSL $s3_use_ssl,
         URL_STYLE '$s3_url_style',
         REGION '$s3_region'
+    );
+
+    CREATE OR REPLACE SECRET postgres (
+        TYPE postgres,
+        HOST '$psql_host',
+        PORT $psql_port,
+        DATABASE $psql_db,
+        USER '$psql_user',
+        PASSWORD '$psql_password'
+    );
+
+    CREATE OR REPLACE SECRET (
+        TYPE ducklake,
+        METADATA_PATH '',
+        METADATA_PARAMETERS MAP {
+            'TYPE': 'postgres',
+            'SECRET': 'postgres'
+        }
     );
     """
 )

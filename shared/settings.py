@@ -8,14 +8,10 @@ env.read_env()
 
 LOCAL_DIR = str((Path(__file__).parents[1] / "local").resolve())
 
-MART_DB_VARS = []
-
-for varname in os.environ.keys():
-    if varname.endswith("_MART_DB"):
-        MART_DB_VARS.append(varname)
-
+MART_SCHEMA_VARS = []
 MART_SCHEMAS = []
 
 for varname, value in os.environ.items():
-    if varname.endswith("_MART_DB"):
-        MART_SCHEMAS.append(os.path.splitext(os.path.split(value)[-1])[0])
+    if varname.endswith("_MART_SCHEMA"):
+        MART_SCHEMA_VARS.append(varname)
+        MART_SCHEMAS.append(value)
