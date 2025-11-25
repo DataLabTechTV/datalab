@@ -1,6 +1,66 @@
 # CHANGELOG
 
 
+## v1.1.0 (2025-11-25)
+
+### Bug Fixes
+
+- Missing S3_EXPORTS_PREFIX and S3_BACKUPS_PREFIX
+  ([`93b8bb5`](https://github.com/DataLabTechTV/datalab/commit/93b8bb51eabecee6e8f34397a3fd0062f88b190a))
+
+### Chores
+
+- Implement just command for migrating from a sqlite to a postgres catalog on ducklake
+  ([`81e082f`](https://github.com/DataLabTechTV/datalab/commit/81e082f99fae1faeeeda58dc2e029002135211e5))
+
+- Normalize etl related commands, create tl only commands, and global etl, ingest, and tl commands
+  ([`c7dca94`](https://github.com/DataLabTechTV/datalab/commit/c7dca94f2241b988f95a5bbf499bfea3878106e5))
+
+- **deps**: Bump up duckdb and switch dbt-duckdb to stable non-git version
+  ([`2c6bb02`](https://github.com/DataLabTechTV/datalab/commit/2c6bb02ac2b8c3926823247f980167e865f59b9f))
+
+### Code Style
+
+- Remove new line
+  ([`8b2a148`](https://github.com/DataLabTechTV/datalab/commit/8b2a148cc7402843478025a15aff1fb1aea75e87))
+
+- Wrap sql script path in double quotes
+  ([`0894362`](https://github.com/DataLabTechTV/datalab/commit/08943627646cd573c1b2390972b389a722f2be8d))
+
+### Documentation
+
+- Update file structure and dlctl commands to match new postgres catalog backups
+  ([`0febe4a`](https://github.com/DataLabTechTV/datalab/commit/0febe4add0737085911ff172f518c33c48f78c66))
+
+### Features
+
+- Add env vars required to get lakehouse connectivity
+  ([`9cf6bf5`](https://github.com/DataLabTechTV/datalab/commit/9cf6bf5095c57d9ce5effca42391317fa19a858b))
+
+- Migrate ducklake catalog from sqlite to postgres
+  ([`c077595`](https://github.com/DataLabTechTV/datalab/commit/c077595aa92c0a12d2acf4d45efdd7a8a5154375))
+
+- Migrate the dlctl backup from sqlite to postgres support
+  ([`0fe2c6d`](https://github.com/DataLabTechTV/datalab/commit/0fe2c6d2894b672d208fb42d32684fc5377c48ed))
+
+### Refactoring
+
+- Change engine_db variable scope (not used anywhere else)
+  ([`2fad9de`](https://github.com/DataLabTechTV/datalab/commit/2fad9de12d158a49bad90b3897cda578d36a5f4d))
+
+- Extract sql script to a separate file
+  ([`66e282c`](https://github.com/DataLabTechTV/datalab/commit/66e282cb39577a9ba5c89082f5b1d46ea091d695))
+
+- Reformat inline sql into fewer columns
+  ([`5a81765`](https://github.com/DataLabTechTV/datalab/commit/5a81765050db285fb3af72bda07c952337317668))
+
+- Remove unused imports
+  ([`acaccd0`](https://github.com/DataLabTechTV/datalab/commit/acaccd00cb0bb2ff3880dff99a0ff83aea7700e9))
+
+- Rename env var for postgres root password
+  ([`17b82a0`](https://github.com/DataLabTechTV/datalab/commit/17b82a06641ee61437b985ee632d8d163a2a03be))
+
+
 ## v1.0.1 (2025-10-21)
 
 ### Bug Fixes
