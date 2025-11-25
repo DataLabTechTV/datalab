@@ -135,7 +135,7 @@ resource "proxmox_virtual_environment_vm" "docker" {
 
   cpu {
     cores = try(local.docker[count.index].cores, 1)
-    type  = "x86-64-v2-AES"
+    type  = "host"
   }
 
   memory {
