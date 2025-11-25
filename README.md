@@ -181,9 +181,7 @@ s3://lakehouse/
 │   └── catalog/
 │       ├── YYYY_MM_DD/
 │       │   └── HH_mm_SS_sss/
-│       │       ├── engine.duckdb
-│       │       ├── stage.sqlite
-│       │       └── marts/*.sqlite
+│       │       └── lakehouse.dump
 │       └── manifest.json
 ├── raw/
 │   └── <dataset-name>/
@@ -238,7 +236,7 @@ S3_REGION=eu-west-1
 #### PostgreSQL
 
 ```bash
-PGPASSWORD=datalabtech
+PSQL_ROOT_PASSWORD=datalabtech
 ```
 
 Set this to the `root` user password of your PostgreSQL database—only used when deploying your on-premise infrastructure, so that databases and credentials can be provisioned at a later stage. Otherwise not accessed.
@@ -440,9 +438,7 @@ dlctl backup create
 In order to restore a backup, just run:
 
 ```bash
-dlctl backup restore \
-    --source "<YYYY-mm-ddTHH:MM:SS.sss>" \
-    --target "<target-dir>"
+dlctl backup restore --source "<YYYY-mm-ddTHH:MM:SS.sss>"
 ```
 
 Omitting `--source` will restore the latest backup.

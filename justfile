@@ -1,20 +1,22 @@
-set shell := ["bash", "-uc"]
-
-set dotenv-load
-
-
 # =======
 # Configs
 # =======
 
-# ------
-# Global
-# ------
+set shell := ["bash", "-uc"]
+set dotenv-load
+
+# -----
+# Paths
+# -----
 
 local_dir := "local/"
 init_sql_path := join(local_dir, "init.sql")
 
 engine_db_path := join(local_dir, env_var("ENGINE_DB"))
+stage_db_path := join(local_dir, env_var("STAGE_DB"))
+secure_stage_db_path := join(local_dir, env_var("SECURE_STAGE_DB"))
+graphs_mart_db_path := join(local_dir, env_var("GRAPHS_MART_DB"))
+analytics_mart_db_path := join(local_dir, env_var("ANALYTICS_MART_DB"))
 
 # --------
 # Datasets
@@ -54,6 +56,12 @@ check-terraform:
 check-docker:
     just check docker
 
+check-psql:
+    just check psql
+
+check-pgloader:
+    just check pgloader
+
 confirm:
     #!/bin/bash
     while true; do
@@ -90,13 +98,10 @@ setup-dev:
 check-init-sql:
     test -r {{init_sql_path}} || just generate-init-sql
 
-check-engine-db:
-    test -r {{engine_db_path}}
-
 generate-init-sql: check-dlctl
     dlctl tools generate-init-sql --path {{init_sql_path}}
 
-lakehouse: check-duckdb check-init-sql check-engine-db
+lakehouse: check-duckdb check-init-sql
     duckdb -init {{init_sql_path}} {{engine_db_path}}
 
 
@@ -104,12 +109,22 @@ lakehouse: check-duckdb check-init-sql check-engine-db
 # GraphRAG with KùzuDB
 # ====================
 
-graphrag-etl: check-dlctl
+graphrag-ingest: check-dlctl
     dlctl ingest dataset {{ds_dsn_url}}
     dlctl ingest dataset {{ds_msdsl_url}}
+
+graphrag-transform:
     dlctl transform -m "+marts.graphs.music_taste"
+
+graphrag-export:
     dlctl export dataset graphs "music_taste"
+
+graphrag-load:
     dlctl graph load --overwrite "music_taste"
+
+graphrag-tl: graphrag-transform graphrag-export graphrag-load
+
+graphrag-etl: graphrag-ingest graphrag-tl
 
 graphrag-embeddings: check-dlctl
     dlctl graph compute embeddings "music_taste" -d 256 -b 9216 -e 5
@@ -137,7 +152,9 @@ econ-compnet-export: check-dlctl
 econ-compnet-load: check-dlctl
     dlctl graph load --overwrite "econ_comp"
 
-econ-compnet-etl: econ-compnet-ingest econ-compnet-transform econ-compnet-export econ-compnet-load
+econ-compnet-tl: econ-compnet-transform econ-compnet-export econ-compnet-load
+
+econ-compnet-etl: econ-compnet-ingest econ-compnet-tl
 
 econ-compnet-scoring: check-dlctl
     dlctl graph compute con-score "econ_comp" "Country" "CompetesWith"
@@ -160,7 +177,9 @@ mlops-ingest: check-dlctl
 mlops-transform: check-dlctl
     dlctl transform -m "+stage.depression_detection"
 
-mlops-etl: mlops-ingest mlops-transform
+mlops-tl: mlops-transform
+
+mlops-etl: mlops-ingest mlops-tl
 
 # --------
 # Training
@@ -359,3 +378,81 @@ infra-show-credentials: infra-config-check-all
     @echo "Platform"
     @echo "========"
     @just infra-show-tf-credentials platform
+
+
+# ====================================================
+# Migrating DuckLake Catalog From SQLite to PostgreSQL
+# ====================================================
+
+migrate_lakehouse_fix_script := "./scripts/ducklake_sqlite_to_postgres_fix.sql"
+
+test-lakehouse-catalog-connection: check-psql
+    #!/bin/bash
+
+    export PGHOST=$PSQL_CATALOG_HOST
+    export PGPORT=$PSQL_CATALOG_PORT
+    export PGDATABASE=$PSQL_CATALOG_DB
+    export PGUSER=$PSQL_CATALOG_USER
+    export PGPASSWORD=$PSQL_CATALOG_PASSWORD
+
+    echo -n "Testing lakehouse catalog connection... "
+
+    if output=$(psql -c '\q' 2>&1); then
+        echo "ok"
+    else
+        echo "failed"
+        echo $output
+    fi
+
+migrate-lakehouse-catalog catalog: check-pgloader test-lakehouse-catalog-connection
+    #!/bin/bash
+
+    set -e
+
+    export PGHOST=$PSQL_CATALOG_HOST
+    export PGPORT=$PSQL_CATALOG_PORT
+    export PGDATABASE=$PSQL_CATALOG_DB
+    export PGUSER=$PSQL_CATALOG_USER
+    export PGPASSWORD=$PSQL_CATALOG_PASSWORD
+
+    case "{{catalog}}" in
+        "stage")
+            sqlite_db_path="{{stage_db_path}}"
+            psql_schema="$PSQL_CATALOG_STAGE_SCHEMA"
+            ;;
+        "secure_stage")
+            sqlite_db_path="{{secure_stage_db_path}}"
+            psql_schema="$PSQL_CATALOG_SECURE_STAGE_SCHEMA"
+            ;;
+        "graphs_mart")
+            sqlite_db_path="{{graphs_mart_db_path}}"
+            psql_schema="$PSQL_CATALOG_GRAPHS_MART_SCHEMA"
+            ;;
+        "analytics_mart")
+            sqlite_db_path="{{analytics_mart_db_path}}"
+            psql_schema="$PSQL_CATALOG_ANALYTICS_MART_SCHEMA"
+            ;;
+    esac
+
+    echo "Migrating {{catalog}} catalog from SQLite to PostgreSQL..."
+
+    psql_conn_str="postgresql://$PGUSER:$PGPASSWORD@$PGHOST:$PGPORT/$PGDATABASE"
+
+    psql -c "CREATE SCHEMA IF NOT EXISTS $psql_schema"
+    pgloader --set search_path="'$psql_schema'" $sqlite_db_path $psql_conn_str
+    PGOPTIONS="--search-path=$psql_schema" psql -f "{{migrate_lakehouse_fix_script}}"
+
+migrate-lakehouse-catalog-all:
+    just migrate-lakehouse-catalog stage
+    just migrate-lakehouse-catalog secure_stage
+    just migrate-lakehouse-catalog graphs_mart
+    just migrate-lakehouse-catalog analytics_mart
+
+
+# ======
+# Global
+# ======
+
+global-etl: graphrag-etl econ-compnet-etl mlops-etl
+global-ingest: graphrag-ingest econ-compnet-ingest mlops-ingest
+global-tl: graphrag-tl econ-compnet-tl mlops-tl

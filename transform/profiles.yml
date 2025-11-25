@@ -7,35 +7,51 @@ transform:
         - httpfs
         - parquet
         - ducklake
-        - sqlite
+        - postgres
       secrets:
         - type: s3
+          name: minio
           region: "{{ env_var('S3_REGION') }}"
           key_id: "{{ env_var('S3_ACCESS_KEY_ID') }}"
           secret: "{{ env_var('S3_SECRET_ACCESS_KEY') }}"
           endpoint: "{{ env_var('S3_ENDPOINT') }}"
           use_ssl: "{{ env_var('S3_USE_SSL') }}"
           url_style: "{{ env_var('S3_URL_STYLE') }}"
+        - type: postgres
+          name: postgres
+          host: "{{ env_var('PSQL_CATALOG_HOST') }}"
+          port: "{{ env_var('PSQL_CATALOG_PORT') }}"
+          database: "{{ env_var('PSQL_CATALOG_DB') }}"
+          user: "{{ env_var('PSQL_CATALOG_USER') }}"
+          password: "{{ env_var('PSQL_CATALOG_PASSWORD') }}"
+        - type: ducklake
+          name: ""
+          metadata_path: ""
+          metadata_parameters:
+            type: postgres
+            secret: postgres
       attach:
-        - path: ducklake:sqlite:{{ env_var('LOCAL_DIR') }}/{{ env_var('STAGE_DB') }}
+        - path: "ducklake:"
           alias: stage
           options:
+            metadata_schema: stage
             data_path: s3://{{ env_var('S3_BUCKET') }}/{{ env_var('S3_STAGE_PREFIX') }}
-        - path: ducklake:sqlite:{{ env_var('LOCAL_DIR') }}/{{ env_var('SECURE_STAGE_DB') }}
+        - path: "ducklake:"
           alias: secure_stage
           options:
+            metadata_schema: secure_stage
             data_path: s3://{{ env_var('S3_BUCKET') }}/{{ env_var('S3_SECURE_STAGE_PREFIX') }}
             encrypted: 1
-        - path: >
-            ducklake:sqlite:{{ env_var('LOCAL_DIR') }}/{{ env_var('GRAPHS_MART_DB') }}
+        - path: "ducklake:"
           alias: graphs
           options:
+            metadata_schema: graphs
             data_path: >
               s3://{{ env_var('S3_BUCKET') }}/{{ env_var('S3_GRAPHS_MART_PREFIX') }}
-        - path: >
-            ducklake:sqlite:{{ env_var('LOCAL_DIR') }}/{{ env_var('ANALYTICS_MART_DB') }}
+        - path: "ducklake:"
           alias: analytics
           options:
+            metadata_schema: analytics
             data_path: >
               s3://{{ env_var('S3_BUCKET') }}/{{ env_var('S3_ANALYTICS_MART_PREFIX') }}
   target: lakehouse
