@@ -107,6 +107,8 @@ resource "proxmox_virtual_environment_vm" "gitlab" {
   vm_id     = local.gitlab.vm_id
   tags      = ["l2-platform"]
 
+  on_boot = false
+
   agent {
     enabled = true
   }

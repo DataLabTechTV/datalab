@@ -25,7 +25,7 @@ resource "proxmox_virtual_environment_container" "minio" {
   vm_id     = 101
   tags      = ["l1-foundation"]
 
-  start_on_boot = true
+  start_on_boot = false
   unprivileged  = true
 
   cpu {

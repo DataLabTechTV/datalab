@@ -129,6 +129,8 @@ resource "proxmox_virtual_environment_vm" "docker" {
   vm_id     = local.docker[count.index].vm_id
   tags      = ["l2-platform"]
 
+  on_boot = false
+
   agent {
     enabled = true
   }
