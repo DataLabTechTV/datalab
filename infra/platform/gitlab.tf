@@ -105,8 +105,9 @@ resource "proxmox_virtual_environment_file" "gitlab_cfg" {
 resource "proxmox_virtual_environment_vm" "gitlab" {
   node_name = var.pm_node
   vm_id     = local.gitlab.vm_id
-  tags      = ["l2-platform"]
+  tags      = ["datalab"]
 
+  started = false
   on_boot = false
 
   agent {
